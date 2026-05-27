@@ -1,0 +1,1 @@
+# edu-standalone-activities
