@@ -31,9 +31,10 @@ Python developers who already understand Temporal Activities.
 | # | Name | Time | Goal |
 |---|------|------|------|
 | 01 | **Skip the workflow** (core, build-and-teach) | 10 min | Build a webhook-delivery activity, run it standalone, run it via a workflow, see the cost diff (events / actions / retention). |
-| 02 | Idempotency and crash safety | 10 min | Without an idempotency key, crashing mid-flight double-delivers; with one, it does not. |
+| 02 | Idempotency and crash safety | 10 min | **Dedup against Temporal's own retries.** A worker crash mid-flight makes Temporal retry — without an idempotency key the receiver gets the POST twice; with one, only the first lands. |
 | 03 | Concurrency and rate limits | 10 min | Worker config to cap downstream load (`max_concurrent_activities`, `max_activities_per_second`). |
-| 04 | Dedup via ID reuse | 10 min | Activity ID as scheduling-layer dedup (SDK behavior verified at implementation). |
+| 04 | Dedup via ID reuse | 10 min | **Dedup against duplicate upstream events.** Same event scheduled twice from the client → Temporal rejects / returns the existing handle at the scheduling layer (no second worker run). SDK behavior verified at implementation. |
+| 05 | **Ship to Temporal Cloud** (optional advanced) | 10 min | Swap the local dev server for a Temporal Cloud namespace with mTLS auth; run the same activity against Cloud; verify in the Cloud UI. Requires the learner's own Cloud namespace + cert/key. |
 
 ## Use case
 
@@ -41,7 +42,7 @@ Webhook delivery to a local stdlib echo server inside the Instruqt sandbox. No A
 
 ## Out of scope (for v1)
 
-Workflows beyond a 5-line comparison class · signals / queries / updates · heartbeats (deferred to future Course 1, framed as long-running-work, not cancellation) · local activities · worker versioning · Temporal Cloud connection setup.
+Workflows beyond a 5-line comparison class · signals / queries / updates · heartbeats (deferred to future Course 1, framed as long-running-work, not cancellation) · local activities · worker versioning. (Temporal Cloud connection is now covered, optionally, in Module 05.)
 
 ## Open questions for review
 
