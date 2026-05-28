@@ -13,7 +13,7 @@ Python developers who already understand Temporal Activities.
 ## Why this course
 
 - **Customer asks:** cheaper job-queue primitive with operator levers — concurrency control, dedup, reduced visibility / retention.
-- **PR-1 review (Dan):** SAA shouldn't feel like a major new skill; teach Activities once (future Course 1), then SAA as the cost-saving variant; the durability demo needs idempotency.
+- **PR-1 review (Dan):** SAA shouldn't feel like a major new skill; teach Activities once, then SAA as the cost-saving variant; the durability demo needs idempotency.
 
 ## Customer signal
 
