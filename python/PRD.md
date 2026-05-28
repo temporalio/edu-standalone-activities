@@ -8,7 +8,7 @@ Build a durable webhook-delivery job with a Standalone Activity, and see how it 
 
 ## Audience
 
-Python developers who already understand Temporal Activities at the level a future Course 1 will teach. Until Course 1 exists, the interim prereq is Temporal's existing [Activities docs](https://docs.temporal.io/develop/python/activities).
+Python developers who already understand Temporal Activities.
 
 ## Why this course
 
