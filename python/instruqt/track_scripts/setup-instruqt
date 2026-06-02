@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p /var/log/workshop
+
+# Start Temporal dev server in the background
+nohup temporal server start-dev \
+  --ui-port 8233 \
+  --db-filename /tmp/temporal.db \
+  --log-level warn \
+  > /var/log/workshop/temporal.log 2>&1 &
+
+# Start echo server in the background
+nohup python /opt/workshop/server/echo_server.py \
+  > /var/log/workshop/echo.log 2>&1 &
+
+# Wait for ports
+for i in {1..30}; do
+  if (echo > /dev/tcp/localhost/7233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/8233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9000) 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+# Seed /root/workshop with exercise content + shared files
+mkdir -p /root/workshop
+cp -r /opt/workshop/exercise/01-skip-the-workflow/. /root/workshop/
+cp /opt/workshop/pyproject.toml /root/workshop/
+cp -r /opt/workshop/scripts /root/workshop/
+chmod +x /root/workshop/scripts/*.sh
+
+cd /root/workshop && uv sync

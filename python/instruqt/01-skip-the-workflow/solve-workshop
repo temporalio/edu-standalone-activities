@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Overlay solution code onto the workshop directory.
+cp -rf /opt/workshop/solution/01-skip-the-workflow/. /root/workshop/

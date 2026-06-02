@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sync starter files for this module without clobbering learner edits.
+rsync -a --ignore-existing /opt/workshop/exercise/01-skip-the-workflow/ /root/workshop/
+
+# Clean echo server state.
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
