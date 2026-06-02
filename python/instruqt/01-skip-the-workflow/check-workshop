@@ -31,7 +31,7 @@ fi
 # Sanity check: a standalone activity ran on webhook-queue.
 sa_count=$(temporal activity list \
   --address localhost:7233 \
-  --query "TaskQueue='webhook-queue'" \
+  --query 'TaskQueue="webhook-queue"' \
   -o json 2>/dev/null | jq 'length' || echo 0)
 if [ "$sa_count" -lt 1 ]; then
   echo "FAIL: expected >=1 standalone activity on webhook-queue, got $sa_count"
@@ -41,7 +41,7 @@ fi
 # Sanity check: a workflow ran on webhook-queue.
 wf_count=$(temporal workflow list \
   --address localhost:7233 \
-  --query "TaskQueue='webhook-queue'" \
+  --query 'TaskQueue="webhook-queue"' \
   -o json 2>/dev/null | jq 'length' || echo 0)
 if [ "$wf_count" -lt 1 ]; then
   echo "FAIL: expected >=1 workflow on webhook-queue, got $wf_count"

@@ -3,14 +3,9 @@ name = "webhooks"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-  # TODO: pin to the SDK build that supports client.execute_activity for
-  # Standalone Activities. >=1.18 is a placeholder.
-  "temporalio>=1.18",
+  "temporalio>=1.27",
   "httpx>=0.27",
 ]
-
-[tool.uv]
-dev-dependencies = []
 
 [build-system]
 requires = ["hatchling"]

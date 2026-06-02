@@ -92,21 +92,21 @@ Refresh the **Echo server** tab. You should now see **2** deliveries total — o
 The two ways look identical from the outside — but Temporal did very different amounts of work under the hood. Run these side by side in the **Terminal** tab:
 
 ```bash
-# Standalone activity - ~3 events
-temporal activity describe --address localhost:7233 --id deliver-evt_001
+# Standalone Activity — look for "StateTransitionCount: 3"
+temporal activity describe --address localhost:7233 --activity-id deliver-evt_001
 
-# Workflow-wrapped activity - ~10 events
+# Activity-in-Workflow — count the rows in "Progress" (11 events)
 temporal workflow show --address localhost:7233 --workflow-id wf-evt_002
 ```
 
-Count the events in each output. You should see something like:
+You should see something like:
 
 | | Standalone Activity | Activity-in-Workflow |
 |---|---|---|
-| Events emitted | ~3 (`Scheduled`, `Started`, `Completed`) | ~10 (workflow start/task/activity events + workflow completion) |
+| State transitions / events | **3** (per `StateTransitionCount` in `activity describe`) | **11** (`WorkflowExecutionStarted` → `WorkflowTaskScheduled` → ... → `WorkflowExecutionCompleted`) |
 | Temporal Cloud actions billed* | 1 | ≥ 2 |
 | History retention | Activity-scoped | Workflow-scoped (full history retained) |
-| Visibility | Activity list | Full workflow timeline + search |
+| Visibility | `temporal activity list/describe` | Full workflow timeline + search |
 | Latency overhead | Lower (no workflow scheduling) | Higher (workflow tasks bracket the activity) |
 | Throughput at scale | Higher (fewer events per unit of work) | Lower (more events per unit of work) |
 

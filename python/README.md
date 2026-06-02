@@ -38,11 +38,13 @@ uv run python -m webhooks.send_via_workflow evt_002
 curl http://localhost:9000/_received
 ```
 
-## Open implementation questions
-
-Tracked in [`PRD.md`](./PRD.md). Pinned defaults for now:
+## Implementation decisions (verified locally)
 
 - HTTP client: `httpx` (sync mode).
-- `start_activity` ID conflict policy: TODO comment in Module 04 until SDK behavior is verified.
-- Task Queue Priority and Fairness: depth depends on SDK exposure; Module 03 will adapt at implementation time.
-- `temporalio` version pin: `>=1.18` placeholder. The exact SDK build that supports `client.execute_activity` directly (i.e. the prerelease standalone-activities branch) needs to be confirmed and pinned before publication.
+- `temporalio>=1.27` — verified that `Client.execute_activity` and `Client.start_activity` are exposed in 1.27.2 (built and smoke-tested locally).
+- Temporal CLI: `v1.6.2-standalone-activity` — verified as a real published release; ships `temporal activity describe/list/count` (all marked Experimental).
+
+## Open questions for future modules
+
+- `start_activity` ID conflict policy: needed for Module 04; verify the exact kwarg name in the Python SDK at implementation time.
+- Task Queue Priority and Fairness: depth in Module 03 depends on SDK exposure; verify when authoring Module 03.
