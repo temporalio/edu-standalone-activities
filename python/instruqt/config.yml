@@ -1,0 +1,12 @@
+# Instruqt sandbox container configuration.
+#
+# The image is built and pushed by .github/workflows/build-sandbox.yml.
+# After the first successful CI run, swap the :latest tag for an immutable
+# SHA-pinned tag (e.g. :<commit-sha>) to prevent sandbox drift between pushes.
+
+version: "3"
+containers:
+  - name: workshop
+    image: ghcr.io/temporalio/edu-standalone-activities-sandbox:latest
+    shell: /bin/bash
+    memory: 4096
