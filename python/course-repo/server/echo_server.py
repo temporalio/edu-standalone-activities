@@ -31,7 +31,7 @@ class EchoHandler(BaseHTTPRequestHandler):
             self._respond(404, {"error": "not found"})
 
     def do_GET(self) -> None:
-        if self.path == "/_received":
+        if self.path in ("/", "/_received"):
             self._handle_received()
         else:
             self._respond(404, {"error": "not found"})

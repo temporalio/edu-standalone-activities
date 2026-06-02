@@ -1,3 +1,42 @@
+---
+slug: skip-the-workflow
+id: cnt4ivcsp1av
+type: challenge
+title: Skip the workflow
+teaser: Build a webhook delivery activity, run it standalone, run it via a workflow,
+  and compare the cost.
+notes:
+- type: text
+  contents: See the assignment for step-by-step instructions.
+tabs:
+- id: cblvczchd9gl
+  title: Editor
+  type: code
+  hostname: workshop
+  path: /root/workshop
+- id: u9ycx960dc7g
+  title: Terminal
+  type: terminal
+  hostname: workshop
+- id: uvg0hwykfsy3
+  title: Worker
+  type: terminal
+  hostname: workshop
+- id: sp8tl0pl7o8t
+  title: Echo server
+  type: service
+  hostname: workshop
+  port: 9000
+- id: 7zrapmphtrzg
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
+difficulty: basic
+timelimit: 900
+enhanced_loading: null
+---
+
 # Skip the workflow
 
 Most Temporal tutorials show you Activities running inside Workflows. This module flips that: you'll write one Activity and run it **without** a Workflow at all — directly from a Temporal Client. Then you'll run the same Activity wrapped in a Workflow and see exactly what that wrapping costs you.

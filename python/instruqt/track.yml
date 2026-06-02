@@ -1,33 +1,35 @@
 slug: standalone-activities-job-queue
-id: REGENERATE_ON_FIRST_PUSH
-type: track
-title: "Standalone Activities as a Durable Job Queue (Python)"
-teaser: Build a durable webhook-delivery job with a Standalone Activity, and see how it costs less than wrapping the same work in a workflow.
+id: nvkcci1s2pyx
+title: Standalone Activities as a Durable Job Queue (Python)
+teaser: Build a durable webhook-delivery job with a Standalone Activity, and see how
+  it costs less than wrapping the same work in a workflow.
 description: |
   Standalone Activities give you Temporal's durability, retries, and visibility
   for one-shot jobs without writing a workflow. You'll build a webhook delivery
   job, run it standalone and via a workflow, and compare the cost of each shape.
-
-icon: https://temporal.io/temporal.svg
-tags: [python, standalone-activities, activities, temporal, job-queue]
+icon: ""
+tags:
+- activities
+- python
+- standalone-activities
+- temporal
+- job-queue
 owner: temporal
 developers:
-  - nikolay.advolodkin@temporal.io
-
-timelimit: 3600        # 1 hour cap; Module 01 expected ~10 min
-idle_timeout: 1800     # 30 min idle
-maintenance: false
-private: false
-
-show_timer: true
+- nikolay.advolodkin@temporal.io
+idle_timeout: 1800
+timelimit: 3600
 lab_config:
-  layout: assignment-right
-  theme: dark
-  sidebar:
-    enabled: true
-    width: 40
-
-checksum: REGENERATE_ON_FIRST_PUSH
-
-challenges:
-  - 01-skip-the-workflow
+  extend_ttl: 900
+  sidebar_enabled: true
+  feedback_recap_enabled: false
+  feedback_tab_enabled: false
+  loadingMessages: true
+  theme:
+    name: modern-dark
+  override_challenge_layout: true
+  hideStopButton: false
+  default_layout: AssignmentRight
+  default_layout_sidebar_size: 40
+checksum: "16266389630061242526"
+enhanced_loading: false
