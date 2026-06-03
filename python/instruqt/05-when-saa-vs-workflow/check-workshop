@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Wrap-up module — pressing Check finishes the track.
+echo "PASS: track complete."
+exit 0

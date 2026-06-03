@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /root/workshop
+
+# Fresh state.
+pkill -f "python -m webhooks.worker" || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null
+
+# Start worker, fire activity, kill worker mid-flight, restart, wait for completion.
+nohup uv run python -m webhooks.worker > /tmp/worker.log 2>&1 &
+sleep 3
+
+EVT="evt_check_02_$RANDOM"
+uv run python -m webhooks.send_standalone "$EVT" &
+STARTER_PID=$!
+
+# Activity POSTs after ~0.5s; we kill the worker during the 4s sleep window.
+sleep 2
+pkill -f "python -m webhooks.worker" || true
+
+# Restart worker so the retry can complete.
+sleep 1
+nohup uv run python -m webhooks.worker >> /tmp/worker.log 2>&1 &
+sleep 1
+
+# Wait for the starter to finish (means the activity completed).
+wait "$STARTER_PID" || true
+
+# Echo server should show exactly 1 delivery for this event_id (idempotency
+# dedup'd the retry's duplicate POST).
+count=$(curl -fsS http://localhost:9000/_received \
+  | jq --arg evt "$EVT" '[.deliveries[] | select(.body.event_id == $evt)] | length')
+
+if [ "$count" -ne 1 ]; then
+  echo "FAIL: expected exactly 1 delivery for $EVT, got $count"
+  echo "Hint: did you add Idempotency-Key from activity.info().activity_id?"
+  echo "Worker log tail:"
+  tail -n 20 /tmp/worker.log || true
+  exit 1
+fi
+
+# The activity should have run at least twice (initial attempt + retry).
+attempts=$(temporal activity describe \
+  --address localhost:7233 \
+  --activity-id "deliver-$EVT" \
+  -o json 2>/dev/null | jq -r '.attempt' || echo 0)
+
+if [ "$attempts" -lt 2 ]; then
+  echo "FAIL: expected attempt >= 2 (so the retry actually fired), got $attempts"
+  echo "Check that you killed the worker fast enough during the sleep window."
+  exit 1
+fi
+
+echo "PASS: 1 delivery for $EVT, attempt=$attempts (retry was dedup'd)"

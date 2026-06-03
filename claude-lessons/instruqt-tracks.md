@@ -46,6 +46,8 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 
 **Anything in a challenge folder is treated as a script.** Validator parses every file as `<event>-<container>`. Dropping `cost-comparison.svg` next to `assignment.md` fails with `references unknown event 'cost'` + `references unknown host 'comparison.svg'`. Put diagrams, assets, etc. *outside* the challenge folder (e.g. `python/diagrams/`).
 
+**Challenge directory numbering must be sequential.** Naming directories `01-`, `02-`, `04-` errors with `challenge ids are not sequential, expected: 03 actual: 04`. Either fill in the gap or renumber. The `NN-` prefix is the ordering Instruqt enforces; renumbering on the fly is cheap because the `slug:` in the frontmatter is what's actually stable (the directory prefix can change without breaking links).
+
 ## Schema gotchas
 
 - **Per-challenge metadata** lives in YAML frontmatter at the top of `assignment.md`. There is no `challenge.yml` file.
@@ -87,8 +89,7 @@ Confirmed rendering: headings, paragraphs, bold/italic, inline code, code fences
 **Tested working:**
 - Inline `<svg>` element in markdown body / `notes:contents:` — renders cleanly. Embed the SVG XML directly in a YAML `|` block scalar; no external file dependency, no sanitization issues observed.
 
-**Testing in progress:**
-- SMIL animations (`<animate>`, `<animateMotion>`) — currently embedded in the cost-comparison.svg; verify on next Instruqt preview.
+- SMIL animations (`<animate>` on text, circle attributes, etc.) — render and loop cleanly. Confirmed working.
 
 **Untested:**
 - Static SVG via `![alt](diagram.svg)` — Instruqt likely doesn't serve adjacent files.

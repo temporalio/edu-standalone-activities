@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /root/workshop
+
+# Fresh state.
+pkill -f "python -m webhooks.worker" || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null
+
+# Start the learner's worker (their worker.py should have the rate cap).
+nohup uv run python -m webhooks.worker > /tmp/worker.log 2>&1 &
+sleep 3
+
+# Fire 30 bulk deliveries; record wall-clock.
+start=$(date +%s)
+uv run python -m webhooks.send_bulk 30
+end=$(date +%s)
+elapsed=$((end - start))
+
+# Echo server should have all 30.
+count=$(curl -fsS http://localhost:9000/_received | jq -r '.count')
+if [ "$count" -lt 30 ]; then
+  echo "FAIL: expected 30 deliveries, got $count"
+  echo "Worker log tail:"
+  tail -n 20 /tmp/worker.log || true
+  exit 1
+fi
+
+# Wall-clock must be >= 5s, which proves the rate cap is in effect.
+# Without the cap, 30 deliveries to localhost finish in ~1s.
+if [ "$elapsed" -lt 5 ]; then
+  echo "FAIL: 30 deliveries completed in ${elapsed}s — rate cap not active."
+  echo "Hint: add max_activities_per_second=5.0 to your Worker config."
+  exit 1
+fi
+
+echo "PASS: 30 deliveries spread over ${elapsed}s (rate cap is active)"

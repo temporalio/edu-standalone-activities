@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+rm -rf /root/workshop/src
+cp -r /opt/workshop/exercise/04-dedup-via-id-reuse/. /root/workshop/
+pkill -f "python -m webhooks.worker" || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true

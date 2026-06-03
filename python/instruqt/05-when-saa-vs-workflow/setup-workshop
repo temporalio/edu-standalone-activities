@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Wrap-up module: no code work required. Leave whatever's in /root/workshop alone.
+exit 0

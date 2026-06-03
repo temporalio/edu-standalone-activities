@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /root/workshop
+
+pkill -f "python -m webhooks.worker" || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null
+
+nohup uv run python -m webhooks.worker > /tmp/worker.log 2>&1 &
+sleep 3
+
+EVT="evt_check_04_$RANDOM"
+out=$(uv run python -m webhooks.send_double "$EVT" 2>&1)
+echo "$out"
+
+# Both calls must have succeeded ("handle ok" appears twice).
+ok_count=$(echo "$out" | grep -c 'handle ok' || true)
+if [ "$ok_count" -lt 2 ]; then
+  echo "FAIL: expected both calls to succeed (handle ok twice), got $ok_count"
+  echo "Hint: set id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING."
+  exit 1
+fi
+
+# Echo server should have exactly 1 delivery for this event.
+deliveries=$(curl -fsS http://localhost:9000/_received \
+  | jq --arg evt "$EVT" '[.deliveries[] | select(.body.event_id == $evt)] | length')
+if [ "$deliveries" -ne 1 ]; then
+  echo "FAIL: expected exactly 1 echo delivery for $EVT, got $deliveries"
+  exit 1
+fi
+
+# Both calls should reference the same run_id (proves USE_EXISTING).
+run_ids=$(echo "$out" | grep -oE 'run_id=[a-z0-9-]+' | sort -u | wc -l)
+if [ "$run_ids" -ne 1 ]; then
+  echo "FAIL: expected both calls to share one run_id, got $run_ids unique values"
+  exit 1
+fi
+
+echo "PASS: both calls handle ok, 1 echo delivery, same run_id (dedup worked)"

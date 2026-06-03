@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cp -rf /opt/workshop/solution/02-idempotency-and-crash-safety/. /root/workshop/
