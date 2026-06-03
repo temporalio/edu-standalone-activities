@@ -28,15 +28,15 @@ lab_config:
   - Same activity, 3 events vs 10. That's the standalone story.
   - Wrap an activity in a workflow and the event count triples.
   - 'Workflow history: 11 events. Standalone activity: 3. Same delivery.'
-  - Stripe wants this for webhook delivery with per-customer rate limits.
-  - Coinbase replaces 300M jobs/day of legacy BJS with this primitive.
-  - 'Rippling: half the features at a quarter of the cost.'
-  - 'Roblox: workflow-per-item is too expensive when items are in billions.'
-  - Cursor uses it as a durable queue for agent and webhook work.
-  - Block calls a simple-task primitive crucial for adoption.
-  - Worker is cattle. Activity state lives on the server.
-  - In-flight activity state is in the worker's RAM. Plan accordingly.
-  - Activities are pets. Workers are cattle. Temporal is the ranch.
+  - The same @activity.defn from a workflow runs as a Standalone Activity.
+  - 'Server-driven retries: your client can disconnect, the activity still finishes.'
+  - No @workflow.defn required. client.execute_activity is the whole API.
+  - Standalone Activities support RetryPolicy, timeouts, and heartbeats.
+  - temporal activity list shows every Standalone Activity, in flight or done.
+  - 'Three state transitions: Scheduled, Started, Completed. That''s the lifecycle.'
+  - No workflow history means no retention overhead. That's the cost win.
+  - Pause a running activity with temporal activity pause. Resume it later.
+  - Same worker hosts Standalone and workflow-bound activities alike.
   - 'Module 02: crash the worker. Without idempotency, you double-deliver.'
   - 'Module 03: cap your worker''s rate so you don''t DDoS your own customers.'
   - 'Module 04: same event scheduled twice? Temporal rejects the duplicate.'
@@ -51,5 +51,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "5791569261448225375"
+checksum: "11551557785200894624"
 enhanced_loading: false
