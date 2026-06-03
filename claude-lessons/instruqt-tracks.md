@@ -84,10 +84,14 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 
 Confirmed rendering: headings, paragraphs, bold/italic, inline code, code fences, lists, links, blockquotes, tables.
 
-**Untested as of writing — needs a quick experiment if you want to use:**
-- Static SVG via `![alt](diagram.svg)` — should work like any image.
-- Inline `<svg>` element in the markdown body — depends on sanitizer; probably allowed.
-- SVG with CSS/SMIL animations (no JS) — probably renders.
+**Tested working:**
+- Inline `<svg>` element in markdown body / `notes:contents:` — renders cleanly. Embed the SVG XML directly in a YAML `|` block scalar; no external file dependency, no sanitization issues observed.
+
+**Testing in progress:**
+- SMIL animations (`<animate>`, `<animateMotion>`) — currently embedded in the cost-comparison.svg; verify on next Instruqt preview.
+
+**Untested:**
+- Static SVG via `![alt](diagram.svg)` — Instruqt likely doesn't serve adjacent files.
 - `<iframe>` for embedded pages — most markdown renderers strip these. Unlikely.
 - Inline `<script>` or event handlers — almost certainly stripped.
 

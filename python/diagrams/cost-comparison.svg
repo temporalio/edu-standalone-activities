@@ -1,102 +1,102 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 580" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-  <!-- Background -->
-  <rect width="880" height="580" fill="#1a1a2e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 420" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="880" height="420" fill="#1a1a2e"/>
 
   <!-- Title -->
-  <text x="440" y="36" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="600">
+  <text x="440" y="28" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="600">
     Standalone Activity vs. Activity-in-Workflow
   </text>
-  <text x="440" y="58" text-anchor="middle" fill="#a0aec0" font-size="13">
-    Same business outcome. Different cost.
-  </text>
 
-  <!-- ====== LEFT PANEL: Standalone Activity ====== -->
-  <g transform="translate(40, 90)">
-    <rect x="0" y="0" width="380" height="460" fill="none" stroke="#4a5568" stroke-width="1" stroke-dasharray="3 3" rx="6"/>
-    <text x="190" y="22" text-anchor="middle" fill="#b794f6" font-size="15" font-weight="600">Standalone Activity</text>
+  <!-- ====== LEFT PANEL ====== -->
+  <g transform="translate(40, 50)">
+    <rect width="380" height="340" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
+    <text x="190" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Standalone Activity</text>
 
-    <!-- Client -->
-    <rect x="110" y="48" width="160" height="54" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="71" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Client</text>
-    <text x="190" y="90" text-anchor="middle" fill="#a0aec0" font-size="11" font-family="ui-monospace, 'SF Mono', monospace">execute_activity(...)</text>
+    <rect x="110" y="38" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
+    <text x="190" y="73" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_activity(...)</text>
 
-    <line x1="190" y1="102" x2="190" y2="135" stroke="#a0aec0" stroke-width="1.5"/>
-    <polygon points="185,130 190,140 195,130" fill="#a0aec0"/>
+    <line x1="190" y1="80" x2="190" y2="100" stroke="#a0aec0" stroke-width="1.5"/>
+    <polygon points="186,96 190,104 194,96" fill="#a0aec0"/>
 
-    <!-- Temporal Server -->
-    <rect x="50" y="145" width="280" height="138" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="168" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Temporal Server</text>
-    <text x="190" y="194" text-anchor="middle" fill="#f6e05e" font-size="22" font-weight="700">3 events</text>
-    <text x="190" y="222" text-anchor="middle" fill="#a0aec0" font-size="11">ActivityTaskScheduled</text>
-    <text x="190" y="240" text-anchor="middle" fill="#a0aec0" font-size="11">ActivityTaskStarted</text>
-    <text x="190" y="258" text-anchor="middle" fill="#a0aec0" font-size="11">ActivityTaskCompleted</text>
+    <rect x="50" y="105" width="280" height="110" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
+    <text x="190" y="152" text-anchor="middle" fill="#f6e05e" font-size="20" font-weight="700">
+      3 events
+      <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
+    </text>
+    <text x="190" y="175" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskScheduled</text>
+    <text x="190" y="190" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskStarted</text>
+    <text x="190" y="205" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskCompleted</text>
 
-    <line x1="190" y1="283" x2="190" y2="316" stroke="#a0aec0" stroke-width="1.5"/>
-    <polygon points="185,311 190,321 195,311" fill="#a0aec0"/>
+    <line x1="190" y1="217" x2="190" y2="237" stroke="#a0aec0" stroke-width="1.5"/>
+    <polygon points="186,233 190,241 194,233" fill="#a0aec0"/>
 
-    <!-- Worker -->
-    <rect x="110" y="326" width="160" height="54" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="349" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Worker</text>
-    <text x="190" y="368" text-anchor="middle" fill="#a0aec0" font-size="11" font-family="ui-monospace, 'SF Mono', monospace">@activity.defn</text>
+    <rect x="110" y="242" width="160" height="36" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="259" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
+    <text x="190" y="272" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@activity.defn</text>
 
-    <line x1="190" y1="380" x2="190" y2="413" stroke="#a0aec0" stroke-width="1.5"/>
-    <polygon points="185,408 190,418 195,408" fill="#a0aec0"/>
+    <line x1="190" y1="280" x2="190" y2="300" stroke="#a0aec0" stroke-width="1.5"/>
+    <polygon points="186,296 190,304 194,296" fill="#a0aec0"/>
 
-    <!-- Echo Server -->
-    <rect x="110" y="423" width="160" height="32" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="444" text-anchor="middle" fill="#e2e8f0" font-size="12">Echo Server</text>
+    <rect x="110" y="304" width="160" height="28" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="322" text-anchor="middle" fill="#e2e8f0" font-size="11">Echo Server</text>
+
+    <!-- Traveling pulse (left, fewer hops -> simpler keyTimes) -->
+    <circle r="4.5" fill="#b794f6">
+      <animate attributeName="cx" values="190" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="58;58;160;260;320" keyTimes="0;0.08;0.4;0.7;1" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.08;0.5;0.9;1" dur="3s" repeatCount="indefinite"/>
+    </circle>
   </g>
 
-  <!-- ====== RIGHT PANEL: Activity in Workflow ====== -->
-  <g transform="translate(460, 90)">
-    <rect x="0" y="0" width="380" height="460" fill="none" stroke="#4a5568" stroke-width="1" stroke-dasharray="3 3" rx="6"/>
-    <text x="190" y="22" text-anchor="middle" fill="#b794f6" font-size="15" font-weight="600">Activity-in-Workflow</text>
+  <!-- ====== RIGHT PANEL ====== -->
+  <g transform="translate(460, 50)">
+    <rect width="380" height="340" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
+    <text x="190" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Activity-in-Workflow</text>
 
-    <!-- Client -->
-    <rect x="110" y="48" width="160" height="54" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="71" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Client</text>
-    <text x="190" y="90" text-anchor="middle" fill="#a0aec0" font-size="11" font-family="ui-monospace, 'SF Mono', monospace">execute_workflow(...)</text>
+    <rect x="110" y="38" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
+    <text x="190" y="73" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_workflow(...)</text>
 
-    <line x1="190" y1="102" x2="190" y2="135" stroke="#a0aec0" stroke-width="1.5"/>
-    <polygon points="185,130 190,140 195,130" fill="#a0aec0"/>
+    <line x1="190" y1="80" x2="190" y2="100" stroke="#a0aec0" stroke-width="1.5"/>
+    <polygon points="186,96 190,104 194,96" fill="#a0aec0"/>
 
-    <!-- Temporal Server (containing the workflow execution) -->
-    <rect x="20" y="145" width="340" height="200" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="168" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Temporal Server</text>
-    <text x="190" y="190" text-anchor="middle" fill="#f6e05e" font-size="22" font-weight="700">11 events</text>
+    <rect x="20" y="105" width="340" height="160" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
+    <text x="190" y="147" text-anchor="middle" fill="#f6e05e" font-size="20" font-weight="700">
+      11 events
+      <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
+    </text>
 
-    <!-- Inner Workflow Execution -->
-    <rect x="40" y="205" width="300" height="125" fill="#1a1a2e" stroke="#7350f7" stroke-width="1.2" rx="4"/>
-    <text x="190" y="223" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">Workflow Execution</text>
+    <rect x="40" y="158" width="300" height="100" fill="#1a1a2e" stroke="#7350f7" stroke-width="1.2" rx="4"/>
+    <text x="190" y="174" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">Workflow Execution</text>
+    <text x="55" y="192" fill="#cbd5e0" font-size="9" font-weight="600">1.</text>
+    <text x="75" y="192" fill="#a0aec0" font-size="9">WorkflowExecutionStarted</text>
+    <text x="55" y="207" fill="#cbd5e0" font-size="9" font-weight="600">2-4.</text>
+    <text x="92" y="207" fill="#a0aec0" font-size="9">WorkflowTask Scheduled / Started / Completed</text>
+    <text x="55" y="222" fill="#cbd5e0" font-size="9" font-weight="600">5-7.</text>
+    <text x="92" y="222" fill="#a0aec0" font-size="9">ActivityTask Scheduled / Started / Completed</text>
+    <text x="55" y="237" fill="#cbd5e0" font-size="9" font-weight="600">8-10.</text>
+    <text x="96" y="237" fill="#a0aec0" font-size="9">WorkflowTask Scheduled / Started / Completed</text>
+    <text x="55" y="252" fill="#cbd5e0" font-size="9" font-weight="600">11.</text>
+    <text x="80" y="252" fill="#a0aec0" font-size="9">WorkflowExecutionCompleted</text>
 
-    <text x="55" y="244" fill="#cbd5e0" font-size="10" font-weight="600">1.</text>
-    <text x="75" y="244" fill="#a0aec0" font-size="10">WorkflowExecutionStarted</text>
+    <line x1="190" y1="267" x2="190" y2="287" stroke="#a0aec0" stroke-width="1.5"/>
+    <polygon points="186,283 190,291 194,283" fill="#a0aec0"/>
 
-    <text x="55" y="262" fill="#cbd5e0" font-size="10" font-weight="600">2–4.</text>
-    <text x="92" y="262" fill="#a0aec0" font-size="10">WorkflowTask Scheduled / Started / Completed</text>
+    <rect x="110" y="292" width="160" height="36" fill="#2d3748" stroke="#4a5568" rx="4"/>
+    <text x="190" y="309" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
+    <text x="190" y="322" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@workflow.defn + @activity.defn</text>
 
-    <text x="55" y="280" fill="#cbd5e0" font-size="10" font-weight="600">5–7.</text>
-    <text x="92" y="280" fill="#a0aec0" font-size="10">ActivityTask Scheduled / Started / Completed</text>
-
-    <text x="55" y="298" fill="#cbd5e0" font-size="10" font-weight="600">8–10.</text>
-    <text x="96" y="298" fill="#a0aec0" font-size="10">WorkflowTask Scheduled / Started / Completed</text>
-
-    <text x="55" y="316" fill="#cbd5e0" font-size="10" font-weight="600">11.</text>
-    <text x="80" y="316" fill="#a0aec0" font-size="10">WorkflowExecutionCompleted</text>
-
-    <line x1="190" y1="345" x2="190" y2="378" stroke="#a0aec0" stroke-width="1.5"/>
-    <polygon points="185,373 190,383 195,373" fill="#a0aec0"/>
-
-    <!-- Worker -->
-    <rect x="110" y="388" width="160" height="54" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="190" y="411" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Worker</text>
-    <text x="190" y="430" text-anchor="middle" fill="#a0aec0" font-size="11" font-family="ui-monospace, 'SF Mono', monospace">@workflow.defn + @activity.defn</text>
-
-    <!-- (Echo server omitted; explained in footer that the activity body is identical) -->
+    <!-- Traveling pulse (right) — pauses inside Workflow Execution to visualize the extra hops -->
+    <circle r="4.5" fill="#b794f6">
+      <animate attributeName="cx" values="190" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="58;58;180;210;240;305;310" keyTimes="0;0.06;0.25;0.45;0.65;0.92;1" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;1;1;1;0" keyTimes="0;0.06;0.25;0.45;0.65;0.92;1" dur="3s" repeatCount="indefinite"/>
+    </circle>
   </g>
 
-  <!-- Footer -->
-  <text x="440" y="568" text-anchor="middle" fill="#cbd5e0" font-size="13">
-    Same <tspan font-family="ui-monospace, monospace" fill="#e2e8f0">@activity.defn</tspan>.  Same HTTP delivery.  ≈3.7× the server-side events.
+  <text x="440" y="410" text-anchor="middle" fill="#cbd5e0" font-size="12">
+    Same @activity.defn. Same HTTP delivery. About 3.7x the server-side events.
   </text>
 </svg>
