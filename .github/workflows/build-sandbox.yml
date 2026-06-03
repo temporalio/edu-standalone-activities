@@ -53,6 +53,9 @@ jobs:
           # Context is python/ so the Dockerfile's `COPY course-repo/` resolves.
           context: python
           file: python/sandbox/Dockerfile
+          # Instruqt sandboxes run linux/amd64. Pin explicitly so this matches
+          # regardless of who triggers the build or what host arch they're on.
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.IMAGE }}:latest
