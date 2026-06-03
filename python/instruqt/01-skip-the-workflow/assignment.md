@@ -33,13 +33,13 @@ notes:
         <text x="190" y="205" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskCompleted</text>
         <line x1="190" y1="217" x2="190" y2="237" stroke="#a0aec0" stroke-width="1.5"/>
         <polygon points="186,233 190,241 194,233" fill="#a0aec0"/>
-        <rect x="110" y="242" width="160" height="36" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <rect x="110" y="242" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
         <text x="190" y="259" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <text x="190" y="272" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@activity.defn</text>
-        <line x1="190" y1="280" x2="190" y2="300" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="186,296 190,304 194,296" fill="#a0aec0"/>
-        <rect x="110" y="304" width="160" height="28" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="322" text-anchor="middle" fill="#e2e8f0" font-size="11">Echo Server</text>
+        <text x="190" y="274" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@activity.defn</text>
+        <line x1="190" y1="284" x2="190" y2="304" stroke="#a0aec0" stroke-width="1.5"/>
+        <polygon points="186,300 190,308 194,300" fill="#a0aec0"/>
+        <rect x="110" y="308" width="160" height="28" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="190" y="326" text-anchor="middle" fill="#e2e8f0" font-size="11">Echo Server</text>
         <circle r="4.5" fill="#b794f6">
           <animate attributeName="cx" values="190" dur="3s" repeatCount="indefinite"/>
           <animate attributeName="cy" values="58;58;160;260;320" keyTimes="0;0.08;0.4;0.7;1" dur="3s" repeatCount="indefinite"/>
@@ -71,9 +71,9 @@ notes:
         <text x="80" y="252" fill="#a0aec0" font-size="9">WorkflowExecutionCompleted</text>
         <line x1="190" y1="267" x2="190" y2="287" stroke="#a0aec0" stroke-width="1.5"/>
         <polygon points="186,283 190,291 194,283" fill="#a0aec0"/>
-        <rect x="110" y="292" width="160" height="36" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <rect x="110" y="292" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
         <text x="190" y="309" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <text x="190" y="322" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@workflow.defn + @activity.defn</text>
+        <text x="190" y="324" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@workflow + @activity</text>
         <circle r="4.5" fill="#b794f6">
           <animate attributeName="cx" values="190" dur="3s" repeatCount="indefinite"/>
           <animate attributeName="cy" values="58;58;180;210;240;305;310" keyTimes="0;0.06;0.25;0.45;0.65;0.92;1" dur="3s" repeatCount="indefinite"/>
