@@ -137,6 +137,24 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-4) tab and find t
 
 ---
 
+## Check your understanding
+
+> Your activity body generates a random discount code (`code = random.choice(codes)`) for each delivery, and you build the `Idempotency-Key` from `code`. The activity body works on the happy path. What goes wrong on a retry, and how do you fix it?
+
+<details>
+<summary>Answer</summary>
+
+Each retry generates a **different** random code, so the idempotency key changes per attempt. The receiver sees N different keys for the same logical request and accepts all N. Your "idempotency" doesn't dedup anything.
+
+The fix is to make the key deterministic across retries:
+
+- Derive it from input fields the caller already chose (e.g. `req.event_id`), or
+- Use `activity.info().activity_id`, which is stable across retries.
+
+If you need a random code as part of the side effect, generate it **outside** the activity (in the caller / starter) and pass it in as activity input.
+
+</details>
+
 ## Check
 
 Press **Check** when the echo server shows exactly **1** delivery for `evt_fixed` and the Temporal UI shows attempt ≥ 2 for `deliver-evt_fixed`.

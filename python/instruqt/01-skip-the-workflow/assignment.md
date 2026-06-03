@@ -231,6 +231,19 @@ Also open the [button label="Temporal UI" background="#444CE7"](tab-4) tab and c
 
 ---
 
+## Check your understanding
+
+> Your Workflow calls 5 Activities sequentially before returning. Roughly how many *more* events does that emit compared to firing the same 5 Activities as Standalone Activities?
+
+<details>
+<summary>Answer</summary>
+
+About **2×** more. A Workflow that calls 5 Activities emits roughly 30+ events (each Activity is bracketed by Workflow Task events, plus Workflow-start and Workflow-end). Five Standalone Activities emit ~15 events total (3 each).
+
+Multiply by millions of executions per day and you have a real line item in retention storage and per-action billing — which is exactly why Stripe, Coinbase, and Rippling asked for Standalone Activities in the first place.
+
+</details>
+
 ## Check
 
 When the comparison feels intuitive, press **Check**. The check validates:

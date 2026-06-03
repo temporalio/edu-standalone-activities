@@ -132,9 +132,44 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-4) tab while the 
 
 ---
 
-## Going further: Priority and Fairness
+## 4. Priority: label which work matters (~3 min)
 
-`Priority(priority_key=..., fairness_key=..., fairness_weight=...)` on `client.start_activity` lets you express *which* tenant's work should jump the queue when capacity is tight. A future module covers it in depth; for now, know it exists and pairs naturally with the rate cap.
+Rate cap controls *how fast*. Priority controls *in what order* when the queue is contended. Lower `priority_key` = higher priority.
+
+A demo script is provided. In the [button label="Terminal" background="#444CE7"](tab-1) tab:
+
+```bash
+scripts/reset-echo.sh
+uv run python -m webhooks.send_priority_demo
+```
+
+This fires 10 background deliveries (`priority_key=5`) followed by 3 urgent ones (`priority_key=1`). The worker is rate-capped at 5/sec, so the queue is contended — exactly the situation where priority matters.
+
+Open the [button label="Echo server" background="#444CE7"](tab-3) tab and look at the `received_at` order of the `urgent_*` deliveries relative to the `bg_*` ones. The urgent batch jumps the queue.
+
+For multi-tenant fairness — where you want "loud" tenants to not starve "quiet" ones rather than always-jump-the-queue priority — pass `fairness_key=<tenant_id>` and `fairness_weight=<float>` on the same `Priority(...)` object. A full multi-tenant demo lives in a future module.
+
+> **What just happened?** You labeled work with first-class metadata that Temporal's server uses to shape dispatch order, not just rate. Pair it with the rate cap from Section 3 and you've got both throughput shaping and importance shaping.
+
+---
+
+## Check your understanding
+
+> Your downstream API has a hard rate limit of **100 req/sec**. You configure `max_activities_per_second=10` on your worker and deploy. Are you safe?
+
+<details>
+<summary>Answer</summary>
+
+Safe but **probably underutilizing**.
+
+10/sec is 10% of your downstream's headroom. Unless you have ~10 workers each at 10/sec polling the same task queue (aggregating to 100/sec), you're leaving most of the downstream's capacity unused.
+
+Two knobs to remember:
+
+- `max_activities_per_second` is **per worker**. If N workers are polling the same task queue, the aggregate is `N × max_activities_per_second`. Tune by dividing your safe rate budget across the worker fleet.
+- `max_task_queue_activities_per_second` is **queue-wide** — a hard cap regardless of worker count. Use this when you can't predict how many workers will be running.
+
+</details>
 
 ---
 

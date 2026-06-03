@@ -151,6 +151,26 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-4) tab — there 
 
 ---
 
+## Check your understanding
+
+> You set `id_conflict_policy=USE_EXISTING` and call `start_activity(id="evt_001")` twice. The second call arrives **60 seconds after** the first one already completed successfully. What happens?
+
+<details>
+<summary>Answer</summary>
+
+A **new** activity execution starts.
+
+`id_conflict_policy` only governs duplicates while the original is **in flight**. Once the first activity completes, `id_reuse_policy` takes over — and the default (`ALLOW_DUPLICATE`) accepts a fresh execution with the same id.
+
+For full dedup across both windows, set both:
+
+```python
+id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,   # in-flight duplicate
+id_reuse_policy=ActivityIDReusePolicy.REJECT_DUPLICATE,     # completed duplicate
+```
+
+</details>
+
 ## Check
 
 Press **Check** when running `send_double` with the policy in place produces 1 echo delivery and both calls return the same `run_id`.
