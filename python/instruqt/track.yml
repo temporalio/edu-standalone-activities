@@ -24,12 +24,32 @@ lab_config:
   sidebar_enabled: true
   feedback_recap_enabled: false
   feedback_tab_enabled: false
-  loadingMessages: true
+  loadingMessages:
+  - Same activity, 3 events vs 10. That's the standalone story.
+  - Wrap an activity in a workflow and the event count triples.
+  - 'Workflow history: 11 events. Standalone activity: 3. Same delivery.'
+  - Stripe wants this for webhook delivery with per-customer rate limits.
+  - Coinbase replaces 300M jobs/day of legacy BJS with this primitive.
+  - 'Rippling: half the features at a quarter of the cost.'
+  - 'Roblox: workflow-per-item is too expensive when items are in billions.'
+  - Cursor uses it as a durable queue for agent and webhook work.
+  - Block calls a simple-task primitive crucial for adoption.
+  - Worker is cattle. Activity state lives on the server.
+  - In-flight activity state is in the worker's RAM. Plan accordingly.
+  - Activities are pets. Workers are cattle. Temporal is the ranch.
+  - 'Module 02: crash the worker. Without idempotency, you double-deliver.'
+  - 'Module 03: cap your worker''s rate so you don''t DDoS your own customers.'
+  - 'Module 04: same event scheduled twice? Temporal rejects the duplicate.'
+  - Activity IDs are the dedup key Temporal already gives you for free.
+  - Booting your sandbox. Reading the manual is overrated.
+  - Spinning up an echo server. It will receive whatever you POST at it.
+  - Provisioning a Python that doesn't time out. Or get lost. Or duplicate.
+  - Standalone Activities have been waiting their whole life for this tutorial.
   theme:
     name: modern-dark
   override_challenge_layout: true
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "16266389630061242526"
+checksum: "5791569261448225375"
 enhanced_loading: false
