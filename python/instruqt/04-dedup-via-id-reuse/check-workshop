@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# Soft check: runs validation; logs diagnostics on issues; never blocks the learner.
+(
 set -euo pipefail
-cd /root/workshop
+cd /root/workshop/exercises/04-dedup-via-id-reuse/exercise
 
 pkill -f "python -m webhooks.worker" || true
 curl -fsS -X POST http://localhost:9000/_reset > /dev/null
@@ -36,3 +38,6 @@ if [ "$run_ids" -ne 1 ]; then
 fi
 
 echo "PASS: both calls handle ok, 1 echo delivery, same run_id (dedup worked)"
+) || true
+echo "(soft check: advancing regardless of validation result)"
+exit 0

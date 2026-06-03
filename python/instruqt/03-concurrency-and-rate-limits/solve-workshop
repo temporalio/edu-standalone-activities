@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cp -rf /opt/workshop/solution/03-concurrency-and-rate-limits/. /root/workshop/
+DIR=/root/workshop/exercises/03-concurrency-and-rate-limits/exercise
+cp -rf /opt/workshop/solution/03-concurrency-and-rate-limits/. "$DIR/"

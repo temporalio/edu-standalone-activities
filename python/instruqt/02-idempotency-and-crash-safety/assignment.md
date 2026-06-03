@@ -29,15 +29,22 @@ tabs:
   title: Editor
   type: code
   hostname: workshop
-  path: /root/workshop
+  path: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
+- id: nry5elwiiegg
+  title: Solution
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/02-idempotency-and-crash-safety/solution
 - id: ilosldpsh5zx
   title: Terminal
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
 - id: tl58vxopklzz
   title: Worker
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
 - id: 1skz9ini3o8j
   title: Echo server
   type: service
@@ -74,14 +81,12 @@ Open `src/webhooks/activities.py` in the [button label="Editor" background="#444
 In the [button label="Worker" background="#444CE7"](tab-2) tab:
 
 ```bash
-cd /root/workshop
 uv run python -m webhooks.worker
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-1) tab:
 
 ```bash
-cd /root/workshop
 scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_buggy
 ```

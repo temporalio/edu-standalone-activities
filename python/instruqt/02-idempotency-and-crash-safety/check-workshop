@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# Soft check: runs validation; logs diagnostics on issues; never blocks the learner.
+(
 set -euo pipefail
-cd /root/workshop
+cd /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
 
 # Fresh state.
 pkill -f "python -m webhooks.worker" || true
@@ -52,3 +54,6 @@ if [ "$attempts" -lt 2 ]; then
 fi
 
 echo "PASS: 1 delivery for $EVT, attempt=$attempts (retry was dedup'd)"
+) || true
+echo "(soft check: advancing regardless of validation result)"
+exit 0

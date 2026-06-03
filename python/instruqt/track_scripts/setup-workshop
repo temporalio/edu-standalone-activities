@@ -24,11 +24,24 @@ for i in {1..30}; do
   sleep 1
 done
 
-# Seed /root/workshop with exercise content + shared files
-mkdir -p /root/workshop
-cp -r /opt/workshop/exercise/01-skip-the-workflow/. /root/workshop/
-cp /opt/workshop/pyproject.toml /root/workshop/
-cp -r /opt/workshop/scripts /root/workshop/
-chmod +x /root/workshop/scripts/*.sh
+# Seed every module's exercise + solution tree.
+# Exercise dirs are full runnable projects (pyproject.toml + scripts + src).
+# Solution dirs are read-only reference (just src for the learner to peek).
+for NN in \
+    01-skip-the-workflow \
+    02-idempotency-and-crash-safety \
+    03-concurrency-and-rate-limits \
+    04-dedup-via-id-reuse; do
+  DIR=/root/workshop/exercises/$NN
+  mkdir -p "$DIR/exercise" "$DIR/solution"
+  cp -r /opt/workshop/exercise/$NN/. "$DIR/exercise/"
+  cp -r /opt/workshop/solution/$NN/. "$DIR/solution/"
+  cp /opt/workshop/pyproject.toml "$DIR/exercise/"
+  cp -r /opt/workshop/scripts "$DIR/exercise/"
+  chmod +x "$DIR/exercise/scripts/"*.sh
+done
 
-cd /root/workshop && uv sync
+# Pre-sync deps for Module 01 (where the learner starts). Other modules will
+# sync on first entry; deps are identical across modules so the cache makes
+# subsequent syncs near-instant.
+cd /root/workshop/exercises/01-skip-the-workflow/exercise && uv sync

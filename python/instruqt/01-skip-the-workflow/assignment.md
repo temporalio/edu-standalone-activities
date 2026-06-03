@@ -87,15 +87,22 @@ tabs:
   title: Editor
   type: code
   hostname: workshop
-  path: /root/workshop
+  path: /root/workshop/exercises/01-skip-the-workflow/exercise
+- id: xhxihbdamu3g
+  title: Solution
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/01-skip-the-workflow/solution
 - id: u9ycx960dc7g
   title: Terminal
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/01-skip-the-workflow/exercise
 - id: uvg0hwykfsy3
   title: Worker
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/01-skip-the-workflow/exercise
 - id: sp8tl0pl7o8t
   title: Echo server
   type: service
@@ -150,7 +157,6 @@ Fill it in. `httpx` is already in your environment.
 In the [button label="Worker" background="#444CE7"](tab-2) tab, start the worker:
 
 ```bash
-cd /root/workshop
 uv run python -m webhooks.worker
 ```
 
@@ -263,5 +269,4 @@ The next modules tackle what happens when reality intrudes:
 - **Module 02** — Idempotency and crash safety. Crash the worker mid-delivery; watch the echo server show 2 deliveries; fix it.
 - **Module 03** — Concurrency, rate limits, priority & fairness. Stop one loud tenant from starving the rest.
 - **Module 04** — Dedup via ID reuse. Same upstream event arrives twice; let Temporal reject the duplicate.
-- **Module 05** (optional) — Ship the same code against your Temporal Cloud namespace.
 - **Module 05** — When SAA vs. when Workflow. Three scenarios, your call.

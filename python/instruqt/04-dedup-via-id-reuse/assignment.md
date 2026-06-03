@@ -32,15 +32,22 @@ tabs:
   title: Editor
   type: code
   hostname: workshop
-  path: /root/workshop
+  path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
+- id: 0jbcdh3rosbw
+  title: Solution
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/04-dedup-via-id-reuse/solution
 - id: luyh7wot41gn
   title: Terminal
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
 - id: osmbuuft6ify
   title: Worker
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
 - id: 3ixuq3zgdzyi
   title: Echo server
   type: service
@@ -73,14 +80,12 @@ Budget ~10 minutes.
 In the [button label="Worker" background="#444CE7"](tab-2) tab:
 
 ```bash
-cd /root/workshop
 uv run python -m webhooks.worker
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-1) tab:
 
 ```bash
-cd /root/workshop
 scripts/reset-echo.sh
 uv run python -m webhooks.send_double evt_dup_001
 ```

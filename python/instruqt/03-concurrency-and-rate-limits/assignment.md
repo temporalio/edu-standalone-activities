@@ -31,15 +31,22 @@ tabs:
   title: Editor
   type: code
   hostname: workshop
-  path: /root/workshop
+  path: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
+- id: 4tfuoxsgkh61
+  title: Solution
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercises/03-concurrency-and-rate-limits/solution
 - id: uye7c8clfvle
   title: Terminal
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
 - id: 9qmbudhyhgex
   title: Worker
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
 - id: daugc4aefzka
   title: Echo server
   type: service
@@ -74,14 +81,12 @@ Budget ~10 minutes.
 In the [button label="Worker" background="#444CE7"](tab-2) tab:
 
 ```bash
-cd /root/workshop
 uv run python -m webhooks.worker
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-1) tab:
 
 ```bash
-cd /root/workshop
 scripts/reset-echo.sh
 time uv run python -m webhooks.send_bulk 30
 ```

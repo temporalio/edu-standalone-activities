@@ -29,11 +29,12 @@ tabs:
   title: Editor
   type: code
   hostname: workshop
-  path: /root/workshop
+  path: /root/workshop/exercises
 - id: xyytuusarc0c
   title: Terminal
   type: terminal
   hostname: workshop
+  workdir: /root/workshop/exercises
 difficulty: basic
 timelimit: 600
 enhanced_loading: null

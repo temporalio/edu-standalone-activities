@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cp -rf /opt/workshop/solution/04-dedup-via-id-reuse/. /root/workshop/
+DIR=/root/workshop/exercises/04-dedup-via-id-reuse/exercise
+cp -rf /opt/workshop/solution/04-dedup-via-id-reuse/. "$DIR/"

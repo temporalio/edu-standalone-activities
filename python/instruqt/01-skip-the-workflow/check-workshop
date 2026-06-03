@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# Soft check: runs validation; logs diagnostics on issues; never blocks the learner.
+(
 set -euo pipefail
-cd /root/workshop
+cd /root/workshop/exercises/01-skip-the-workflow/exercise
 
 # Restart the worker against the learner's source.
 pkill -f "python -m webhooks.worker" || true
@@ -49,3 +51,6 @@ if [ "$wf_count" -lt 1 ]; then
 fi
 
 echo "PASS: $count deliveries, $sa_count standalone activity, $wf_count workflow"
+) || true
+echo "(soft check: advancing regardless of validation result)"
+exit 0
