@@ -124,7 +124,7 @@ id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,
 
 ## 3. Verify (~3 min)
 
-Re-run with the policy in place:
+Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, re-run with the policy in place:
 
 ```bash,run
 scripts/reset-echo.sh

@@ -91,7 +91,7 @@ scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_buggy
 ```
 
-The activity is now running. The POST already hit the echo server. The worker is in the 4-second sleep window. Quick — kill it before it returns:
+The activity is now running. The POST already hit the echo server. The worker is in the 4-second sleep window. Back in the [button label="Terminal" background="#444CE7"](tab-2) tab — quick, kill it before it returns:
 
 ```bash,run
 scripts/kill-worker.sh
@@ -118,7 +118,7 @@ headers = {"Idempotency-Key": activity.info().activity_id}
 
 ## 3. Verify the fix (~3 min)
 
-Now repeat the chaos sequence with the fix in place:
+Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, repeat the chaos sequence with the fix in place:
 
 ```bash,run
 scripts/reset-echo.sh
@@ -127,7 +127,7 @@ scripts/restart-worker.sh
 uv run python -m webhooks.send_standalone evt_fixed
 ```
 
-Quickly:
+Quickly, in the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
 scripts/kill-worker.sh

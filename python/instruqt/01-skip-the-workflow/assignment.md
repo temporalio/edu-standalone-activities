@@ -188,7 +188,7 @@ Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You'll se
 
 A 5-line `WebhookWorkflow` is provided in `src/webhooks/workflow.py`. You don't need to edit it — it just wraps `deliver_webhook` and calls it via `workflow.execute_activity`. Open it and read it once so you see the shape.
 
-Fire one delivery through the workflow:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, fire one delivery through the workflow:
 
 ```bash,run
 uv run python -m webhooks.send_via_workflow evt_002
