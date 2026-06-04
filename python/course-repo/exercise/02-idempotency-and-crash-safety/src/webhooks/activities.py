@@ -25,6 +25,6 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     # side effect succeeding and Temporal learning about it. If the worker
     # crashes during this window, Temporal will retry - and without an
     # idempotency key, the receiver gets the POST twice.
-    time.sleep(4)
+    time.sleep(15)
 
     return response.status_code

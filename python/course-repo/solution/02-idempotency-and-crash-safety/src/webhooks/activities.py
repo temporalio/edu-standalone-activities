@@ -24,6 +24,6 @@ def deliver_webhook(req: WebhookDelivery) -> int:
 
     # Sleep AFTER the POST to simulate the (real) window between the external
     # side effect succeeding and Temporal learning about it.
-    time.sleep(4)
+    time.sleep(15)
 
     return response.status_code
