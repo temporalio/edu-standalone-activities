@@ -3,8 +3,13 @@ set -euo pipefail
 
 mkdir -p /var/log/workshop
 
-# Start Temporal dev server in the background
+# Start Temporal dev server in the background.
+# --ip 0.0.0.0 binds both gRPC (7233) and the Web UI (8233) to all
+# interfaces, so Instruqt's external service-tab proxy can reach the UI.
+# Default would be 127.0.0.1, which is only reachable from inside the
+# container - the workers see it, but the Instruqt UI tab can't.
 nohup temporal server start-dev \
+  --ip 0.0.0.0 \
   --ui-port 8233 \
   --db-filename /tmp/temporal.db \
   --log-level warn \
