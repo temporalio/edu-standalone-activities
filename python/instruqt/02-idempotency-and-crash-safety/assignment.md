@@ -118,6 +118,11 @@ tabs:
   type: service
   hostname: workshop
   port: 8233
+- id: fcrl1fl2kc64
+  title: Idempotency demo
+  type: service
+  hostname: workshop
+  port: 9001
 difficulty: basic
 timelimit: 900
 enhanced_loading: null
@@ -135,7 +140,7 @@ By the end you'll have:
 
 Budget ~10 minutes.
 
-> 💡 Want to step through the comparison interactively first? **[Open the with-vs-without demo →](https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html)** (opens in a new tab; use the Step / Play / Reset controls)
+> 💡 Want to step through the comparison interactively first? Open the [button label="Idempotency demo" background="#444CE7"](tab-6) tab and use the Step / Play / Reset controls.
 
 ---
 

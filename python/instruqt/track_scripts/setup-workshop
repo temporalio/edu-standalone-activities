@@ -19,11 +19,17 @@ nohup temporal server start-dev \
 nohup python /opt/workshop/server/echo_server.py \
   > /var/log/workshop/echo.log 2>&1 &
 
+# Serve the interactive demo HTML on port 9001 (a static file server).
+# Lets Module 02 surface the idempotency comparison as an in-sandbox tab.
+nohup python -m http.server 9001 --directory /opt/workshop/demo \
+  > /var/log/workshop/demo.log 2>&1 &
+
 # Wait for ports
 for i in {1..30}; do
   if (echo > /dev/tcp/localhost/7233) 2>/dev/null \
      && (echo > /dev/tcp/localhost/8233) 2>/dev/null \
-     && (echo > /dev/tcp/localhost/9000) 2>/dev/null; then
+     && (echo > /dev/tcp/localhost/9000) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9001) 2>/dev/null; then
     break
   fi
   sleep 1
