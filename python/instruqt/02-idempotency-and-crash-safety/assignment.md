@@ -140,54 +140,9 @@ By the end you'll have:
 
 Budget ~10 minutes.
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 460" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-  <rect width="1100" height="460" fill="#1a1a2e"/>
-  <text x="550" y="28" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="600">Same chaos sequence, two outcomes</text>
-  <text x="550" y="48" text-anchor="middle" fill="#a0aec0" font-size="12">Worker crashes mid-flight. Temporal retries. Watch what the receiver does.</text>
-  <g transform="translate(20, 70)">
-    <rect width="510" height="370" fill="none" stroke="#e53e3e" stroke-width="1.5" stroke-dasharray="4 3" rx="6"/>
-    <text x="255" y="22" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="600">Without Idempotency-Key</text>
-    <rect x="180" y="40" width="150" height="44" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="255" y="60" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
-    <text x="255" y="76" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">POST /hooks</text>
-    <text x="255" y="115" text-anchor="middle" fill="#fc8181" font-size="32" font-weight="700" opacity="0">💥<animate attributeName="opacity" values="0;0;1;1;0;0;0" keyTimes="0;0.30;0.32;0.42;0.45;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <line x1="255" y1="90" x2="255" y2="265" stroke="#4a5568" stroke-width="1.2" stroke-dasharray="3 4"/>
-    <rect x="170" y="270" width="170" height="80" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="255" y="292" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Echo Server</text>
-    <text x="255" y="312" text-anchor="middle" fill="#a0aec0" font-size="10">deliveries</text>
-    <text x="255" y="338" text-anchor="middle" fill="#fc8181" font-size="24" font-weight="700">0<animate attributeName="opacity" values="1;1;0;0;0;0;0" keyTimes="0;0.18;0.20;0.55;0.60;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <text x="255" y="338" text-anchor="middle" fill="#f6e05e" font-size="24" font-weight="700" opacity="0">1<animate attributeName="opacity" values="0;0;1;1;0;0;0" keyTimes="0;0.18;0.20;0.55;0.60;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <text x="255" y="338" text-anchor="middle" fill="#fc8181" font-size="24" font-weight="700" opacity="0">2<animate attributeName="opacity" values="0;0;0;0;1;1;0" keyTimes="0;0.55;0.58;0.60;0.62;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <circle r="7" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5" opacity="0">
-      <animate attributeName="cy" values="62;62;320;320;62;62;320;320" keyTimes="0;0.02;0.18;0.30;0.45;0.47;0.58;1" dur="10s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="255" dur="10s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0;1;1;0;0;1;1;0" keyTimes="0;0.02;0.18;0.20;0.45;0.47;0.58;0.60" dur="10s" repeatCount="indefinite"/>
-    </circle>
-  </g>
-  <g transform="translate(570, 70)">
-    <rect width="510" height="370" fill="none" stroke="#38a169" stroke-width="1.5" stroke-dasharray="4 3" rx="6"/>
-    <text x="255" y="22" text-anchor="middle" fill="#9ae6b4" font-size="14" font-weight="600">With Idempotency-Key</text>
-    <rect x="180" y="40" width="150" height="44" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="255" y="60" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
-    <text x="255" y="76" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">POST /hooks (key=ABC)</text>
-    <text x="255" y="115" text-anchor="middle" fill="#fc8181" font-size="32" font-weight="700" opacity="0">💥<animate attributeName="opacity" values="0;0;1;1;0;0;0" keyTimes="0;0.30;0.32;0.42;0.45;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <line x1="255" y1="90" x2="255" y2="265" stroke="#4a5568" stroke-width="1.2" stroke-dasharray="3 4"/>
-    <text x="255" y="195" text-anchor="middle" fill="#9ae6b4" font-size="11" font-weight="600" opacity="0">server sees ABC again → deduped<animate attributeName="opacity" values="0;0;0;0;1;1;0" keyTimes="0;0.55;0.58;0.60;0.62;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <rect x="170" y="270" width="170" height="80" fill="#2d3748" stroke="#4a5568" rx="4"/>
-    <text x="255" y="292" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Echo Server</text>
-    <text x="255" y="312" text-anchor="middle" fill="#a0aec0" font-size="10">deliveries</text>
-    <text x="255" y="338" text-anchor="middle" fill="#9ae6b4" font-size="24" font-weight="700">0<animate attributeName="opacity" values="1;1;0;0;0;0;0" keyTimes="0;0.18;0.20;0.55;0.60;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <text x="255" y="338" text-anchor="middle" fill="#9ae6b4" font-size="24" font-weight="700" opacity="0">1<animate attributeName="opacity" values="0;0;1;1;1;1;0" keyTimes="0;0.18;0.20;0.55;0.60;0.99;1" dur="10s" repeatCount="indefinite"/></text>
-    <circle r="7" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5" opacity="0">
-      <animate attributeName="cy" values="62;62;320;320;62;62;320;320" keyTimes="0;0.02;0.18;0.30;0.45;0.47;0.58;1" dur="10s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="255" dur="10s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0;1;1;0;0;1;1;0" keyTimes="0;0.02;0.18;0.20;0.45;0.47;0.58;0.60" dur="10s" repeatCount="indefinite"/>
-    </circle>
-  </g>
-  <text x="550" y="455" text-anchor="middle" fill="#cbd5e0" font-size="12">Same crash, same retry. The Idempotency-Key header is the only difference.</text>
-</svg>
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="720" style="border:1px solid #4a5568;border-radius:6px;background:#1a1a2e" loading="lazy"></iframe>
 
-> 💡 Want to step through it manually? Open the [button label="Idempotency demo" background="#444CE7"](tab-6) tab for click-by-click Step / Play / Reset controls.
+> 💡 If the embedded demo above doesn't render, open the [button label="Idempotency demo" background="#444CE7"](tab-6) tab for the same experience in its own pane.
 
 ---
 
