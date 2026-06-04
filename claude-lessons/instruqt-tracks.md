@@ -106,6 +106,15 @@ Confirmed rendering: headings, paragraphs, bold/italic, inline code, code fences
 
 Test method: add a minimal example to one challenge's `notes:` or body, `instruqt track push`, view. Record results back into this file.
 
+## Chaos demos: kill the worker correctly
+
+When designing a "kill the worker mid-activity" demo for retry / idempotency:
+
+- **SIGKILL (`pkill -9`), not SIGTERM.** The Temporal Python SDK + a sync activity in a `ThreadPoolExecutor` will gracefully drain in-flight work on SIGTERM — the activity finishes normally, no retry, no chaos. SIGKILL is the only way to guarantee the kind of mid-flight crash the lesson requires.
+- **The starter must be non-blocking.** `client.execute_activity(...)` blocks the calling shell until the activity completes — so the learner can't run `kill-worker.sh` in the same terminal. Use `client.start_activity(...)` for the starter (also a good teaching moment: standalone activities don't tether the starter).
+- **Expect to wait ~`start_to_close_timeout`** between the kill and the retry firing. Without an explicit `heartbeat_timeout`, Temporal can only detect the dead attempt by waiting for the activity-attempt timeout. Pick a `start_to_close_timeout` slightly larger than the activity body's expected duration (e.g. body sleeps 15s → timeout 20s) so the demo doesn't make learners wait minutes.
+- **Standalone activities don't appear in the Workflows view of the Temporal UI** — that view is for Workflow Executions only. Call out the **Activities** view in the left nav so learners can find their activity (and see the `Attempt` counter increment).
+
 ## Common errors → root cause
 
 | Symptom | Cause |
