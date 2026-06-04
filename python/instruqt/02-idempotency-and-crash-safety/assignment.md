@@ -140,7 +140,7 @@ By the end you'll have:
 
 Budget ~10 minutes.
 
-<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="720" style="border:1px solid #4a5568;border-radius:6px;background:#1a1a2e" loading="lazy"></iframe>
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="430" style="border:1px solid #4a5568;border-radius:6px;background:#1a1a2e" loading="lazy"></iframe>
 
 > 💡 If the embedded demo above doesn't render, open the [button label="Idempotency demo" background="#444CE7"](tab-6) tab for the same experience in its own pane.
 

@@ -93,8 +93,10 @@ Confirmed rendering: headings, paragraphs, bold/italic, inline code, code fences
 
 **Untested:**
 - Static SVG via `![alt](diagram.svg)` — Instruqt likely doesn't serve adjacent files.
-- `<iframe>` for embedded pages — most markdown renderers strip these. Unlikely.
 - Inline `<script>` or event handlers — almost certainly stripped.
+
+**Confirmed working:**
+- `<iframe>` from cross-origin CDN (raw.githack.com tested). Survives Instruqt's notes / assignment-body sanitizer and renders cross-origin content cleanly. **Use this for interactive HTML demos** that need JS — host the HTML page in `docs/` and iframe via raw.githack.com pointing at the branch. The Idempotency demo (Module 02) does this.
 
 **Fallback for interactive content:** host the interactive page elsewhere (Vercel, GitHub Pages) and link out with a plain markdown link.
 

@@ -11,24 +11,24 @@
     color: #e2e8f0;
     font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     margin: 0;
-    padding: 2em 1em;
+    padding: 0.8em 1em;
     min-height: 100vh;
   }
-  h1 { text-align: center; margin: 0 0 0.3em 0; font-size: 1.6em; font-weight: 600; }
-  .subtitle { text-align: center; color: #a0aec0; margin-bottom: 1.8em; font-size: 0.95em; }
+  h1 { text-align: center; margin: 0 0 0.15em 0; font-size: 1.25em; font-weight: 600; }
+  .subtitle { text-align: center; color: #a0aec0; margin-bottom: 0.7em; font-size: 0.85em; }
   .step {
     text-align: center;
     color: #b794f6;
-    font-size: 1.05em;
-    margin: 0 auto 1.8em;
+    font-size: 0.9em;
+    margin: 0 auto 0.8em;
     max-width: 900px;
-    min-height: 2.6em;
-    line-height: 1.4;
+    min-height: 2.4em;
+    line-height: 1.35;
   }
   .lanes {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5em;
+    gap: 1em;
     max-width: 1100px;
     margin: 0 auto;
   }
@@ -38,17 +38,16 @@
   .lane {
     border: 1.5px dashed;
     border-radius: 6px;
-    padding: 1.4em 1em;
+    padding: 0.7em 0.7em;
     position: relative;
-    min-height: 420px;
   }
   .lane.without { border-color: #e53e3e; }
   .lane.with { border-color: #38a169; }
   .lane-title {
     text-align: center;
     font-weight: 600;
-    font-size: 1.05em;
-    margin-bottom: 1em;
+    font-size: 0.95em;
+    margin-bottom: 0.5em;
   }
   .lane.without .lane-title { color: #fc8181; }
   .lane.with .lane-title { color: #9ae6b4; }
@@ -56,25 +55,25 @@
     background: #2d3748;
     border: 1px solid #4a5568;
     border-radius: 4px;
-    padding: 0.7em 1em;
-    width: 65%;
+    padding: 0.4em 0.8em;
+    width: 70%;
     margin: 0 auto;
     text-align: center;
   }
   .box.client { margin-bottom: 0; }
-  .box.echo { margin-top: 0; }
-  .box-label { font-weight: 600; font-size: 0.95em; }
+  .box.echo { margin-top: 0; padding: 0.5em 0.8em; }
+  .box-label { font-weight: 600; font-size: 0.88em; }
   .box-sub {
     font-family: ui-monospace, 'SF Mono', monospace;
-    font-size: 0.78em;
+    font-size: 0.72em;
     color: #a0aec0;
-    margin-top: 0.25em;
+    margin-top: 0.15em;
   }
   .conduit {
     position: relative;
-    height: 12em;
-    margin: 0.4em auto;
-    width: 65%;
+    height: 5em;
+    margin: 0.2em auto;
+    width: 70%;
   }
   .conduit::before {
     content: '';
@@ -89,13 +88,13 @@
     position: absolute;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     background: #f6e05e;
     border: 2px solid #1a1a2e;
     border-radius: 50%;
     box-shadow: 0 0 8px rgba(246, 224, 94, 0.5);
-    transition: top 1.4s cubic-bezier(0.4, 0, 0.6, 1), opacity 0.25s;
+    transition: top 1s cubic-bezier(0.4, 0, 0.6, 1), opacity 0.25s;
     opacity: 0;
     top: 0;
     z-index: 2;
@@ -105,19 +104,20 @@
     left: 50%;
     transform: translate(-50%, -50%);
     top: 50%;
-    font-size: 2.4em;
+    font-size: 1.8em;
     opacity: 0;
     transition: opacity 0.25s;
     z-index: 3;
     text-shadow: 0 0 12px rgba(229, 62, 62, 0.6);
   }
-  .echo-label { font-size: 0.85em; color: #a0aec0; }
+  .echo-label { font-size: 0.78em; color: #a0aec0; }
   .counter {
-    font-size: 2.4em;
+    font-size: 1.8em;
     font-weight: 700;
-    margin: 0.15em 0 0.05em 0;
+    margin: 0.05em 0 0 0;
     transition: color 0.3s;
     font-family: ui-monospace, monospace;
+    line-height: 1.1;
   }
   .lane.without .counter { color: #fc8181; }
   .lane.with .counter { color: #9ae6b4; }
@@ -125,16 +125,17 @@
     display: inline-block;
     background: #38a169;
     color: #1a1a2e;
-    font-size: 0.75em;
+    font-size: 0.7em;
     font-weight: 600;
-    padding: 0.2em 0.6em;
+    padding: 0.15em 0.5em;
     border-radius: 3px;
+    margin-top: 0.15em;
     opacity: 0;
     transition: opacity 0.3s;
   }
   .controls {
     text-align: center;
-    margin-top: 2em;
+    margin-top: 0.9em;
     max-width: 1100px;
     margin-left: auto;
     margin-right: auto;
@@ -144,9 +145,9 @@
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 0.6em 1.2em;
-    margin: 0 0.3em;
-    font-size: 0.95em;
+    padding: 0.4em 0.9em;
+    margin: 0 0.2em;
+    font-size: 0.85em;
     font-family: inherit;
     cursor: pointer;
     transition: background 0.15s;
@@ -156,12 +157,12 @@
   .progress {
     display: flex;
     justify-content: center;
-    gap: 6px;
-    margin-top: 1em;
+    gap: 5px;
+    margin-top: 0.55em;
   }
   .progress-pip {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     background: #4a5568;
     border-radius: 50%;
     transition: background 0.2s;
@@ -170,8 +171,8 @@
   .footer {
     text-align: center;
     color: #a0aec0;
-    margin-top: 2em;
-    font-size: 0.85em;
+    margin-top: 0.6em;
+    font-size: 0.78em;
   }
 </style>
 </head>
