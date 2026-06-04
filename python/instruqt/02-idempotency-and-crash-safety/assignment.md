@@ -135,6 +135,8 @@ By the end you'll have:
 
 Budget ~10 minutes.
 
+> 💡 Want to step through the comparison interactively first? **[Open the with-vs-without demo →](https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html)** (opens in a new tab; use the Step / Play / Reset controls)
+
 ---
 
 ## 1. See the bug (~3 min)
