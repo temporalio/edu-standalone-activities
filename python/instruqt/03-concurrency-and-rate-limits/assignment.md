@@ -28,7 +28,7 @@ notes:
     seconds).
 tabs:
 - id: hvzxgvjkgch5
-  title: Editor
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
@@ -78,22 +78,22 @@ Budget ~10 minutes.
 
 ## 1. Fan-out without a cap (~3 min)
 
-In the [button label="Worker" background="#444CE7"](tab-2) tab:
+In the [button label="Worker" background="#444CE7"](tab-3) tab:
 
-```bash
+```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-1) tab:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
-```bash
+```bash,run
 scripts/reset-echo.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
 That `time` prefix prints how long the whole batch took. With no rate cap, all 30 deliveries should complete in **under a couple of seconds** — the worker fires them off as fast as `ThreadPoolExecutor(10)` allows.
 
-Confirm in the [button label="Echo server" background="#444CE7"](tab-3) tab — count should be 30, and the `received_at` timestamps will all be clustered tight.
+Confirm in the [button label="Echo server" background="#444CE7"](tab-4) tab — count should be 30, and the `received_at` timestamps will all be clustered tight.
 
 > **What just happened?** No rate limit anywhere. The worker dispatched activities as fast as it could pull them from the task queue. If the echo server were a real downstream API with a 5 req/sec limit, this run would have triggered 25 rate-limit errors.
 
@@ -101,7 +101,7 @@ Confirm in the [button label="Echo server" background="#444CE7"](tab-3) tab — 
 
 ## 2. Add the cap (~2 min)
 
-Open `src/webhooks/worker.py` in the [button label="Editor" background="#444CE7"](tab-0) tab. Find the TODO inside the `Worker(...)` constructor and add the kwarg:
+Open `src/webhooks/worker.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. Find the TODO inside the `Worker(...)` constructor and add the kwarg:
 
 ```python
 max_activities_per_second=5.0,
@@ -115,23 +115,23 @@ The Worker now dispatches at most 5 activities per second.
 
 ## 3. Fan-out with the cap (~3 min)
 
-Restart the worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-2) tab:
+Restart the worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-3) tab:
 
 ```
 # Ctrl+C to kill the worker, then:
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-1) tab:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
-```bash
+```bash,run
 scripts/reset-echo.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
-The wall-clock time should now be **at least 6 seconds** — 30 deliveries ÷ 5/sec = 6s. The [button label="Echo server" background="#444CE7"](tab-3) tab's `received_at` timestamps will visibly spread out.
+The wall-clock time should now be **at least 6 seconds** — 30 deliveries ÷ 5/sec = 6s. The [button label="Echo server" background="#444CE7"](tab-4) tab's `received_at` timestamps will visibly spread out.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-4) tab while the batch runs and watch the activity list. You'll see some activities in `Scheduled` state — the server holding them durably while the worker dispatches at 5/sec.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab while the batch runs and watch the activity list. You'll see some activities in `Scheduled` state — the server holding them durably while the worker dispatches at 5/sec.
 
 > **What just happened?** Same 30 units of work, same outcome. But the dispatch shape changed: a thundering herd became a steady stream. Pair `max_activities_per_second` with `max_concurrent_activities` (which caps *in-flight* count) for full-spectrum downstream protection.
 
@@ -141,16 +141,16 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-4) tab while the 
 
 Rate cap controls *how fast*. Priority controls *in what order* when the queue is contended. Lower `priority_key` = higher priority.
 
-A demo script is provided. In the [button label="Terminal" background="#444CE7"](tab-1) tab:
+A demo script is provided. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
-```bash
+```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_priority_demo
 ```
 
 This fires 10 background deliveries (`priority_key=5`) followed by 3 urgent ones (`priority_key=1`). The worker is rate-capped at 5/sec, so the queue is contended — exactly the situation where priority matters.
 
-Open the [button label="Echo server" background="#444CE7"](tab-3) tab and look at the `received_at` order of the `urgent_*` deliveries relative to the `bg_*` ones. The urgent batch jumps the queue.
+Open the [button label="Echo server" background="#444CE7"](tab-4) tab and look at the `received_at` order of the `urgent_*` deliveries relative to the `bg_*` ones. The urgent batch jumps the queue.
 
 For multi-tenant fairness — where you want "loud" tenants to not starve "quiet" ones rather than always-jump-the-queue priority — pass `fairness_key=<tenant_id>` and `fairness_weight=<float>` on the same `Priority(...)` object. A full multi-tenant demo lives in a future module.
 

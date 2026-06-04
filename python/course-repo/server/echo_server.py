@@ -76,7 +76,8 @@ class EchoHandler(BaseHTTPRequestHandler):
         self._respond(200, {"status": "reset"})
 
     def _respond(self, code: int, payload: dict) -> None:
-        body = json.dumps(payload).encode("utf-8")
+        # indent=2 so the echo tab is readable without toggling Pretty-print.
+        body = json.dumps(payload, indent=2).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))

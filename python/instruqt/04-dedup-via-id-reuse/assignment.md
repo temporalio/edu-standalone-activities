@@ -29,7 +29,7 @@ notes:
       duplicate `start_activity` calls from your application.
 tabs:
 - id: auimaunpq1xo
-  title: Editor
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
@@ -77,15 +77,15 @@ Budget ~10 minutes.
 
 ## 1. See the conflict (~3 min)
 
-In the [button label="Worker" background="#444CE7"](tab-2) tab:
+In the [button label="Worker" background="#444CE7"](tab-3) tab:
 
-```bash
+```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-1) tab:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
-```bash
+```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_double evt_dup_001
 ```
@@ -108,7 +108,7 @@ The first call succeeded; the second call errored because Temporal's default `id
 
 ## 2. Set the conflict policy (~2 min)
 
-Open `src/webhooks/send_double.py` in the [button label="Editor" background="#444CE7"](tab-0) tab. Two TODOs:
+Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. Two TODOs:
 
 ```python
 # At the top of the file, uncomment:
@@ -126,7 +126,7 @@ id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,
 
 Re-run with the policy in place:
 
-```bash
+```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_double evt_dup_002
 ```
@@ -142,9 +142,9 @@ Now you should see:
 [call-2] activity completed
 ```
 
-Both calls returned successfully with the **same `run_id`** — call-2 got the existing handle. The [button label="Echo server" background="#444CE7"](tab-3) tab shows **1** delivery for `evt_dup_002`.
+Both calls returned successfully with the **same `run_id`** — call-2 got the existing handle. The [button label="Echo server" background="#444CE7"](tab-4) tab shows **1** delivery for `evt_dup_002`.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-4) tab — there is exactly **one** activity for `deliver-evt_dup_002`, not two. The duplicate was rejected at scheduling time; no worker cycles were wasted.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab — there is exactly **one** activity for `deliver-evt_dup_002`, not two. The duplicate was rejected at scheduling time; no worker cycles were wasted.
 
 > **What just happened?** The server-side scheduling layer absorbed the duplicate. Your application code stayed clean. Combined with Module 02's idempotency, your delivery is at-most-once-effect even when both the upstream system retries *and* Temporal retries.
 

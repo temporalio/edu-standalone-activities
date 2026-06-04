@@ -26,7 +26,7 @@ notes:
     No code. ~8 minutes.
 tabs:
 - id: u5kezyyfpdam
-  title: Editor
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises

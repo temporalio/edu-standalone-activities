@@ -84,7 +84,7 @@ notes:
     </svg>
 tabs:
 - id: cblvczchd9gl
-  title: Editor
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-skip-the-workflow/exercise
@@ -134,7 +134,7 @@ Budget ~10 minutes.
 
 ## 1. Write the activity (~2 min)
 
-Open `src/webhooks/activities.py` in the [button label="Editor" background="#444CE7"](tab-0) tab. You'll see a `deliver_webhook` function with three TODOs:
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll see a `deliver_webhook` function with three TODOs:
 
 ```python
 @activity.defn
@@ -154,9 +154,9 @@ Fill it in. `httpx` is already in your environment.
 
 ## 2. Run it standalone (~2 min)
 
-In the [button label="Worker" background="#444CE7"](tab-2) tab, start the worker:
+In the [button label="Worker" background="#444CE7"](tab-3) tab, start the worker:
 
-```bash
+```bash,run
 uv run python -m webhooks.worker
 ```
 
@@ -166,9 +166,9 @@ Expected:
 Worker running on task queue 'webhook-queue'
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-1) tab, fire one delivery as a Standalone Activity:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, fire one delivery as a Standalone Activity:
 
-```bash
+```bash,run
 uv run python -m webhooks.send_standalone evt_001
 ```
 
@@ -178,7 +178,7 @@ Expected:
 Standalone activity completed with status 200
 ```
 
-Open the [button label="Echo server" background="#444CE7"](tab-3) tab. You'll see one delivery in the JSON.
+Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You'll see one delivery in the JSON.
 
 > **What's happening:** Look at `send_standalone.py`. The whole call is `await client.execute_activity(deliver_webhook, ...)`. **No `@workflow.defn` anywhere in your code.** The client tells Temporal "schedule this activity"; Temporal hands it to your worker; the result comes back. It's a typed durable job queue.
 
@@ -190,7 +190,7 @@ A 5-line `WebhookWorkflow` is provided in `src/webhooks/workflow.py`. You don't 
 
 Fire one delivery through the workflow:
 
-```bash
+```bash,run
 uv run python -m webhooks.send_via_workflow evt_002
 ```
 
@@ -200,7 +200,7 @@ Expected:
 Workflow completed with activity returning status 200
 ```
 
-Refresh the [button label="Echo server" background="#444CE7"](tab-3) tab. You should now see **2** deliveries total — one per call.
+Refresh the [button label="Echo server" background="#444CE7"](tab-4) tab. You should now see **2** deliveries total — one per call.
 
 > **What's happening:** Same Activity. Same business outcome. But the second one was scheduled inside a Workflow execution. Both are durable. Both are retried on failure (no failures today). Both show up in the Temporal UI. The difference shows up in how much Temporal had to record to make that happen.
 
@@ -208,9 +208,9 @@ Refresh the [button label="Echo server" background="#444CE7"](tab-3) tab. You sh
 
 ## 4. Compare the cost (~3 min)
 
-The two ways look identical from the outside — but Temporal did very different amounts of work under the hood. Run these side by side in the [button label="Terminal" background="#444CE7"](tab-1) tab:
+The two ways look identical from the outside — but Temporal did very different amounts of work under the hood. Run these side by side in the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
-```bash
+```bash,run
 # Standalone Activity — look for "StateTransitionCount: 3"
 temporal activity describe --address localhost:7233 --activity-id deliver-evt_001
 
@@ -231,7 +231,7 @@ You should see something like:
 
 \* Approximate; check current Temporal Cloud pricing for the exact billing model.
 
-Also open the [button label="Temporal UI" background="#444CE7"](tab-4) tab and click into both executions. The workflow view has a full timeline with task events around the activity; the standalone view has just the activity itself.
+Also open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and click into both executions. The workflow view has a full timeline with task events around the activity; the standalone view has just the activity itself.
 
 > **What's happening:** Wrapping an Activity in a Workflow gives you orchestration — signals, queries, child workflows, multi-step state. If you don't need any of that, you're paying the wrapping cost (events, actions, retention, latency) for nothing. Standalone is the right shape for one-shot durable work.
 
