@@ -105,12 +105,12 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/01-skip-the-workflow/exercise/src/webhooks/activities.py
+  path: /root/workshop/exercises/01-skip-the-workflow/exercise/src/webhooks
 - id: xhxihbdamu3g
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/01-skip-the-workflow/solution/src/webhooks/activities.py
+  path: /root/workshop/exercises/01-skip-the-workflow/solution/src/webhooks
 - id: u9ycx960dc7g
   title: Terminal
   type: terminal
