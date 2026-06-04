@@ -5,28 +5,34 @@ set -euo pipefail
 cd /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
 
 # Fresh state.
-pkill -f "python -m webhooks.worker" || true
+pkill -9 -f "python -m webhooks.worker" || true
+sleep 1
 curl -fsS -X POST http://localhost:9000/_reset > /dev/null
 
-# Start worker, fire activity, kill worker mid-flight, restart, wait for completion.
+# Start worker in background.
 nohup uv run python -m webhooks.worker > /tmp/worker.log 2>&1 &
 sleep 3
 
 EVT="evt_check_02_$RANDOM"
-uv run python -m webhooks.send_standalone "$EVT" &
-STARTER_PID=$!
 
-# Activity POSTs after ~0.5s; we kill the worker during the 4s sleep window.
-sleep 2
-pkill -f "python -m webhooks.worker" || true
+# Schedule the activity. send_standalone uses start_activity and returns
+# immediately; the worker runs the activity independently.
+uv run python -m webhooks.send_standalone "$EVT"
 
-# Restart worker so the retry can complete.
+# Give the worker time to pick up the task and POST.
+sleep 3
+
+# Hard-crash the worker mid-activity. SIGKILL is required - SIGTERM would
+# let the sleep finish and the activity complete cleanly, defeating the demo.
+pkill -9 -f "python -m webhooks.worker" || true
+
+# Restart worker so the retry can pick up after the timeout fires.
 sleep 1
 nohup uv run python -m webhooks.worker >> /tmp/worker.log 2>&1 &
-sleep 1
 
-# Wait for the starter to finish (means the activity completed).
-wait "$STARTER_PID" || true
+# The crashed attempt times out at start_to_close_timeout (20s); the retry
+# then runs the activity (POST + 15s sleep). Wait long enough for both.
+sleep 35
 
 # Echo server should show exactly 1 delivery for this event_id (idempotency
 # dedup'd the retry's duplicate POST).
@@ -49,7 +55,7 @@ attempts=$(temporal activity describe \
 
 if [ "$attempts" -lt 2 ]; then
   echo "FAIL: expected attempt >= 2 (so the retry actually fired), got $attempts"
-  echo "Check that you killed the worker fast enough during the sleep window."
+  echo "Check that the worker was killed before the activity could complete."
   exit 1
 fi
 
