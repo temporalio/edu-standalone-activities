@@ -143,16 +143,16 @@ This is why **idempotency** in the activity body (Module 02) matters: Temporal r
 
 ### Q2
 
-A `Workflow` execution emits about 10 events per Activity it runs (workflow start, workflow task scheduled/started/completed bracketing the activity events, workflow completion). A `Standalone Activity` emits about 3 events (Scheduled, Started, Completed). At 10 million activities per day, roughly how much *less* server-side bookkeeping does Standalone produce per day?
+A `Workflow` execution emits about **11 events** per Activity it runs (`WorkflowExecutionStarted` + three `WorkflowTask*` + three `ActivityTask*` + three `WorkflowTask*` + `WorkflowExecutionCompleted`). A `Standalone Activity` emits about **3 events** (`Scheduled`, `Started`, `Completed`). At 10 million activities per day, roughly how much *less* server-side bookkeeping does Standalone produce per day?
 
 <details>
 <summary>Answer</summary>
 
-**~70 million events per day saved.**
+**~80 million events per day saved** — and translates to **up to ~50% cheaper** on Temporal Cloud billing.
 
-10M activities × (10 events − 3 events) = 70M fewer events.
+10M activities × (11 events − 3 events) = 80M fewer events.
 
-Multiply by the per-event cost on Temporal Cloud (and the retention storage cost), and you have a meaningful line item. This is the empirical answer to "why do Stripe / Coinbase / Roblox keep asking for Standalone Activities as a Job Queue replacement."
+The action-billing math is even more user-friendly: a Workflow + Activity is at least 2 billed actions, a Standalone Activity is 1. That's the headline number behind "up to 50% cheaper" — and it's the empirical answer to "why do Stripe / Coinbase / Roblox keep asking for Standalone Activities as a Job Queue replacement."
 
 </details>
 

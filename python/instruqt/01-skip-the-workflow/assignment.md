@@ -80,7 +80,7 @@ notes:
           <animate attributeName="opacity" values="0;1;1;1;1;1;0" keyTimes="0;0.06;0.25;0.45;0.65;0.92;1" dur="3s" repeatCount="indefinite"/>
         </circle>
       </g>
-      <text x="440" y="410" text-anchor="middle" fill="#cbd5e0" font-size="12">Same @activity.defn. Same HTTP delivery. About 3.7x the server-side events.</text>
+      <text x="440" y="410" text-anchor="middle" fill="#cbd5e0" font-size="12">Same @activity.defn. Same HTTP delivery. Up to 50% cheaper on Temporal Cloud.</text>
     </svg>
 tabs:
 - id: cblvczchd9gl

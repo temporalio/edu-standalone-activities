@@ -25,8 +25,8 @@ lab_config:
   feedback_recap_enabled: false
   feedback_tab_enabled: false
   loadingMessages:
-  - Same activity, 3 events vs 10. That's the standalone story.
-  - Wrap an activity in a workflow and the event count triples.
+  - Same activity, 3 events vs 11. That's the standalone story.
+  - Standalone Activities are up to 50% cheaper than the same work in a workflow.
   - 'Workflow history: 11 events. Standalone activity: 3. Same delivery.'
   - The same @activity.defn from a workflow runs as a Standalone Activity.
   - 'Server-driven retries: your client can disconnect, the activity still finishes.'
@@ -51,5 +51,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "15078492666879694178"
+checksum: "12550600840831699272"
 enhanced_loading: false
