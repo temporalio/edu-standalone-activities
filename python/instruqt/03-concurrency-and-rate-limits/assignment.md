@@ -31,12 +31,12 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise/src/webhooks
+  path: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
 - id: 4tfuoxsgkh61
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/03-concurrency-and-rate-limits/solution/src/webhooks
+  path: /root/workshop/exercises/03-concurrency-and-rate-limits/solution
 - id: uye7c8clfvle
   title: Terminal
   type: terminal

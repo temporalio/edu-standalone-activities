@@ -92,12 +92,12 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise/src/webhooks
+  path: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
 - id: nry5elwiiegg
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/02-idempotency-and-crash-safety/solution/src/webhooks
+  path: /root/workshop/exercises/02-idempotency-and-crash-safety/solution
 - id: ilosldpsh5zx
   title: Terminal
   type: terminal

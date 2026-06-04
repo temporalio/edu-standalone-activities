@@ -32,12 +32,12 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise/src/webhooks
+  path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
 - id: 0jbcdh3rosbw
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/04-dedup-via-id-reuse/solution/src/webhooks
+  path: /root/workshop/exercises/04-dedup-via-id-reuse/solution
 - id: luyh7wot41gn
   title: Terminal
   type: terminal
