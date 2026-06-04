@@ -32,12 +32,12 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
+  path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise/src/webhooks/send_double.py
 - id: 0jbcdh3rosbw
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/04-dedup-via-id-reuse/solution
+  path: /root/workshop/exercises/04-dedup-via-id-reuse/solution/src/webhooks/send_double.py
 - id: luyh7wot41gn
   title: Terminal
   type: terminal

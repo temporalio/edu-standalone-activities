@@ -14,85 +14,103 @@ notes:
     see — with real event counts — why one shape costs less than the
     other.
 
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 420" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-      <rect width="880" height="420" fill="#1a1a2e"/>
-      <text x="440" y="28" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="600">Standalone Activity vs. Activity-in-Workflow</text>
-      <g transform="translate(40, 50)">
-        <rect width="380" height="340" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
-        <text x="190" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Standalone Activity</text>
-        <rect x="110" y="38" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
-        <text x="190" y="73" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_activity(...)</text>
-        <line x1="190" y1="80" x2="190" y2="100" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="186,96 190,104 194,96" fill="#a0aec0"/>
-        <rect x="50" y="105" width="280" height="110" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
-        <text x="190" y="152" text-anchor="middle" fill="#f6e05e" font-size="20" font-weight="700">3 events<animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/></text>
-        <text x="190" y="175" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskScheduled</text>
-        <text x="190" y="190" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskStarted</text>
-        <text x="190" y="205" text-anchor="middle" fill="#a0aec0" font-size="10">ActivityTaskCompleted</text>
-        <line x1="190" y1="217" x2="190" y2="237" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="186,233 190,241 194,233" fill="#a0aec0"/>
-        <rect x="110" y="242" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="259" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <text x="190" y="274" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@activity.defn</text>
-        <line x1="190" y1="284" x2="190" y2="304" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="186,300 190,308 194,300" fill="#a0aec0"/>
-        <rect x="110" y="308" width="160" height="28" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="326" text-anchor="middle" fill="#e2e8f0" font-size="11">Echo Server</text>
-        <circle r="4.5" fill="#b794f6">
-          <animate attributeName="cx" values="190" dur="3s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="58;58;160;260;320" keyTimes="0;0.08;0.4;0.7;1" dur="3s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0;1;1;1;0" keyTimes="0;0.08;0.5;0.9;1" dur="3s" repeatCount="indefinite"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 540" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+      <rect width="1100" height="540" fill="#1a1a2e"/>
+      <text x="550" y="30" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="600">Standalone Activity vs. Activity-in-Workflow</text>
+      <g transform="translate(20, 55)">
+        <rect width="500" height="450" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
+        <text x="250" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Standalone Activity</text>
+        <rect x="170" y="38" width="160" height="38" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
+        <text x="250" y="71" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_activity(...)</text>
+        <line x1="250" y1="78" x2="250" y2="98" stroke="#a0aec0" stroke-width="1.5"/>
+        <polygon points="246,94 250,102 254,94" fill="#a0aec0"/>
+        <rect x="20" y="105" width="460" height="200" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
+        <text x="250" y="155" text-anchor="middle" fill="#f6e05e" font-size="22" font-weight="700">3 events<animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/></text>
+        <g font-size="11" font-family="ui-monospace, monospace">
+          <circle cx="55" cy="205" r="3" fill="#7350f7"/>
+          <text x="68" y="209" fill="#cbd5e0">1. ActivityTaskScheduled</text>
+          <circle cx="105" cy="235" r="3" fill="#7350f7"/>
+          <text x="118" y="239" fill="#cbd5e0">2. ActivityTaskStarted</text>
+          <circle cx="155" cy="265" r="3" fill="#7350f7"/>
+          <text x="168" y="269" fill="#cbd5e0">3. ActivityTaskCompleted</text>
+        </g>
+        <line x1="250" y1="309" x2="250" y2="335" stroke="#a0aec0" stroke-width="1.5"/>
+        <polygon points="246,331 250,339 254,331" fill="#a0aec0"/>
+        <rect x="170" y="338" width="160" height="34" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="359" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
+        <line x1="250" y1="376" x2="250" y2="402" stroke="#a0aec0" stroke-width="1.5"/>
+        <polygon points="246,398 250,406 254,398" fill="#a0aec0"/>
+        <rect x="170" y="406" width="160" height="30" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="425" text-anchor="middle" fill="#e2e8f0" font-size="11">Echo Server</text>
+        <circle r="6" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5">
+          <animate attributeName="cx" values="250;250;55;55;105;105;155;155;250;250;250;250" keyTimes="0;0.05;0.15;0.27;0.35;0.47;0.55;0.67;0.77;0.83;0.93;1" dur="7s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="58;58;205;205;235;235;265;265;359;359;421;421" keyTimes="0;0.05;0.15;0.27;0.35;0.47;0.55;0.67;0.77;0.83;0.93;1" dur="7s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0;1;1;1;1;1;1;1;1;1;1;0" keyTimes="0;0.05;0.15;0.27;0.35;0.47;0.55;0.67;0.77;0.83;0.93;1" dur="7s" repeatCount="indefinite"/>
         </circle>
       </g>
-      <g transform="translate(460, 50)">
-        <rect width="380" height="340" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
-        <text x="190" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Activity-in-Workflow</text>
-        <rect x="110" y="38" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
-        <text x="190" y="73" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_workflow(...)</text>
-        <line x1="190" y1="80" x2="190" y2="100" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="186,96 190,104 194,96" fill="#a0aec0"/>
-        <rect x="20" y="105" width="340" height="160" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
-        <text x="190" y="147" text-anchor="middle" fill="#f6e05e" font-size="20" font-weight="700">11 events<animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/></text>
-        <rect x="40" y="158" width="300" height="100" fill="#1a1a2e" stroke="#7350f7" stroke-width="1.2" rx="4"/>
-        <text x="190" y="174" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">Workflow Execution</text>
-        <text x="55" y="192" fill="#cbd5e0" font-size="9" font-weight="600">1.</text>
-        <text x="75" y="192" fill="#a0aec0" font-size="9">WorkflowExecutionStarted</text>
-        <text x="55" y="207" fill="#cbd5e0" font-size="9" font-weight="600">2-4.</text>
-        <text x="92" y="207" fill="#a0aec0" font-size="9">WorkflowTask Scheduled / Started / Completed</text>
-        <text x="55" y="222" fill="#cbd5e0" font-size="9" font-weight="600">5-7.</text>
-        <text x="92" y="222" fill="#a0aec0" font-size="9">ActivityTask Scheduled / Started / Completed</text>
-        <text x="55" y="237" fill="#cbd5e0" font-size="9" font-weight="600">8-10.</text>
-        <text x="96" y="237" fill="#a0aec0" font-size="9">WorkflowTask Scheduled / Started / Completed</text>
-        <text x="55" y="252" fill="#cbd5e0" font-size="9" font-weight="600">11.</text>
-        <text x="80" y="252" fill="#a0aec0" font-size="9">WorkflowExecutionCompleted</text>
-        <line x1="190" y1="267" x2="190" y2="287" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="186,283 190,291 194,283" fill="#a0aec0"/>
-        <rect x="110" y="292" width="160" height="40" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="190" y="309" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <text x="190" y="324" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">@workflow + @activity</text>
-        <circle r="4.5" fill="#b794f6">
-          <animate attributeName="cx" values="190" dur="3s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="58;58;180;210;240;305;310" keyTimes="0;0.06;0.25;0.45;0.65;0.92;1" dur="3s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0;1;1;1;1;1;0" keyTimes="0;0.06;0.25;0.45;0.65;0.92;1" dur="3s" repeatCount="indefinite"/>
+      <g transform="translate(580, 55)">
+        <rect width="500" height="450" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
+        <text x="250" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Activity-in-Workflow</text>
+        <rect x="170" y="38" width="160" height="38" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
+        <text x="250" y="71" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_workflow(...)</text>
+        <line x1="250" y1="78" x2="250" y2="98" stroke="#a0aec0" stroke-width="1.5"/>
+        <polygon points="246,94 250,102 254,94" fill="#a0aec0"/>
+        <rect x="10" y="105" width="480" height="270" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
+        <text x="250" y="148" text-anchor="middle" fill="#f6e05e" font-size="22" font-weight="700">11 events<animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/></text>
+        <rect x="25" y="160" width="450" height="210" fill="#1a1a2e" stroke="#7350f7" stroke-width="1.2" rx="4"/>
+        <text x="250" y="177" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">Workflow Execution</text>
+        <g font-size="10" font-family="ui-monospace, monospace">
+          <circle cx="40" cy="195" r="3" fill="#7350f7"/>
+          <text x="52" y="199" fill="#cbd5e0">1. WorkflowExecutionStarted</text>
+          <circle cx="55" cy="210" r="3" fill="#7350f7"/>
+          <text x="67" y="214" fill="#cbd5e0">2. WorkflowTaskScheduled</text>
+          <circle cx="70" cy="225" r="3" fill="#7350f7"/>
+          <text x="82" y="229" fill="#cbd5e0">3. WorkflowTaskStarted</text>
+          <circle cx="85" cy="240" r="3" fill="#7350f7"/>
+          <text x="97" y="244" fill="#cbd5e0">4. WorkflowTaskCompleted</text>
+          <circle cx="100" cy="255" r="3" fill="#7350f7"/>
+          <text x="112" y="259" fill="#cbd5e0">5. ActivityTaskScheduled</text>
+          <circle cx="115" cy="270" r="3" fill="#7350f7"/>
+          <text x="127" y="274" fill="#cbd5e0">6. ActivityTaskStarted</text>
+          <circle cx="130" cy="285" r="3" fill="#7350f7"/>
+          <text x="142" y="289" fill="#cbd5e0">7. ActivityTaskCompleted</text>
+          <circle cx="145" cy="300" r="3" fill="#7350f7"/>
+          <text x="157" y="304" fill="#cbd5e0">8. WorkflowTaskScheduled</text>
+          <circle cx="160" cy="315" r="3" fill="#7350f7"/>
+          <text x="172" y="319" fill="#cbd5e0">9. WorkflowTaskStarted</text>
+          <circle cx="175" cy="330" r="3" fill="#7350f7"/>
+          <text x="187" y="334" fill="#cbd5e0">10. WorkflowTaskCompleted</text>
+          <circle cx="190" cy="345" r="3" fill="#7350f7"/>
+          <text x="202" y="349" fill="#cbd5e0">11. WorkflowExecutionCompleted</text>
+        </g>
+        <line x1="250" y1="379" x2="250" y2="402" stroke="#a0aec0" stroke-width="1.5"/>
+        <polygon points="246,398 250,406 254,398" fill="#a0aec0"/>
+        <rect x="170" y="406" width="160" height="34" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="425" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
+        <text x="250" y="436" text-anchor="middle" fill="#a0aec0" font-size="9" font-family="ui-monospace, monospace">@workflow.defn + @activity.defn</text>
+        <circle r="6" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5">
+          <animate attributeName="cx" values="250;250;40;55;70;85;100;115;130;145;160;175;190;250;250;250" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="58;58;195;210;225;240;255;270;285;300;315;330;345;425;425;425" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0;1;1;1;1;1;1;1;1;1;1;1;1;1;1;0" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
         </circle>
       </g>
-      <text x="440" y="410" text-anchor="middle" fill="#cbd5e0" font-size="12">Same @activity.defn. Same HTTP delivery. Up to 50% cheaper on Temporal Cloud.</text>
+      <text x="550" y="530" text-anchor="middle" fill="#cbd5e0" font-size="12">Same @activity.defn. Same HTTP delivery. Up to 50% cheaper on Temporal Cloud.</text>
     </svg>
 tabs:
 - id: cblvczchd9gl
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/01-skip-the-workflow/exercise
+  path: /root/workshop/exercises/01-skip-the-workflow/exercise/src/webhooks/activities.py
 - id: xhxihbdamu3g
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/01-skip-the-workflow/solution
+  path: /root/workshop/exercises/01-skip-the-workflow/solution/src/webhooks/activities.py
 - id: u9ycx960dc7g
   title: Terminal
   type: terminal
