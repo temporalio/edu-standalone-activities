@@ -301,7 +301,7 @@ Also open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and c
 
 About **2×** more. A Workflow that calls 5 Activities emits roughly 30+ events (each Activity is bracketed by Workflow Task events, plus Workflow-start and Workflow-end). Five Standalone Activities emit ~15 events total (3 each).
 
-Multiply by millions of executions per day and you have a real line item in retention storage and per-action billing — which is exactly why Stripe, Coinbase, and Rippling asked for Standalone Activities in the first place.
+Multiply by millions of executions per day and you have a real line item in retention storage and per-action billing.
 
 </details>
 
