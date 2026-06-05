@@ -59,7 +59,7 @@ tabs:
   hostname: workshop
   port: 8233
 difficulty: basic
-timelimit: 900
+timelimit: 1500
 enhanced_loading: null
 ---
 

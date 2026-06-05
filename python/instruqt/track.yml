@@ -17,10 +17,10 @@ tags:
 owner: temporal
 developers:
 - nikolay.advolodkin@temporal.io
-idle_timeout: 1800
-timelimit: 3600
+idle_timeout: 3600
+timelimit: 7200
 lab_config:
-  extend_ttl: 900
+  extend_ttl: 1800
   sidebar_enabled: true
   feedback_recap_enabled: false
   feedback_tab_enabled: false
@@ -51,5 +51,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "12915933419704243555"
+checksum: "4289384640922539403"
 enhanced_loading: false

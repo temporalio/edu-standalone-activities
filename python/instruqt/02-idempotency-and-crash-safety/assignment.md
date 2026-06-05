@@ -124,7 +124,7 @@ tabs:
   hostname: workshop
   port: 9001
 difficulty: basic
-timelimit: 900
+timelimit: 1500
 enhanced_loading: null
 ---
 
