@@ -202,7 +202,7 @@ Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You'll se
 
 In the [button label="Temporal UI" background="#444CE7"](tab-5) tab you will see a record of a completed Standalone Activity:
 
-//insert standalone-activity-ui.png
+![Temporal UI showing a completed Standalone Activity in the Activities view](https://raw.githubusercontent.com/temporalio/edu-standalone-activities/impl/module-01/python/diagrams/standalone-activity-ui.png)
 
 ---
 
