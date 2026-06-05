@@ -100,7 +100,7 @@ The activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's defaul
 
 Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **3 deliveries** for `evt_buggy` — one per attempt. The receiver had no way to know the second and third POSTs were duplicates, so it accepted all three.
 
-> **Where is this in the Temporal UI?** Standalone activities don't show in the **Workflows** view — that view is for Workflow Executions, of which we have none in this module. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and look for an **Activities** view (left nav). You should find `deliver-evt_buggy` with **attempt = 3**.
+> **Where is this in the Temporal UI?** Standalone activities don't show in the **Workflows** tab — that tab is for Workflow Executions, of which we have none in this module. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab — your `deliver-evt_buggy` record lives there, including the retry history.
 
 > **What just happened?** Each attempt POSTed before raising. Temporal saw a retryable error, waited the backoff interval, and retried — replaying the activity body top-to-bottom including the POST. Without dedup on the receiver, you get N deliveries for one logical request.
 
@@ -135,7 +135,7 @@ uv run python -m webhooks.send_standalone evt_fixed
 
 Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed` — the same 3 POSTs landed at the receiver, but it returned a cached `"deduped": true` response to attempts 2 and 3 and never recorded a second delivery.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Activities** view → find `deliver-evt_fixed`. **Attempt = 3** — Temporal retried just as before, but the receiver's idempotency check absorbed the duplicates.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** tab → find `deliver-evt_fixed`. Temporal retried just as before — but this time the receiver's idempotency check absorbed the duplicates.
 
 > **What just happened?** The first POST was logged in the receiver's cache by its idempotency key. When the retries POSTed with the same key, the receiver returned the cached response without recording new deliveries. At-least-once delivery + idempotency = effectively at-most-once side effect.
 
