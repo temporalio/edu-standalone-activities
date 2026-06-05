@@ -200,6 +200,10 @@ Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You'll se
 
 > **What's happening:** Look at `send_standalone.py`. The whole call is `await client.execute_activity(deliver_webhook, ...)`. **No `@workflow.defn` anywhere in your code.** The client tells Temporal "schedule this activity"; Temporal hands it to your worker; the result comes back. It's a typed durable job queue.
 
+In the [button label="Temporal UI" background="#444CE7"](tab-5) tab you will see a record of a completed Standalone Activity:
+
+//insert standalone-activity-ui.png
+
 ---
 
 ## 3. Run the same activity inside a workflow (~2 min)
@@ -238,14 +242,47 @@ temporal workflow show --address localhost:7233 --workflow-id wf-evt_002
 
 You should see something like:
 
-| | Standalone Activity | Activity-in-Workflow |
-|---|---|---|
-| State transitions / events | **3** (per `StateTransitionCount` in `activity describe`) | **11** (`WorkflowExecutionStarted` → `WorkflowTaskScheduled` → ... → `WorkflowExecutionCompleted`) |
-| Temporal Cloud actions billed* | 1 | ≥ 2 |
-| History retention | Activity-scoped | Workflow-scoped (full history retained) |
-| Visibility | `temporal activity list/describe` | Full workflow timeline + search |
-| Latency overhead | Lower (no workflow scheduling) | Higher (workflow tasks bracket the activity) |
-| Throughput at scale | Higher (fewer events per unit of work) | Lower (more events per unit of work) |
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 620" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title>Standalone Activity vs Activity-in-Workflow — cost comparison</title>
+  <rect width="1100" height="620" fill="#1a1a2e" rx="14"/>
+  <g transform="translate(40, 32)">
+    <circle cx="8" cy="10" r="7" fill="#7350f7"/>
+    <text x="24" y="15" fill="#cbd5e0" font-size="12" font-weight="600" letter-spacing="2">TEMPORAL · STANDALONE ACTIVITIES</text>
+  </g>
+  <text x="550" y="90" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="800">Same delivery. Different cost shape.</text>
+  <text x="550" y="118" text-anchor="middle" fill="#a0aec0" font-size="14">Same @activity.defn. Same HTTP POST. Compared event-for-event.</text>
+  <g transform="translate(0, 160)">
+    <text x="380" y="0" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="700" letter-spacing="3">STANDALONE</text>
+    <text x="380" y="18" text-anchor="middle" fill="#7350f7" font-size="10" font-family="ui-monospace, monospace">client.execute_activity</text>
+    <text x="820" y="0" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="700" letter-spacing="3">IN A WORKFLOW</text>
+    <text x="820" y="18" text-anchor="middle" fill="#f56565" font-size="10" font-family="ui-monospace, monospace">workflow → execute_activity</text>
+  </g>
+  <line x1="40" y1="200" x2="1060" y2="200" stroke="#4a5568" stroke-width="1" opacity="0.5"/>
+  <line x1="600" y1="210" x2="600" y2="515" stroke="#4a5568" stroke-width="1" opacity="0.3" stroke-dasharray="2 4"/>
+  <rect x="40" y="218" width="1020" height="64" fill="#252540" opacity="0.4" rx="8"/>
+  <text x="60" y="256" fill="#cbd5e0" font-size="14" font-weight="600">Events / state transitions</text>
+  <text x="380" y="265" text-anchor="middle" fill="#9ae6b4" font-size="42" font-weight="800">3</text>
+  <text x="820" y="265" text-anchor="middle" fill="#fc8181" font-size="42" font-weight="800">11</text>
+  <rect x="40" y="294" width="1020" height="50" fill="#252540" opacity="0.25" rx="6"/>
+  <text x="60" y="324" fill="#cbd5e0" font-size="14" font-weight="600">Cloud actions billed*</text>
+  <text x="380" y="330" text-anchor="middle" fill="#9ae6b4" font-size="28" font-weight="800">1</text>
+  <text x="820" y="330" text-anchor="middle" fill="#fc8181" font-size="28" font-weight="800">≥ 2</text>
+  <text x="60" y="378" fill="#a0aec0" font-size="13" font-weight="500">History retention</text>
+  <text x="380" y="378" text-anchor="middle" fill="#e2e8f0" font-size="14">Activity-scoped</text>
+  <text x="820" y="378" text-anchor="middle" fill="#e2e8f0" font-size="14">Workflow-scoped (full)</text>
+  <text x="60" y="418" fill="#a0aec0" font-size="13" font-weight="500">Visibility</text>
+  <text x="380" y="418" text-anchor="middle" fill="#cbd5e0" font-size="12" font-family="ui-monospace, monospace">temporal activity describe</text>
+  <text x="820" y="418" text-anchor="middle" fill="#e2e8f0" font-size="14">Full timeline + search</text>
+  <text x="60" y="458" fill="#a0aec0" font-size="13" font-weight="500">Latency overhead</text>
+  <text x="380" y="458" text-anchor="middle" fill="#9ae6b4" font-size="14" font-weight="700">Lower ▼</text>
+  <text x="820" y="458" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="700">Higher ▲</text>
+  <text x="60" y="498" fill="#a0aec0" font-size="13" font-weight="500">Throughput at scale</text>
+  <text x="380" y="498" text-anchor="middle" fill="#9ae6b4" font-size="14" font-weight="700">Higher ▲</text>
+  <text x="820" y="498" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="700">Lower ▼</text>
+  <rect x="180" y="530" width="740" height="60" fill="#2d3748" stroke="#7350f7" stroke-width="1.5" rx="10"/>
+  <text x="550" y="558" text-anchor="middle" fill="#f6e05e" font-size="20" font-weight="800">Up to 50% cheaper on Temporal Cloud</text>
+  <text x="550" y="578" text-anchor="middle" fill="#cbd5e0" font-size="11">Workflows give you orchestration. Standalone activities skip the scaffolding when you don't need it.</text>
+</svg>
 
 \* Approximate; check current Temporal Cloud pricing for the exact billing model.
 
@@ -257,7 +294,7 @@ Also open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and c
 
 ## Check your understanding
 
-> Your Workflow calls 5 Activities sequentially before returning. Roughly how many *more* events does that emit compared to firing the same 5 Activities as Standalone Activities?
+> Your Workflow calls 5 Activities sequentially before returning. Roughly how many _more_ events does that emit compared to firing the same 5 Activities as Standalone Activities?
 
 <details>
 <summary>Answer</summary>
