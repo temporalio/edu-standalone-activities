@@ -7,86 +7,19 @@ teaser: Crash the worker mid-flight; watch the receiver get two deliveries; fix 
   with one line.
 notes:
 - type: text
-  contents: "# Idempotency and crash safety\n\nTemporal gives you **at-least-once**
-    delivery, not exactly-once. If\nyour worker crashes after an activity's side effect
-    succeeded but\nbefore Temporal hears about it, Temporal retries — and the side\neffect
-    happens twice.\n\nIn this module you'll:\n\n1. Reproduce the bug — kill a worker
-    mid-flight, watch the echo\n   server receive the same webhook twice.\n2. Fix
-    it with one line — an `Idempotency-Key` header from\n   `activity.info().activity_id`
-    (stable across retries) that lets\n   the receiver dedup.\n\nThe fix is small.
-    The intuition it builds is large.\n\n<svg xmlns=\"http://www.w3.org/2000/svg\"
-    viewBox=\"0 0 1100 460\" font-family=\"system-ui, -apple-system, 'Segoe UI', sans-serif\">\n
-    \ <rect width=\"1100\" height=\"460\" fill=\"#1a1a2e\"/>\n  <text x=\"550\" y=\"28\"
-    text-anchor=\"middle\" fill=\"#e2e8f0\" font-size=\"18\" font-weight=\"600\">Same
-    chaos sequence, two outcomes</text>\n  <text x=\"550\" y=\"48\" text-anchor=\"middle\"
-    fill=\"#a0aec0\" font-size=\"12\">Worker crashes mid-flight. Temporal retries.
-    Watch what the receiver does.</text>\n  <g transform=\"translate(20, 70)\">\n
-    \   <rect width=\"510\" height=\"370\" fill=\"none\" stroke=\"#e53e3e\" stroke-width=\"1.5\"
-    stroke-dasharray=\"4 3\" rx=\"6\"/>\n    <text x=\"255\" y=\"22\" text-anchor=\"middle\"
-    fill=\"#fc8181\" font-size=\"14\" font-weight=\"600\">Without Idempotency-Key</text>\n
-    \   <rect x=\"180\" y=\"40\" width=\"150\" height=\"44\" fill=\"#2d3748\" stroke=\"#4a5568\"
-    rx=\"4\"/>\n    <text x=\"255\" y=\"60\" text-anchor=\"middle\" fill=\"#e2e8f0\"
-    font-size=\"12\" font-weight=\"600\">Client</text>\n    <text x=\"255\" y=\"76\"
-    text-anchor=\"middle\" fill=\"#a0aec0\" font-size=\"10\" font-family=\"ui-monospace,
-    monospace\">POST /hooks</text>\n    <text x=\"255\" y=\"115\" text-anchor=\"middle\"
-    fill=\"#fc8181\" font-size=\"32\" font-weight=\"700\" opacity=\"0\">\n      \U0001F4A5\n
-    \     <animate attributeName=\"opacity\" values=\"0;0;1;1;0;0;0\" keyTimes=\"0;0.30;0.32;0.42;0.45;0.99;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n    </text>\n    <line x1=\"255\" y1=\"90\"
-    x2=\"255\" y2=\"265\" stroke=\"#4a5568\" stroke-width=\"1.2\" stroke-dasharray=\"3
-    4\"/>\n    <rect x=\"170\" y=\"270\" width=\"170\" height=\"80\" fill=\"#2d3748\"
-    stroke=\"#4a5568\" rx=\"4\"/>\n    <text x=\"255\" y=\"292\" text-anchor=\"middle\"
-    fill=\"#e2e8f0\" font-size=\"12\" font-weight=\"600\">Echo Server</text>\n    <text
-    x=\"255\" y=\"312\" text-anchor=\"middle\" fill=\"#a0aec0\" font-size=\"10\">deliveries</text>\n
-    \   <text x=\"255\" y=\"338\" text-anchor=\"middle\" fill=\"#fc8181\" font-size=\"24\"
-    font-weight=\"700\">\n      0\n      <animate attributeName=\"opacity\" values=\"1;1;0;0;0;0;0\"
-    keyTimes=\"0;0.18;0.20;0.55;0.60;0.99;1\" dur=\"10s\" repeatCount=\"indefinite\"/>\n
-    \   </text>\n    <text x=\"255\" y=\"338\" text-anchor=\"middle\" fill=\"#f6e05e\"
-    font-size=\"24\" font-weight=\"700\" opacity=\"0\">\n      1\n      <animate attributeName=\"opacity\"
-    values=\"0;0;1;1;0;0;0\" keyTimes=\"0;0.18;0.20;0.55;0.60;0.99;1\" dur=\"10s\"
-    repeatCount=\"indefinite\"/>\n    </text>\n    <text x=\"255\" y=\"338\" text-anchor=\"middle\"
-    fill=\"#fc8181\" font-size=\"24\" font-weight=\"700\" opacity=\"0\">\n      2\n
-    \     <animate attributeName=\"opacity\" values=\"0;0;0;0;1;1;0\" keyTimes=\"0;0.55;0.58;0.60;0.62;0.99;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n    </text>\n    <circle r=\"7\" fill=\"#f6e05e\"
-    stroke=\"#1a1a2e\" stroke-width=\"1.5\" opacity=\"0\">\n      <animate attributeName=\"cy\"
-    values=\"62;62;320;320;62;62;320;320\" keyTimes=\"0;0.02;0.18;0.30;0.45;0.47;0.58;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n      <animate attributeName=\"cx\"
-    values=\"255\" dur=\"10s\" repeatCount=\"indefinite\"/>\n      <animate attributeName=\"opacity\"
-    values=\"0;1;1;0;0;1;1;0\" keyTimes=\"0;0.02;0.18;0.20;0.45;0.47;0.58;0.60\" dur=\"10s\"
-    repeatCount=\"indefinite\"/>\n    </circle>\n  </g>\n  <g transform=\"translate(570,
-    70)\">\n    <rect width=\"510\" height=\"370\" fill=\"none\" stroke=\"#38a169\"
-    stroke-width=\"1.5\" stroke-dasharray=\"4 3\" rx=\"6\"/>\n    <text x=\"255\"
-    y=\"22\" text-anchor=\"middle\" fill=\"#9ae6b4\" font-size=\"14\" font-weight=\"600\">With
-    Idempotency-Key</text>\n    <rect x=\"180\" y=\"40\" width=\"150\" height=\"44\"
-    fill=\"#2d3748\" stroke=\"#4a5568\" rx=\"4\"/>\n    <text x=\"255\" y=\"60\" text-anchor=\"middle\"
-    fill=\"#e2e8f0\" font-size=\"12\" font-weight=\"600\">Client</text>\n    <text
-    x=\"255\" y=\"76\" text-anchor=\"middle\" fill=\"#a0aec0\" font-size=\"10\" font-family=\"ui-monospace,
-    monospace\">POST /hooks (key=ABC)</text>\n    <text x=\"255\" y=\"115\" text-anchor=\"middle\"
-    fill=\"#fc8181\" font-size=\"32\" font-weight=\"700\" opacity=\"0\">\n      \U0001F4A5\n
-    \     <animate attributeName=\"opacity\" values=\"0;0;1;1;0;0;0\" keyTimes=\"0;0.30;0.32;0.42;0.45;0.99;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n    </text>\n    <line x1=\"255\" y1=\"90\"
-    x2=\"255\" y2=\"265\" stroke=\"#4a5568\" stroke-width=\"1.2\" stroke-dasharray=\"3
-    4\"/>\n    <text x=\"255\" y=\"195\" text-anchor=\"middle\" fill=\"#9ae6b4\" font-size=\"11\"
-    font-weight=\"600\" opacity=\"0\">\n      server sees ABC again → deduped\n      <animate
-    attributeName=\"opacity\" values=\"0;0;0;0;1;1;0\" keyTimes=\"0;0.55;0.58;0.60;0.62;0.99;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n    </text>\n    <rect x=\"170\" y=\"270\"
-    width=\"170\" height=\"80\" fill=\"#2d3748\" stroke=\"#4a5568\" rx=\"4\"/>\n    <text
-    x=\"255\" y=\"292\" text-anchor=\"middle\" fill=\"#e2e8f0\" font-size=\"12\" font-weight=\"600\">Echo
-    Server</text>\n    <text x=\"255\" y=\"312\" text-anchor=\"middle\" fill=\"#a0aec0\"
-    font-size=\"10\">deliveries</text>\n    <text x=\"255\" y=\"338\" text-anchor=\"middle\"
-    fill=\"#9ae6b4\" font-size=\"24\" font-weight=\"700\">\n      0\n      <animate
-    attributeName=\"opacity\" values=\"1;1;0;0;0;0;0\" keyTimes=\"0;0.18;0.20;0.55;0.60;0.99;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n    </text>\n    <text x=\"255\" y=\"338\"
-    text-anchor=\"middle\" fill=\"#9ae6b4\" font-size=\"24\" font-weight=\"700\" opacity=\"0\">\n
-    \     1\n      <animate attributeName=\"opacity\" values=\"0;0;1;1;1;1;0\" keyTimes=\"0;0.18;0.20;0.55;0.60;0.99;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n    </text>\n    <circle r=\"7\" fill=\"#f6e05e\"
-    stroke=\"#1a1a2e\" stroke-width=\"1.5\" opacity=\"0\">\n      <animate attributeName=\"cy\"
-    values=\"62;62;320;320;62;62;320;320\" keyTimes=\"0;0.02;0.18;0.30;0.45;0.47;0.58;1\"
-    dur=\"10s\" repeatCount=\"indefinite\"/>\n      <animate attributeName=\"cx\"
-    values=\"255\" dur=\"10s\" repeatCount=\"indefinite\"/>\n      <animate attributeName=\"opacity\"
-    values=\"0;1;1;0;0;1;1;0\" keyTimes=\"0;0.02;0.18;0.20;0.45;0.47;0.58;0.60\" dur=\"10s\"
-    repeatCount=\"indefinite\"/>\n    </circle>\n  </g>\n  <text x=\"550\" y=\"455\"
-    text-anchor=\"middle\" fill=\"#cbd5e0\" font-size=\"12\">Same crash, same retry.
-    The Idempotency-Key header is the only difference.</text>\n</svg>\n"
+  contents: |
+    # Idempotency and crash safety
+
+    Temporal gives you **at-least-once** delivery, not exactly-once. If your worker crashes after an activity's side effect succeeded but before Temporal hears about it, Temporal retries — and the side effect happens twice.
+
+    In this module you'll:
+
+    1. Reproduce the bug — kill a worker mid-flight, watch the echo server receive the same webhook twice.
+    2. Fix it with one line — an `Idempotency-Key` header from `activity.info().activity_id` (stable across retries) that lets the receiver dedup.
+
+    The fix is small. The intuition it builds is large.
+
+    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
 - id: mixqrvicyeey
   title: Exercise

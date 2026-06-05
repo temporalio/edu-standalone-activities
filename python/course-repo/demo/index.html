@@ -121,9 +121,8 @@
   }
   .lane.without .counter { color: #fc8181; }
   .lane.with .counter { color: #9ae6b4; }
-  .deduped-badge {
+  .deduped-badge, .duplicated-badge {
     display: inline-block;
-    background: #38a169;
     color: #1a1a2e;
     font-size: 0.7em;
     font-weight: 600;
@@ -133,6 +132,8 @@
     opacity: 0;
     transition: opacity 0.3s;
   }
+  .deduped-badge { background: #38a169; }
+  .duplicated-badge { background: #e53e3e; color: #fff; }
   .controls {
     text-align: center;
     margin-top: 0.9em;
@@ -195,7 +196,7 @@
     <div class="box echo">
       <div class="echo-label">Echo Server — deliveries</div>
       <div class="counter" id="count-without">0</div>
-      <div class="deduped-badge" id="dedup-without">deduped</div>
+      <div class="duplicated-badge" id="dup-without">duplicated</div>
     </div>
   </div>
   <div class="lane with">
@@ -250,7 +251,7 @@
     },
     {
       desc: 'Step 5: the retry arrives. Without a key, echo records #2. With the key, echo sees the duplicate and dedupes.',
-      apply: () => { moveDots('echo'); setCounts(2, 1); flashDedup(); }
+      apply: () => { moveDots('echo'); setCounts(2, 1); flashDedup(); flashDuplicated(); }
     },
     {
       desc: 'Final: <span style="color:#fc8181">2 deliveries</span> vs <span style="color:#9ae6b4">1 delivery</span>. Same code, same crash. The header is the only difference.',
@@ -305,9 +306,13 @@
     $('dedup-with').style.opacity = 1;
   }
 
+  function flashDuplicated() {
+    $('dup-without').style.opacity = 1;
+  }
+
   function hideDedup() {
-    $('dedup-without').style.opacity = 0;
     $('dedup-with').style.opacity = 0;
+    $('dup-without').style.opacity = 0;
   }
 
   function renderProgress() {
