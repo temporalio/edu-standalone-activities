@@ -115,6 +115,10 @@ When designing a "kill the worker mid-activity" demo for retry / idempotency:
 - **Expect to wait ~`start_to_close_timeout`** between the kill and the retry firing. Without an explicit `heartbeat_timeout`, Temporal can only detect the dead attempt by waiting for the activity-attempt timeout. Pick a `start_to_close_timeout` slightly larger than the activity body's expected duration (e.g. body sleeps 15s → timeout 20s) so the demo doesn't make learners wait minutes.
 - **Standalone activities don't appear in the Workflows tab of the Temporal UI** — that tab is for Workflow Executions only. They live under the **Standalone Activities** tab. Don't claim a specific `attempt =` value in the docs — let learners read what the UI actually shows.
 
+## Free module navigation
+
+Default Instruqt tracks lock modules sequentially. To let learners jump to any module without completing prior ones, add `skipping_enabled: true` at the root of `track.yml`. Prerequisite: every challenge with a `check-<container>` script must also have a `solve-<container>` script (Instruqt rejects the flag otherwise — when a learner skips, Instruqt runs the solve scripts for skipped challenges so the sandbox state stays coherent). Make solve scripts cheap: e.g. `cp -rf /opt/workshop/solution/NN/. $DIR/`. The lock icons in the sidebar disappear and the "Skip to challenge?" dialog stops appearing.
+
 ## Common errors → root cause
 
 | Symptom | Cause |
