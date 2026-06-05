@@ -1,9 +1,4 @@
-"""Schedule a webhook delivery as a Standalone Activity.
-
-Uses start_activity (not execute_activity): the call returns as soon as the
-server has accepted the activity, regardless of whether it has finished
-running. The starter exits; the worker continues independently.
-"""
+"""Fire a webhook delivery as a Standalone Activity and wait for it to finish."""
 
 import asyncio
 import sys
@@ -17,7 +12,7 @@ from .shared import ECHO_SERVER_URL, TASK_QUEUE, WebhookDelivery
 
 async def main(event_id: str) -> None:
     client = await Client.connect("localhost:7233")
-    handle = await client.start_activity(
+    result = await client.execute_activity(
         deliver_webhook,
         args=[WebhookDelivery(
             url=ECHO_SERVER_URL,
@@ -26,9 +21,9 @@ async def main(event_id: str) -> None:
         )],
         id=f"deliver-{event_id}",
         task_queue=TASK_QUEUE,
-        start_to_close_timeout=timedelta(seconds=20),
+        start_to_close_timeout=timedelta(seconds=10),
     )
-    print(f"Scheduled activity {handle.id}")
+    print(f"Activity completed with status {result}")
 
 
 if __name__ == "__main__":

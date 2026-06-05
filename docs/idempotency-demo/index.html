@@ -179,7 +179,7 @@
 </head>
 <body>
 <h1>Idempotency-Key: with vs without</h1>
-<div class="subtitle">Worker crashes mid-flight. Temporal retries. Watch what the receiver does.</div>
+<div class="subtitle">Activity errors after the POST lands. Temporal retries. Watch what the receiver does.</div>
 <div class="step" id="step-desc"></div>
 
 <div class="lanes">
@@ -225,7 +225,7 @@
   <div class="progress" id="progress"></div>
 </div>
 
-<div class="footer">Same crash. Same retry. The header is the only difference.</div>
+<div class="footer">Same error. Same retry. The header is the only difference.</div>
 
 <script>
   const steps = [
@@ -242,7 +242,7 @@
       apply: () => { moveDots('echo'); setCounts(1, 1); }
     },
     {
-      desc: 'Step 3: 💥 the worker crashes <em>after</em> the POST succeeded but <em>before</em> Temporal heard "done".',
+      desc: 'Step 3: 💥 the activity raises a transient error <em>after</em> the POST succeeded but <em>before</em> Temporal heard "done".',
       apply: () => { hideDots(); crash(true); }
     },
     {
@@ -254,7 +254,7 @@
       apply: () => { moveDots('echo'); setCounts(2, 1); flashDedup(); flashDuplicated(); }
     },
     {
-      desc: 'Final: <span style="color:#fc8181">2 deliveries</span> vs <span style="color:#9ae6b4">1 delivery</span>. Same code, same crash. The header is the only difference.',
+      desc: 'Final: <span style="color:#fc8181">2 deliveries</span> vs <span style="color:#9ae6b4">1 delivery</span>. Same code, same error, same retry. The header is the only difference.',
       apply: () => {}
     }
   ];

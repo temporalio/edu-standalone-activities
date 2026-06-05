@@ -1,29 +1,32 @@
-import time
-
 import httpx
 from temporalio import activity
+from temporalio.exceptions import ApplicationError
 
 from .shared import WebhookDelivery
 
 
 @activity.defn
 def deliver_webhook(req: WebhookDelivery) -> int:
+    info = activity.info()
     activity.logger.info(
-        "Delivering webhook for event %s to %s", req.event_id, req.url
+        "Delivering webhook for event %s (attempt %d)", req.event_id, info.attempt
     )
 
     # activity_id is stable across retries; perfect as an idempotency key.
-    # If the worker crashes after the POST but before Temporal acks the
-    # success, Temporal retries this activity. The receiver caches by this
-    # header and returns the cached response on the duplicate POST, so the
-    # delivery happens exactly once even though it was attempted twice.
-    headers = {"Idempotency-Key": activity.info().activity_id}
+    # Every retry POSTs with the same key, so the receiver can recognise
+    # duplicates and return the cached response instead of recording a
+    # new delivery.
+    headers = {"Idempotency-Key": info.activity_id}
 
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()
 
-    # Sleep AFTER the POST to simulate the (real) window between the external
-    # side effect succeeding and Temporal learning about it.
-    time.sleep(15)
+    # Simulate a transient downstream failure on the first two attempts -
+    # see the exercise version of this file for the full reasoning.
+    if info.attempt < 3:
+        raise ApplicationError(
+            f"Simulated transient failure on attempt {info.attempt}",
+            non_retryable=False,
+        )
 
     return response.status_code

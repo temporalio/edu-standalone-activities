@@ -1,15 +1,15 @@
-import time
-
 import httpx
 from temporalio import activity
+from temporalio.exceptions import ApplicationError
 
 from .shared import WebhookDelivery
 
 
 @activity.defn
 def deliver_webhook(req: WebhookDelivery) -> int:
+    info = activity.info()
     activity.logger.info(
-        "Delivering webhook for event %s to %s", req.event_id, req.url
+        "Delivering webhook for event %s (attempt %d)", req.event_id, info.attempt
     )
 
     headers: dict[str, str] = {}
@@ -21,10 +21,16 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()
 
-    # Sleep AFTER the POST to simulate the (real) window between the external
-    # side effect succeeding and Temporal learning about it. If the worker
-    # crashes during this window, Temporal will retry - and without an
-    # idempotency key, the receiver gets the POST twice.
-    time.sleep(15)
+    # Simulate a transient downstream failure that hits AFTER the POST has
+    # already landed - the receiver got the request, but our activity errored
+    # before Temporal heard "done." Real-world equivalents: 500 from the
+    # endpoint, network drop after the receiver processed it, worker crash
+    # right after the side effect. Temporal retries; each retry replays the
+    # POST; without an idempotency key the receiver records every attempt.
+    if info.attempt < 3:
+        raise ApplicationError(
+            f"Simulated transient failure on attempt {info.attempt}",
+            non_retryable=False,
+        )
 
     return response.status_code

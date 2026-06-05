@@ -63,11 +63,11 @@ enhanced_loading: null
 
 # Idempotency and crash safety
 
-Temporal retries activities that don't complete cleanly. Most of the time that's exactly what you want. But when an activity has already produced a side effect (a webhook, a charge, an email) and *then* the worker dies, the retry runs the side effect again — unless your activity is idempotent.
+Temporal retries activities that don't complete cleanly. Most of the time that's exactly what you want. But when an activity has already produced a side effect (a webhook, a charge, an email) and *then* something goes wrong, the retry runs the side effect again — unless your activity is idempotent.
 
 By the end you'll have:
 
-- Reproduced a double-delivery by crashing a worker mid-flight.
+- Reproduced a triple-delivery by letting Temporal retry across a transient failure.
 - Fixed it with a single line — an HTTP `Idempotency-Key` header that the receiver dedupes on.
 - Understood why the key has to come from `activity.info().activity_id` and not `uuid4()`.
 
@@ -79,7 +79,9 @@ Budget ~10 minutes.
 
 ## 1. See the bug (~3 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The activity POSTs the webhook and then sleeps for 15 seconds — simulating the (real) window between "side effect succeeded" and "Temporal got the ack." There's a TODO above the headers dict; **leave it alone for now** so you can see what goes wrong without the fix.
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The activity POSTs the webhook and then, on its first two attempts, raises a retryable `ApplicationError` — simulating a transient downstream failure that hits *after* the side effect has already landed. Real-world equivalents: the receiver returned 500 after processing, the network dropped after the POST was accepted, the activity host crashed right after the side effect.
+
+There's a TODO above the headers dict; **leave it alone for now** so you can see what goes wrong without the fix.
 
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the worker:
 
@@ -87,34 +89,20 @@ In the [button label="Worker" background="#444CE7"](tab-3) tab, start the worker
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, schedule one delivery:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_buggy
 ```
 
-`send_standalone` uses `client.start_activity`, which enqueues the work durably on the server and returns immediately. The terminal is free again, but on the worker the POST has already hit the echo server and the worker is now in the 15-second sleep window.
+The activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy fires each retry with backoff — the whole thing finishes in about 3 seconds.
 
-Quickly — crash the worker mid-sleep:
+Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **3 deliveries** for `evt_buggy` — one per attempt. The receiver had no way to know the second and third POSTs were duplicates, so it accepted all three.
 
-```bash,run
-scripts/kill-worker.sh
-```
+> **Where is this in the Temporal UI?** Standalone activities don't show in the **Workflows** view — that view is for Workflow Executions, of which we have none in this module. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and look for an **Activities** view (left nav). You should find `deliver-evt_buggy` with **attempt = 3**.
 
-(SIGKILL, not the default SIGTERM. A graceful SIGTERM would let the sleep finish, the activity complete cleanly, and no retry would fire.)
-
-Switch to the [button label="Worker" background="#444CE7"](tab-3) tab — the worker process has died. Press **Up Arrow + Enter** to restart it:
-
-```bash,run
-uv run python -m webhooks.worker
-```
-
-Temporal noticed the orphaned attempt never acked, but it has to wait for the `start_to_close_timeout` (20s on this activity) to fire before declaring the attempt timed out and dispatching a retry. **Wait ~20 seconds**, then check the [button label="Echo server" background="#444CE7"](tab-4) tab. **2 deliveries** for `evt_buggy` — one from the crashed attempt, one from the retry.
-
-> **Where is this in the Temporal UI?** Standalone activities don't show in the **Workflows** view — that view is for Workflow Executions, of which we have none in this module. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and look for an **Activities** view (left nav). You should find `deliver-evt_buggy` with **attempt = 2**.
-
-> **What just happened?** The POST already succeeded. The sleep was meant to simulate the gap before Temporal heard "complete." You killed the worker during that gap, so Temporal eventually timed out the attempt and dispatched a retry. The retried activity ran top-to-bottom again and POSTed a second time. The receiver had no way to know the second POST was a duplicate, so it accepted both.
+> **What just happened?** Each attempt POSTed before raising. Temporal saw a retryable error, waited the backoff interval, and retried — replaying the activity body top-to-bottom including the POST. Without dedup on the receiver, you get N deliveries for one logical request.
 
 ---
 
@@ -132,27 +120,24 @@ headers = {"Idempotency-Key": activity.info().activity_id}
 
 ## 3. Verify the fix (~3 min)
 
-Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, repeat the chaos sequence — schedule the activity, then crash the worker:
-
-```bash,run
-scripts/reset-echo.sh
-uv run python -m webhooks.send_standalone evt_fixed
-scripts/kill-worker.sh
-```
-
-Switch to the [button label="Worker" background="#444CE7"](tab-3) tab. Press **Up Arrow + Enter** to restart the worker:
+Restart the worker so it picks up the new code. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then **Up Arrow + Enter**:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-Wait ~20 seconds for `start_to_close_timeout` to fire on the crashed attempt and the retry to run.
+In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
-Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed` — and the record will have `"deduped": true` in its server response, signalling that the receiver saw a duplicate key and refused to re-process.
+```bash,run
+scripts/reset-echo.sh
+uv run python -m webhooks.send_standalone evt_fixed
+```
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Activities** view → find `deliver-evt_fixed`. Look at the **Attempt** number — it should be 2 or higher. That's the receipt: Temporal *did* retry, but the receiver's idempotency check absorbed the duplicate.
+Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed` — the same 3 POSTs landed at the receiver, but it returned a cached `"deduped": true` response to attempts 2 and 3 and never recorded a second delivery.
 
-> **What just happened?** The first POST was logged in the receiver's cache by its idempotency key. When the retry POSTed with the same key, the receiver returned the cached response without recording a new delivery. At-least-once delivery + idempotency = effectively at-most-once side effect.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Activities** view → find `deliver-evt_fixed`. **Attempt = 3** — Temporal retried just as before, but the receiver's idempotency check absorbed the duplicates.
+
+> **What just happened?** The first POST was logged in the receiver's cache by its idempotency key. When the retries POSTed with the same key, the receiver returned the cached response without recording new deliveries. At-least-once delivery + idempotency = effectively at-most-once side effect.
 
 ---
 
