@@ -305,18 +305,6 @@ Multiply by millions of executions per day and you have a real line item in rete
 
 </details>
 
-## Check
-
-When the comparison feels intuitive, press **Check**. The check validates:
-
-- The echo server received both deliveries.
-- A standalone activity ran on `webhook-queue`.
-- A workflow ran on `webhook-queue`.
-
-If the check fails, peek at `/tmp/worker.log` and rerun the two `send_*` commands.
-
----
-
 ## Coming up
 
 The next modules tackle what happens when reality intrudes:

@@ -176,12 +176,6 @@ id_reuse_policy=ActivityIDReusePolicy.REJECT_DUPLICATE,     # completed duplicat
 
 </details>
 
-## Check
-
-Press **Check** when running `send_double` with the policy in place produces 1 echo delivery and both calls return the same `run_id`.
-
----
-
 ## Coming up
 
 **Module 05** — When to choose Standalone Activity vs. Workflow. Three scenarios, your call.

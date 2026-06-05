@@ -241,12 +241,6 @@ If you need a random code as part of the side effect, generate it **outside** th
 
 </details>
 
-## Check
-
-Press **Check** when the echo server shows exactly **1** delivery for `evt_fixed` and the Temporal UI shows attempt ≥ 2 for `deliver-evt_fixed`.
-
----
-
 ## Coming up
 
 **Module 03** — Concurrency, rate limits, and priority. You've made each delivery safe. Next: cap how many of them fire at once so you don't DDoS your own customers.

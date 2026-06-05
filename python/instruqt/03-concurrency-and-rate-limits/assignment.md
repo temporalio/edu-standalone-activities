@@ -178,12 +178,6 @@ Two knobs to remember:
 
 ---
 
-## Check
-
-Press **Check** when 30 bulk deliveries arrive at the echo server in ≥6 seconds of wall-clock time.
-
----
-
 ## Coming up
 
 **Module 04** — Dedup via ID reuse. Module 02 made each delivery safe under retry. Module 04 makes each delivery happen at most once even when the upstream system sends the same event twice.
