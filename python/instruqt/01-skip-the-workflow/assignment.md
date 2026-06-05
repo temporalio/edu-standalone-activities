@@ -89,9 +89,9 @@ notes:
         </g>
         <line x1="250" y1="379" x2="250" y2="402" stroke="#a0aec0" stroke-width="1.5"/>
         <polygon points="246,398 250,406 254,398" fill="#a0aec0"/>
-        <rect x="170" y="406" width="160" height="34" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="425" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <text x="250" y="436" text-anchor="middle" fill="#a0aec0" font-size="9" font-family="ui-monospace, monospace">@workflow.defn + @activity.defn</text>
+        <rect x="130" y="406" width="240" height="38" fill="#2d3748" stroke="#4a5568" rx="4"/>
+        <text x="250" y="423" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
+        <text x="250" y="437" text-anchor="middle" fill="#a0aec0" font-size="9" font-family="ui-monospace, monospace">@workflow.defn + @activity.defn</text>
         <circle r="6" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5">
           <animate attributeName="cx" values="250;250;40;55;70;85;100;115;130;145;160;175;190;250;250;250" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
           <animate attributeName="cy" values="58;58;195;210;225;240;255;270;285;300;315;330;345;425;425;425" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
