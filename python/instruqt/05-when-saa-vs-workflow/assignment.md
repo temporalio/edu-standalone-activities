@@ -57,7 +57,9 @@ You're Stripe (or a Stripe-adjacent product). Every payment event triggers a web
 **Decide before you peek.**
 
 <details>
-<summary><b>Recommendation: Standalone Activity.</b></summary>
+<summary><b>Reveal the answer</b></summary>
+
+**Standalone Activity.**
 
 Each delivery is a single durable side effect. No multi-step state, no signals, no compensation. A Workflow would pay for orchestration you're not using — extra workflow history events per delivery, full retention, more billed actions. At 10M/day the cost delta is real money.
 
@@ -86,7 +88,9 @@ The whole thing has to look atomic from the customer's perspective — partial c
 **Decide.**
 
 <details>
-<summary><b>Recommendation: Workflow.</b></summary>
+<summary><b>Reveal the answer</b></summary>
+
+**Workflow.**
 
 This is exactly what Workflows exist for. You have:
 
@@ -108,7 +112,9 @@ Every morning at 9 AM in the user's timezone, send them a digest email summarizi
 **Decide.**
 
 <details>
-<summary><b>Recommendation: Standalone Activity.</b></summary>
+<summary><b>Reveal the answer</b></summary>
+
+**Standalone Activity.**
 
 Each user's daily digest is a one-shot durable job. A scheduler (Temporal Schedules, cron, or your own logic) fires `client.execute_activity` per user per day. The activity:
 
@@ -168,4 +174,4 @@ You've built and shipped a real Standalone-Activity-as-Job-Queue track. Here's w
 - **`ActivityIDConflictPolicy.USE_EXISTING`** — dedup duplicate upstream calls.
 - **`Priority(priority_key, fairness_key, fairness_weight)`** on `start_activity` — express tenant prioritization (covered briefly in Module 03, deeper in a future module).
 
-Press **Check** to finish.
+That's it. Click **Check** to wrap up the track.
