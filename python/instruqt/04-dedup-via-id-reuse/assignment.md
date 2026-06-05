@@ -102,7 +102,26 @@ You'll see something like:
 
 The first call succeeded; the second call errored because Temporal's default `id_conflict_policy` is `FAIL` — refuse to schedule a second activity with an id already in flight.
 
-> **What just happened?** Temporal's server is enforcing id uniqueness at *scheduling* time. The second call never reached a worker; it was rejected by the server. Echo server has 1 delivery, which is the right outcome — but your application code had to deal with an exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing a lot.
+### How to verify this is the right outcome
+
+The Temporal UI is sparse here on purpose: **the second call was rejected at the server before any activity was created**, so there's no failed activity record to look at. The verification has to come from the surrounding state. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+
+```bash,run
+# Exactly 1 webhook actually delivered (the duplicate never reached the worker).
+curl -s http://localhost:9000/_received | jq '.count, [.deliveries[].body.event_id]'
+
+# Exactly 1 activity exists on the server for deliver-evt_dup_001.
+temporal activity list --address localhost:7233 \
+  --query 'ActivityId="deliver-evt_dup_001"' -o json | jq 'length'
+
+# That one activity ran exactly once (attempt=1, status=Completed).
+temporal activity describe --address localhost:7233 \
+  --activity-id deliver-evt_dup_001 -o json | jq '{attempt, status}'
+```
+
+All three checks point to the same picture: server rejected call-2 instantly, only one activity got scheduled, one webhook delivered, no retries.
+
+> **What just happened?** Temporal's server enforced id uniqueness at *scheduling* time — call-2 never reached a worker, never created a history record, never showed up in the UI. The only place the failure exists is the `WorkflowAlreadyStartedError` your Python code caught. That's why your application has to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing a lot.
 
 ---
 
