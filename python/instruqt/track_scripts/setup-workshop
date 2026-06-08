@@ -36,20 +36,21 @@ for i in {1..30}; do
 done
 
 # Seed every module's exercise + solution tree.
-# Exercise dirs are full runnable projects (pyproject.toml + scripts + src).
-# Solution dirs are read-only reference (just src for the learner to peek).
+# Both dirs are fully runnable projects (pyproject.toml + scripts + src) so
+# learners can `uv run python -m webhooks.worker` from either side.
 for NN in \
     01-skip-the-workflow \
     02-idempotency-and-crash-safety \
     03-concurrency-and-rate-limits \
     04-dedup-via-id-reuse; do
   DIR=/root/workshop/exercises/$NN
-  mkdir -p "$DIR/exercise" "$DIR/solution"
-  cp -r /opt/workshop/exercise/$NN/. "$DIR/exercise/"
-  cp -r /opt/workshop/solution/$NN/. "$DIR/solution/"
-  cp /opt/workshop/pyproject.toml "$DIR/exercise/"
-  cp -r /opt/workshop/scripts "$DIR/exercise/"
-  chmod +x "$DIR/exercise/scripts/"*.sh
+  for SIDE in exercise solution; do
+    mkdir -p "$DIR/$SIDE"
+    cp -r /opt/workshop/$SIDE/$NN/. "$DIR/$SIDE/"
+    cp /opt/workshop/pyproject.toml "$DIR/$SIDE/"
+    cp -r /opt/workshop/scripts "$DIR/$SIDE/"
+    chmod +x "$DIR/$SIDE/scripts/"*.sh
+  done
 done
 
 # Pre-sync deps for Module 01 (where the learner starts). Other modules will
