@@ -1,5 +1,5 @@
-slug: standalone-activities-job-queue
-id: nvkcci1s2pyx
+slug: standalone-activities-python
+id: d4xnvujmv3rf
 title: Standalone Activities as a Durable Job Queue (Python)
 teaser: Build a durable webhook-delivery job with a Standalone Activity, and see how
   it costs less than wrapping the same work in a workflow.
@@ -52,5 +52,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "14280228335711359293"
+checksum: "16638320258945297976"
 enhanced_loading: false
