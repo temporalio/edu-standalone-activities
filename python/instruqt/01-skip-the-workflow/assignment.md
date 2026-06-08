@@ -1,6 +1,6 @@
 ---
 slug: skip-the-workflow
-id: cnt4ivcsp1av
+id: yuewx9heodgi
 type: challenge
 title: Skip the workflow
 teaser: Build a webhook delivery activity, run it standalone, run it via a workflow,
@@ -100,33 +100,35 @@ notes:
       </g>
       <text x="550" y="530" text-anchor="middle" fill="#cbd5e0" font-size="12">Same @activity.defn. Same HTTP delivery. Up to 50% cheaper on Temporal Cloud.</text>
     </svg>
+
+    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/cost-comparison/index.html" width="100%" height="640" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
-- id: cblvczchd9gl
+- id: vryel8ovmbex
   title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-skip-the-workflow/exercise
-- id: xhxihbdamu3g
+- id: y9g12yc9sk4i
   title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-skip-the-workflow/solution
-- id: u9ycx960dc7g
+- id: xyqbqlaekkix
   title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/01-skip-the-workflow/exercise
-- id: uvg0hwykfsy3
+- id: lyxq5rizt6bi
   title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/01-skip-the-workflow/exercise
-- id: sp8tl0pl7o8t
+- id: sgg6rcekwwk2
   title: Echo server
   type: service
   hostname: workshop
   port: 9000
-- id: 7zrapmphtrzg
+- id: x7aermetxpnt
   title: Temporal UI
   type: service
   hostname: workshop
@@ -138,13 +140,15 @@ enhanced_loading: null
 
 # Skip the workflow
 
-Most Temporal tutorials show you Activities running inside Workflows. This module flips that: you'll write one Activity and run it **without** a Workflow at all — directly from a Temporal Client. Then you'll run the same Activity wrapped in a Workflow and see exactly what that wrapping costs you.
+Workflows are Temporal's primary primitive when you need orchestration — multi-step state, signals, child workflows, compensation logic. But not every durable job needs orchestration. For one-shot work like a webhook delivery, a charge, or a single email, **Standalone Activities** let you skip the workflow scaffolding and run an Activity directly from a Temporal Client — keeping durability, retries, and visibility while paying less for them.
+
+In this module you'll build one Activity and run it two ways: standalone from a client, and wrapped in a Workflow. Side by side you'll see the cost difference.
 
 By the end you'll be able to:
 
-- Invoke an Activity from a client with no Workflow class.
+- Invoke an Activity directly from a client (no Workflow class needed).
 - Compare a Standalone Activity vs. an Activity-in-Workflow on **events, actions, retention, latency, and throughput**.
-- Decide when the wrapping is worth it — and when it isn't.
+- Decide when wrapping work in a Workflow is worth the cost — and when a Standalone Activity is the better shape.
 
 Budget ~10 minutes.
 
@@ -242,47 +246,7 @@ temporal workflow show --address localhost:7233 --workflow-id wf-evt_002
 
 You should see something like:
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 620" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-  <title>Standalone Activity vs Activity-in-Workflow — cost comparison</title>
-  <rect width="1100" height="620" fill="#1a1a2e" rx="14"/>
-  <g transform="translate(40, 32)">
-    <circle cx="8" cy="10" r="7" fill="#7350f7"/>
-    <text x="24" y="15" fill="#cbd5e0" font-size="12" font-weight="600" letter-spacing="2">TEMPORAL · STANDALONE ACTIVITIES</text>
-  </g>
-  <text x="550" y="90" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="800">Same delivery. Different cost shape.</text>
-  <text x="550" y="118" text-anchor="middle" fill="#a0aec0" font-size="14">Same @activity.defn. Same HTTP POST. Compared event-for-event.</text>
-  <g transform="translate(0, 160)">
-    <text x="380" y="0" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="700" letter-spacing="3">STANDALONE</text>
-    <text x="380" y="18" text-anchor="middle" fill="#7350f7" font-size="10" font-family="ui-monospace, monospace">client.execute_activity</text>
-    <text x="820" y="0" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="700" letter-spacing="3">IN A WORKFLOW</text>
-    <text x="820" y="18" text-anchor="middle" fill="#f56565" font-size="10" font-family="ui-monospace, monospace">workflow → execute_activity</text>
-  </g>
-  <line x1="40" y1="200" x2="1060" y2="200" stroke="#4a5568" stroke-width="1" opacity="0.5"/>
-  <line x1="600" y1="210" x2="600" y2="515" stroke="#4a5568" stroke-width="1" opacity="0.3" stroke-dasharray="2 4"/>
-  <rect x="40" y="218" width="1020" height="64" fill="#252540" opacity="0.4" rx="8"/>
-  <text x="60" y="256" fill="#cbd5e0" font-size="14" font-weight="600">Events / state transitions</text>
-  <text x="380" y="265" text-anchor="middle" fill="#9ae6b4" font-size="42" font-weight="800">3</text>
-  <text x="820" y="265" text-anchor="middle" fill="#fc8181" font-size="42" font-weight="800">11</text>
-  <rect x="40" y="294" width="1020" height="50" fill="#252540" opacity="0.25" rx="6"/>
-  <text x="60" y="324" fill="#cbd5e0" font-size="14" font-weight="600">Cloud actions billed*</text>
-  <text x="380" y="330" text-anchor="middle" fill="#9ae6b4" font-size="28" font-weight="800">1</text>
-  <text x="820" y="330" text-anchor="middle" fill="#fc8181" font-size="28" font-weight="800">≥ 2</text>
-  <text x="60" y="378" fill="#a0aec0" font-size="13" font-weight="500">History retention</text>
-  <text x="380" y="378" text-anchor="middle" fill="#e2e8f0" font-size="14">Activity-scoped</text>
-  <text x="820" y="378" text-anchor="middle" fill="#e2e8f0" font-size="14">Workflow-scoped (full)</text>
-  <text x="60" y="418" fill="#a0aec0" font-size="13" font-weight="500">Visibility</text>
-  <text x="380" y="418" text-anchor="middle" fill="#cbd5e0" font-size="12" font-family="ui-monospace, monospace">temporal activity describe</text>
-  <text x="820" y="418" text-anchor="middle" fill="#e2e8f0" font-size="14">Full timeline + search</text>
-  <text x="60" y="458" fill="#a0aec0" font-size="13" font-weight="500">Latency overhead</text>
-  <text x="380" y="458" text-anchor="middle" fill="#9ae6b4" font-size="14" font-weight="700">Lower ▼</text>
-  <text x="820" y="458" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="700">Higher ▲</text>
-  <text x="60" y="498" fill="#a0aec0" font-size="13" font-weight="500">Throughput at scale</text>
-  <text x="380" y="498" text-anchor="middle" fill="#9ae6b4" font-size="14" font-weight="700">Higher ▲</text>
-  <text x="820" y="498" text-anchor="middle" fill="#fc8181" font-size="14" font-weight="700">Lower ▼</text>
-  <rect x="180" y="530" width="740" height="60" fill="#2d3748" stroke="#7350f7" stroke-width="1.5" rx="10"/>
-  <text x="550" y="558" text-anchor="middle" fill="#f6e05e" font-size="20" font-weight="800">Up to 50% cheaper on Temporal Cloud</text>
-  <text x="550" y="578" text-anchor="middle" fill="#cbd5e0" font-size="11">Workflows give you orchestration. Standalone activities skip the scaffolding when you don't need it.</text>
-</svg>
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/cost-comparison/index.html" width="100%" height="640" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 
 \* Approximate; check current Temporal Cloud pricing for the exact billing model.
 

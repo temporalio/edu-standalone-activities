@@ -1,6 +1,6 @@
 ---
 slug: when-saa-vs-workflow
-id: upzjbaybeiaf
+id: qsxxv9y7a5oh
 type: challenge
 title: When SAA vs when Workflow
 teaser: Three scenarios. For each one, pick Standalone Activity or Workflow — then
@@ -25,12 +25,12 @@ notes:
 
     No code. ~8 minutes.
 tabs:
-- id: u5kezyyfpdam
+- id: ripqsfaeunnx
   title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises
-- id: xyytuusarc0c
+- id: vcb9zf4htmkc
   title: Terminal
   type: terminal
   hostname: workshop

@@ -1,6 +1,6 @@
 ---
 slug: idempotency-and-crash-safety
-id: ke3maxyqbkyf
+id: mowdyyydsf1e
 type: challenge
 title: Idempotency and crash safety
 teaser: Crash the worker mid-flight; watch the receiver get two deliveries; fix it
@@ -21,37 +21,37 @@ notes:
 
     <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
-- id: mixqrvicyeey
+- id: 1e8ceyilglde
   title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
-- id: nry5elwiiegg
+- id: u62b5ywv1o86
   title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/02-idempotency-and-crash-safety/solution
-- id: ilosldpsh5zx
+- id: 9q4dnwo9qhmm
   title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
-- id: tl58vxopklzz
+- id: kmpvpcafnhiz
   title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
-- id: 1skz9ini3o8j
+- id: jv9klqjfvbkw
   title: Echo server
   type: service
   hostname: workshop
   port: 9000
-- id: g61qtex8phlz
+- id: 9stl3pgh1ly5
   title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
-- id: fcrl1fl2kc64
+- id: s0mmzrec3kli
   title: Idempotency demo
   type: service
   hostname: workshop

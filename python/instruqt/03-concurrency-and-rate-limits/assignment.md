@@ -1,6 +1,6 @@
 ---
 slug: concurrency-and-rate-limits
-id: bf671ejc9oen
+id: 4bet4jkgwomj
 type: challenge
 title: Concurrency and rate limits
 teaser: Cap your worker's throughput so a runaway fan-out doesn't DDoS the downstream
@@ -27,32 +27,32 @@ notes:
     in ~1 second) and then with a cap (spread out by several
     seconds — visibly slower).
 tabs:
-- id: hvzxgvjkgch5
+- id: itwzelvve2hv
   title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
-- id: 4tfuoxsgkh61
+- id: mjbp2e2we8ey
   title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/03-concurrency-and-rate-limits/solution
-- id: uye7c8clfvle
+- id: pw9qli7adehb
   title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
-- id: 9qmbudhyhgex
+- id: fnuv9fjixrx8
   title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
-- id: daugc4aefzka
+- id: fax22gfly8rd
   title: Echo server
   type: service
   hostname: workshop
   port: 9000
-- id: rvmmd1xpmkyf
+- id: iwkxmfxpvx0g
   title: Temporal UI
   type: service
   hostname: workshop
