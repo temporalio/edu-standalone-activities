@@ -24,8 +24,8 @@ notes:
     is lost; throughput is shaped.
 
     You'll fan-out 30 deliveries twice — first without a cap (all hit
-    in ~1 second) and then with a cap (smoothly spread over ≥6
-    seconds).
+    in ~1 second) and then with a cap (spread out by several
+    seconds — visibly slower).
 tabs:
 - id: hvzxgvjkgch5
   title: Exercise
@@ -70,7 +70,7 @@ By the end you'll have:
 
 - Seen 30 webhook deliveries flood the receiver in under a second.
 - Capped the worker's dispatch rate with `max_activities_per_second=5.0`.
-- Watched the same 30 deliveries spread evenly over ≥6 seconds while Temporal holds the excess durably in the task queue.
+- Watched the same 30 deliveries take noticeably longer (~4–6 seconds) while Temporal holds the excess durably in the task queue.
 
 Budget ~10 minutes.
 
@@ -129,7 +129,7 @@ scripts/reset-echo.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
-The wall-clock time should now be **at least 6 seconds** — 30 deliveries ÷ 5/sec = 6s. The [button label="Echo server" background="#444CE7"](tab-4) tab's `received_at` timestamps will visibly spread out.
+The wall-clock time will be noticeably longer — typically **4–6 seconds** for 30 deliveries at 5/sec (the rate limiter allows a small initial burst, then enforces the cap). The [button label="Echo server" background="#444CE7"](tab-4) tab's `received_at` timestamps will visibly spread out.
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab while the batch runs and watch the activity list. You'll see some activities in `Scheduled` state — the server holding them durably while the worker dispatches at 5/sec.
 

@@ -96,7 +96,7 @@ You'll see something like:
 [call-1] start_activity id=deliver-evt_dup_001
 [call-1] handle ok (run_id=...)
 [call-2] start_activity id=deliver-evt_dup_001
-[call-2] FAILED: WorkflowAlreadyStartedError: ...
+[call-2] FAILED: ActivityAlreadyStartedError: ...
 [call-1] activity completed
 ```
 
@@ -121,7 +121,7 @@ temporal activity describe --address localhost:7233 \
 
 All three checks point to the same picture: server rejected call-2 instantly, only one activity got scheduled, one webhook delivered, no retries.
 
-> **What just happened?** Temporal's server enforced id uniqueness at *scheduling* time — call-2 never reached a worker, never created a history record, never showed up in the UI. The only place the failure exists is the `WorkflowAlreadyStartedError` your Python code caught. That's why your application has to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing a lot.
+> **What just happened?** Temporal's server enforced id uniqueness at *scheduling* time — call-2 never reached a worker, never created a history record, never showed up in the UI. The only place the failure exists is the `ActivityAlreadyStartedError` your Python code caught. That's why your application has to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing a lot.
 
 ---
 

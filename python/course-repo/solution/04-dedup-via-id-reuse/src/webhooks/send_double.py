@@ -31,7 +31,7 @@ async def start(client: Client, event_id: str, label: str):
             start_to_close_timeout=timedelta(seconds=30),
             id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,
         )
-        print(f"[{label}] handle ok (run_id={handle.first_execution_run_id})")
+        print(f"[{label}] handle ok (run_id={handle.run_id})")
         return handle
     except Exception as e:
         print(f"[{label}] FAILED: {type(e).__name__}: {e}")
