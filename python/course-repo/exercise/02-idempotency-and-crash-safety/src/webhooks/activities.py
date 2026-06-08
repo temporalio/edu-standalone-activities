@@ -28,9 +28,10 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     # right after the side effect. Temporal retries; each retry replays the
     # POST; without an idempotency key the receiver records every attempt.
     if info.attempt < 3:
+        # ApplicationError defaults to retryable; Temporal will retry under
+        # the default RetryPolicy. Set non_retryable=True for permanent failures.
         raise ApplicationError(
             f"Simulated transient failure on attempt {info.attempt}",
-            non_retryable=False,
         )
 
     return response.status_code

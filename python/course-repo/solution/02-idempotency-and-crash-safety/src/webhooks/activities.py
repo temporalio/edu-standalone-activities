@@ -24,9 +24,10 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     # Simulate a transient downstream failure on the first two attempts -
     # see the exercise version of this file for the full reasoning.
     if info.attempt < 3:
+        # ApplicationError defaults to retryable; Temporal will retry under
+        # the default RetryPolicy. Set non_retryable=True for permanent failures.
         raise ApplicationError(
             f"Simulated transient failure on attempt {info.attempt}",
-            non_retryable=False,
         )
 
     return response.status_code
