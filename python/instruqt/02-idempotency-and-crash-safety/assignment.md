@@ -8,16 +8,24 @@ teaser: Crash the worker mid-flight; watch the receiver get two deliveries; fix 
 notes:
 - type: text
   contents: |
-    # Idempotency and crash safety
+    # Making retries safe with idempotency
 
-    Temporal gives you **at-least-once** delivery, not exactly-once. If your worker crashes after an activity's side effect succeeded but before Temporal hears about it, Temporal retries — and the side effect happens twice.
+    Temporal automatically retries Activities that fail. That's almost always what you want — until the Activity has *already done something visible to the outside world* before it failed.
 
-    In this module you'll:
+    A concrete example: your `deliver_webhook` Activity POSTs to the receiver's URL. The receiver gets the request and processes it. Then something errors out — the receiver returns a 500, the network drops, or the Worker crashes after the POST. Temporal sees no successful completion, so it retries the whole Activity, POST included. The receiver gets the same delivery twice.
 
-    1. Reproduce the bug — kill a worker mid-flight, watch the echo server receive the same webhook twice.
-    2. Fix it with one line — an `Idempotency-Key` header from `activity.info().activity_id` (stable across retries) that lets the receiver dedup.
+    This is at-least-once delivery: Temporal guarantees your Activity runs to completion at least once, but doesn't guarantee exactly once. To get effectively-once *side effects*, your Activity needs to be **idempotent** — safe to run more than once with the same input. The standard way to do that is to send an idempotency key with each request and let the receiver dedupe.
 
-    The fix is small. The intuition it builds is large.
+    ## What you'll do
+
+    1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Echo server record 3 deliveries for one logical event.
+    2. Add a one-line idempotency key to the POST. Re-run. Watch the Echo server record only 1 delivery — the receiver dedupes the retries.
+
+    The same six tabs from Module 1 are available in this module's sandbox (Exercise, Solution, Terminal, Worker, Echo server, Temporal UI). There's also an **Idempotency demo** tab showing an interactive version of the diagram below.
+
+    ## The visual version
+
+    Step through it with the controls below, or click **Play** to watch it run. Left lane: without an idempotency key. Right lane: with one.
 
     <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
@@ -61,83 +69,115 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Idempotency and crash safety
+# Making retries safe with idempotency
 
-Temporal retries activities that don't complete cleanly. Most of the time that's exactly what you want. But when an activity has already produced a side effect (a webhook, a charge, an email) and *then* something goes wrong, the retry runs the side effect again — unless your activity is idempotent.
+When an Activity errors, Temporal retries it. That's the durability you want. But if your Activity has already done something visible to the outside world — POSTed a webhook, charged a card, sent an email — and then errors out before Temporal hears that it finished, the retry runs that side effect again.
 
-By the end you'll have:
+You'll see this happen, then fix it:
 
-- Reproduced a triple-delivery by letting Temporal retry across a transient failure.
-- Fixed it with a single line — an HTTP `Idempotency-Key` header that the receiver dedupes on.
-- Understood why the key has to come from `activity.info().activity_id` and not `uuid4()`.
+1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. Echo server records 3 deliveries for one logical request.
+2. Add one line — an HTTP `Idempotency-Key` header — and re-run. Echo server now records 1 delivery; the receiver dedupes the retries.
+3. Understand why the key has to come from `activity.info().activity_id` (stable across retries) and not `uuid.uuid4()` (regenerated every attempt).
 
-Budget ~10 minutes.
+The **Solution** tab has the finished code for this module. Peek at it whenever you want, especially if you get stuck.
 
-[button label="Interactive Demo: Try Me" background="#444CE7"](tab-6)
+[button label="Try the interactive demo" background="#444CE7"](tab-6)
+
+Estimated time: 10 minutes.
 
 ---
 
-## 1. See the bug (~3 min)
+## 1. Reproduce the bug (~3 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The activity POSTs the webhook and then, on its first two attempts, raises a retryable `ApplicationError` — simulating a transient downstream failure that hits *after* the side effect has already landed. Real-world equivalents: the receiver returned 500 after processing, the network dropped after the POST was accepted, the activity host crashed right after the side effect.
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The Activity is set up to POST the webhook, then raise a retryable `ApplicationError` on its first two attempts. This simulates a transient failure that hits *after* the side effect already landed — examples: the receiver returned 500 after processing, the network dropped after the POST was accepted, the Worker crashed right after the POST.
 
-There's a TODO above the headers dict; **leave it alone for now** so you can see what goes wrong without the fix.
+There's a `TODO` above the `headers` dict. Leave it alone for now — you want to see what goes wrong before the fix is in place.
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the worker:
+In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, send one delivery:
 
 ```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_buggy
 ```
 
-The activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy fires each retry with backoff — the whole thing finishes in about 3 seconds.
+(`scripts/reset-echo.sh` clears the Echo server so each run starts from a clean slate.)
 
-Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **3 deliveries** for `evt_buggy` — one per attempt. The receiver had no way to know the second and third POSTs were duplicates, so it accepted all three.
+The Activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy waits a short backoff between attempts. The whole thing finishes in about 3 seconds.
 
-> **Where is this in the Temporal UI?** Standalone activities don't show in the **Workflows** tab — that tab is for Workflow Executions, of which we have none in this module. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab — your `deliver-evt_buggy` record lives there, including the retry history.
+Check the [button label="Echo server" background="#444CE7"](tab-4) tab. You should see **3 deliveries** recorded for `evt_buggy` — one per attempt. The Echo server tab auto-refreshes every 2 seconds, so you'll see the count climb as the retries land.
 
-> **What just happened?** Each attempt POSTed before raising. Temporal saw a retryable error, waited the backoff interval, and retried — replaying the activity body top-to-bottom including the POST. Without dedup on the receiver, you get N deliveries for one logical request.
+```json
+{
+  "count": 3,
+  "deliveries": [
+    { "body": { "event_id": "evt_buggy", ... }, "idempotency_key": null },
+    { "body": { "event_id": "evt_buggy", ... }, "idempotency_key": null },
+    { "body": { "event_id": "evt_buggy", ... }, "idempotency_key": null }
+  ]
+}
+```
+
+The receiver had no way to know these were duplicates of the same logical event, so it accepted all three.
+
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It shows the retry history — same Activity, three attempts, the last one Completed.
+
+> **What's happening:** each attempt of the Activity body POSTed to the Echo server *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again — and again — because the Activity body is what gets replayed, not the side effect.
 
 ---
 
-## 2. Add the fix (~2 min)
+## 2. Add the idempotency key (~2 min)
 
-Back in the [button label="Exercise" background="#444CE7"](tab-0) tab, find the TODO in `deliver_webhook`. Replace the empty headers dict with one that includes an `Idempotency-Key`:
+Back in the [button label="Exercise" background="#444CE7"](tab-0) tab, find the `TODO` in `deliver_webhook`. Replace the empty `headers` dict with this line:
 
 ```python
 headers = {"Idempotency-Key": activity.info().activity_id}
 ```
 
-> **Why `activity.info().activity_id`?** It's *stable across retries* of the same activity execution. Every retry sees the same value, so the receiver can recognize the duplicate. If you used `uuid.uuid4()` here, each retry would generate a fresh value — defeating the whole point.
+That's the entire fix. The full solution is in the **Solution** tab if you want to copy it.
+
+`activity.info().activity_id` is the id you assigned when starting the Activity (`deliver-evt_buggy` here). It's **stable across retries** of the same Activity execution — every retry sees the same value. The Echo server caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't record a new delivery.
+
+> **Why not `uuid.uuid4()`?** UUIDs are different every time you call them. Each retry would generate a fresh key, the receiver would see N different keys for N retries of one logical request, and your "idempotency" would dedupe nothing. The key has to be deterministic across retries.
 
 ---
 
 ## 3. Verify the fix (~3 min)
 
-Restart the worker so it picks up the new code. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then **Up Arrow + Enter**:
+The Worker is still running the old code. Restart it so it picks up the change. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then **Up Arrow** + **Enter** to re-run:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another delivery with the fix in place:
 
 ```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_fixed
 ```
 
-Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed` — the same 3 POSTs landed at the receiver, but it returned a cached `"deduped": true` response to attempts 2 and 3 and never recorded a second delivery.
+Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed`:
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** tab → find `deliver-evt_fixed`. Temporal retried just as before — but this time the receiver's idempotency check absorbed the duplicates.
+```json
+{
+  "count": 1,
+  "deliveries": [
+    { "body": { "event_id": "evt_fixed", ... }, "idempotency_key": "deliver-evt_fixed" }
+  ]
+}
+```
 
-> **What just happened?** The first POST was logged in the receiver's cache by its idempotency key. When the retries POSTed with the same key, the receiver returned the cached response without recording new deliveries. At-least-once delivery + idempotency = effectively at-most-once side effect.
+Three POSTs still landed at the receiver — the Activity still retried three times. But the receiver saw the same `Idempotency-Key` on each one and returned a cached response to attempts 2 and 3 without recording new deliveries.
+
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-evt_fixed`. Same retry history as the buggy run. The Activity didn't change. The receiver dedupes — that's where exactly-once *effect* lives.
+
+> **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 
 ---
 
@@ -161,4 +201,4 @@ If you need a random code as part of the side effect, generate it **outside** th
 
 ## Coming up
 
-**Module 03** — Concurrency, rate limits, and priority. You've made each delivery safe. Next: cap how many of them fire at once so you don't DDoS your own customers.
+**Module 03** — Concurrency, rate limits, and priority. Each delivery is now safe to retry. Next: limit how many run at the same time so a burst of deliveries doesn't overload your customer's endpoint.
