@@ -27,7 +27,7 @@ notes:
 
     Step through it with the controls below, or click **Play** to watch it run. Left lane: without an idempotency key. Right lane: with one.
 
-    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/standalone-pre/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
 - id: 1e8ceyilglde
   title: Exercise
