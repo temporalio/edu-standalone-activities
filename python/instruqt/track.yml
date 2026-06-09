@@ -6,7 +6,7 @@ teaser: Build a durable webhook-delivery job with a Standalone Activity, and see
 description: |
   Standalone Activities give you Temporal's durability, retries, and visibility
   for one-shot jobs without writing a workflow. You'll build a webhook delivery
-  job, run it standalone and via a workflow, and compare the cost of each shape.
+  job, run it standalone and inside a workflow, and compare the cost of each.
 icon: ""
 tags:
 - activities
@@ -52,5 +52,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "11653785507700063928"
+checksum: "11001434039810388016"
 enhanced_loading: false
