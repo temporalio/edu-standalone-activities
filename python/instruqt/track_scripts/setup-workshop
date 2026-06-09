@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p /var/log/workshop
+
+# Start Temporal dev server in the background.
+# --ip 0.0.0.0 binds both gRPC (7233) and the Web UI (8233) to all
+# interfaces, so Instruqt's external service-tab proxy can reach the UI.
+# Default would be 127.0.0.1, which is only reachable from inside the
+# container - the workers see it, but the Instruqt UI tab can't.
+nohup temporal server start-dev \
+  --ip 0.0.0.0 \
+  --ui-port 8233 \
+  --db-filename /tmp/temporal.db \
+  --log-level warn \
+  > /var/log/workshop/temporal.log 2>&1 &
+
+# Start echo server in the background
+nohup python /opt/workshop/server/echo_server.py \
+  > /var/log/workshop/echo.log 2>&1 &
+
+# Serve the interactive demo HTML on port 9001 (a static file server).
+# Lets Module 02 surface the idempotency comparison as an in-sandbox tab.
+nohup python -m http.server 9001 --directory /opt/workshop/demo \
+  > /var/log/workshop/demo.log 2>&1 &
+
+# Wait for ports
+for i in {1..30}; do
+  if (echo > /dev/tcp/localhost/7233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/8233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9000) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9001) 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+# Seed every module's exercise + solution tree.
+# Both dirs are fully runnable projects (pyproject.toml + scripts + src) so
+# learners can `uv run python -m webhooks.worker` from either side.
+for NN in \
+    01-skip-the-workflow \
+    02-idempotency-and-crash-safety \
+    03-concurrency-and-rate-limits \
+    04-dedup-via-id-reuse; do
+  DIR=/root/workshop/exercises/$NN
+  for SIDE in exercise solution; do
+    mkdir -p "$DIR/$SIDE"
+    cp -r /opt/workshop/$SIDE/$NN/. "$DIR/$SIDE/"
+    cp /opt/workshop/pyproject.toml "$DIR/$SIDE/"
+    cp -r /opt/workshop/scripts "$DIR/$SIDE/"
+    chmod +x "$DIR/$SIDE/scripts/"*.sh
+  done
+done
+
+# Pre-sync deps for Module 01 (where the learner starts). Other modules will
+# sync on first entry; deps are identical across modules so the cache makes
+# subsequent syncs near-instant.
+cd /root/workshop/exercises/01-skip-the-workflow/exercise && uv sync

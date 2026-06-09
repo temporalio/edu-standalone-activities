@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+pkill -f "temporal server" || true
+pkill -f "echo_server.py" || true
+pkill -f "python -m webhooks.worker" || true

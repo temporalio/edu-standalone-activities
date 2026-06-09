@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standalone Activity vs Activity-in-Workflow — cost comparison</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 1.2em 1em;
+    min-height: 100vh;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .brand {
+    display: flex; align-items: center; gap: 0.6em;
+    font-size: 0.72em; font-weight: 600;
+    letter-spacing: 2px; color: #cbd5e0;
+    margin-bottom: 0.9em;
+  }
+  .brand-dot { width: 14px; height: 14px; border-radius: 50%; background: #7350f7; box-shadow: 0 0 16px rgba(115, 80, 247, 0.45); }
+  h1 {
+    text-align: center;
+    font-size: 1.85em;
+    font-weight: 800;
+    margin: 0 0 0.2em 0;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    text-align: center;
+    color: #a0aec0;
+    font-size: 0.95em;
+    margin-bottom: 1.4em;
+  }
+  .lanes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2em;
+  }
+  @media (max-width: 700px) { .lanes { grid-template-columns: 1fr; } }
+  .lane {
+    background: linear-gradient(180deg, #252540 0%, #1f1d35 100%);
+    border-radius: 12px;
+    padding: 1.2em 1.1em;
+    border: 1px solid;
+    position: relative;
+    overflow: hidden;
+  }
+  .lane.standalone { border-color: rgba(115, 80, 247, 0.55); box-shadow: 0 0 0 1px rgba(115, 80, 247, 0.15); }
+  .lane.workflow { border-color: rgba(245, 101, 101, 0.55); box-shadow: 0 0 0 1px rgba(245, 101, 101, 0.15); }
+  .lane-title {
+    text-align: center;
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 0.1em;
+  }
+  .lane.standalone .lane-title { color: #b794f6; }
+  .lane.workflow .lane-title { color: #fc8181; }
+  .lane-call {
+    text-align: center;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.72em;
+    color: #7c7c92;
+    margin-bottom: 1em;
+  }
+  .hero {
+    text-align: center;
+    margin: 0.6em 0 1em;
+  }
+  .hero-number {
+    font-size: 4.8em;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .lane.standalone .hero-number { color: #9ae6b4; }
+  .lane.workflow .hero-number { color: #fc8181; }
+  .hero-label {
+    color: #cbd5e0;
+    font-size: 0.92em;
+    margin-top: 0.2em;
+  }
+  .metrics { font-size: 0.84em; line-height: 1.45; }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4em 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .metric:first-child { border-top: 0; }
+  .metric-label { color: #a0aec0; }
+  .metric-value { font-weight: 600; color: #e2e8f0; }
+  .metric.win .metric-value { color: #9ae6b4; }
+  .metric.lose .metric-value { color: #fc8181; }
+  .metric-value code { font-family: ui-monospace, monospace; font-size: 0.9em; color: inherit; }
+  .footer {
+    margin-top: 1.4em;
+    text-align: center;
+    background: linear-gradient(180deg, #2d3748 0%, #1f2738 100%);
+    border: 1px solid rgba(115, 80, 247, 0.45);
+    border-radius: 10px;
+    padding: 0.95em 1em;
+  }
+  .footer-headline {
+    color: #f6e05e;
+    font-size: 1.2em;
+    font-weight: 800;
+  }
+  .footer-sub {
+    color: #a0aec0;
+    font-size: 0.78em;
+    margin-top: 0.25em;
+  }
+  .note {
+    margin-top: 0.6em;
+    color: #6b7081;
+    font-size: 0.7em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <span>TEMPORAL · STANDALONE ACTIVITIES</span>
+  </div>
+
+  <h1>Same delivery, two ways. Different cost.</h1>
+  <div class="subtitle">Same <code>@activity.defn</code>. Same HTTP POST. Compared event-for-event.</div>
+
+  <div class="lanes">
+    <section class="lane standalone">
+      <div class="lane-title">STANDALONE</div>
+      <div class="lane-call">client.execute_activity</div>
+      <div class="hero">
+        <div class="hero-number" id="num-standalone">3</div>
+        <div class="hero-label">events per delivery</div>
+      </div>
+      <div class="metrics">
+        <div class="metric win"><span class="metric-label">Cloud actions billed*</span><span class="metric-value">1</span></div>
+        <div class="metric"><span class="metric-label">History retention</span><span class="metric-value">Activity-scoped</span></div>
+        <div class="metric"><span class="metric-label">Visibility</span><span class="metric-value"><code>temporal activity</code></span></div>
+        <div class="metric win"><span class="metric-label">Latency overhead</span><span class="metric-value">Lower ▼</span></div>
+        <div class="metric win"><span class="metric-label">Throughput at scale</span><span class="metric-value">Higher ▲</span></div>
+      </div>
+    </section>
+
+    <section class="lane workflow">
+      <div class="lane-title">IN A WORKFLOW</div>
+      <div class="lane-call">workflow → execute_activity</div>
+      <div class="hero">
+        <div class="hero-number" id="num-workflow">11</div>
+        <div class="hero-label">events per delivery</div>
+      </div>
+      <div class="metrics">
+        <div class="metric lose"><span class="metric-label">Cloud actions billed*</span><span class="metric-value">≥ 2</span></div>
+        <div class="metric"><span class="metric-label">History retention</span><span class="metric-value">Workflow-scoped (full)</span></div>
+        <div class="metric"><span class="metric-label">Visibility</span><span class="metric-value">Full timeline + search</span></div>
+        <div class="metric lose"><span class="metric-label">Latency overhead</span><span class="metric-value">Higher ▲</span></div>
+        <div class="metric lose"><span class="metric-label">Throughput at scale</span><span class="metric-value">Lower ▼</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer">
+    <div class="footer-headline">Up to 50% cheaper on Temporal Cloud</div>
+    <div class="footer-sub">Workflows give you orchestration. Standalone activities skip the scaffolding when you don't need it.</div>
+  </div>
+  <div class="note">* Approximate; check current Temporal Cloud pricing for the exact billing model.</div>
+</div>
+
+<script>
+  // Tick the hero numbers up on load so the page feels alive.
+  function tick(id, target) {
+    const el = document.getElementById(id);
+    const step = Math.max(1, Math.floor(target / 18));
+    let v = 0;
+    const t = setInterval(() => {
+      v = Math.min(target, v + step);
+      el.textContent = v;
+      if (v >= target) clearInterval(t);
+    }, 55);
+  }
+  document.getElementById('num-standalone').textContent = '0';
+  document.getElementById('num-workflow').textContent = '0';
+  setTimeout(() => { tick('num-standalone', 3); tick('num-workflow', 11); }, 250);
+</script>
+</body>
+</html>
