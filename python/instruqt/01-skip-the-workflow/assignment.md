@@ -37,9 +37,38 @@ notes:
 
     ## How this tutorial works
 
-    - **Blue tab-name buttons** in the instructions (Worker, Terminal, Webhook receiver, Temporal UI) are clickable — they jump to that tab in the sandbox.
-    - **Code blocks** with a Run button on the right execute in the most recently focused terminal tab. Or copy + paste into the terminal yourself.
-    - The **Solution** tab has the finished code for the current module. Peek at it any time you want, especially if you're stuck.
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 220" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+      <g transform="translate(0, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="60" y="40" width="160" height="44" fill="#444CE7" rx="6"/>
+        <text x="140" y="68" text-anchor="middle" fill="#fff" font-size="15" font-weight="600">Worker</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Click blue buttons</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">to jump to that tab</text>
+      </g>
+      <g transform="translate(300, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="20" y="35" width="240" height="58" fill="#1a1a2e" stroke="#4a5568" rx="4"/>
+        <text x="35" y="58" fill="#7aa2ff" font-size="11" font-family="ui-monospace, monospace">$ uv run python</text>
+        <text x="35" y="76" fill="#9ae6b4" font-size="11" font-family="ui-monospace, monospace">    -m webhooks.worker</text>
+        <rect x="195" y="44" width="55" height="28" fill="#444CE7" rx="4"/>
+        <text x="222" y="62" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">▶ Run</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Click the Run button</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">to execute in a terminal</text>
+      </g>
+      <g transform="translate(600, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="20" y="42" width="60" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="50" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">Exercise</text>
+        <rect x="88" y="42" width="60" height="32" fill="#9ae6b4" rx="3"/>
+        <text x="118" y="63" text-anchor="middle" fill="#1a1a2e" font-size="10" font-weight="700">Solution</text>
+        <rect x="156" y="42" width="60" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="186" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">Terminal</text>
+        <rect x="224" y="42" width="36" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="242" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">...</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Solution tab</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">has the answer — peek any time</text>
+      </g>
+    </svg>
 tabs:
 - id: vryel8ovmbex
   title: Exercise
