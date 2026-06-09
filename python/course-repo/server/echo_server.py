@@ -44,7 +44,7 @@ class EchoHandler(BaseHTTPRequestHandler):
 <html>
 <head>
 <meta charset="utf-8">
-<title>Echo server</title>
+<title>Webhook receiver</title>
 <style>
   body { background: #1a1a2e; color: #e2e8f0; font-family: ui-monospace, "SF Mono", monospace; padding: 1em; margin: 0; }
   header { color: #b794f6; font-weight: 600; margin-bottom: 0.6em; }
@@ -53,7 +53,7 @@ class EchoHandler(BaseHTTPRequestHandler):
 </style>
 </head>
 <body>
-<header>Echo server &mdash; live</header>
+<header>Webhook receiver &mdash; live</header>
 <pre id="data">loading...</pre>
 <div class="meta">auto-refreshes every 2s</div>
 <script>
