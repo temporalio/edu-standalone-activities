@@ -5,7 +5,7 @@ import sys
 
 from temporalio.client import Client
 
-from .shared import ECHO_SERVER_URL, TASK_QUEUE, WebhookDelivery
+from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 from .workflow import WebhookWorkflow
 
 
@@ -14,7 +14,7 @@ async def main(event_id: str) -> None:
     result = await client.execute_workflow(
         WebhookWorkflow.run,
         args=[WebhookDelivery(
-            url=ECHO_SERVER_URL,
+            url=WEBHOOK_RECEIVER_URL,
             payload={"event_id": event_id, "type": "order.created", "amount": 99.99},
             event_id=event_id,
         )],

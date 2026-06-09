@@ -12,7 +12,7 @@ from temporalio.client import Client
 from temporalio.common import ActivityIDConflictPolicy
 
 from .activities import deliver_webhook
-from .shared import ECHO_SERVER_URL, TASK_QUEUE, WebhookDelivery
+from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 
 
 async def start(client: Client, event_id: str, label: str):
@@ -22,7 +22,7 @@ async def start(client: Client, event_id: str, label: str):
         handle = await client.start_activity(
             deliver_webhook,
             args=[WebhookDelivery(
-                url=ECHO_SERVER_URL,
+                url=WEBHOOK_RECEIVER_URL,
                 payload={"event_id": event_id, "type": "dup_test"},
                 event_id=event_id,
             )],

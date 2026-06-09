@@ -156,7 +156,7 @@ docker exec saa-test /tmp/setup-workshop
 # 3. For each module, start a worker and run the starter from BOTH exercise/ and solution/.
 docker exec -d saa-test bash -c \
   'cd /root/workshop/exercises/NN-slug/solution && uv run python -m webhooks.worker > /tmp/worker.log 2>&1'
-# ... then docker exec the starter scripts, check echo server / temporal activity describe ...
+# ... then docker exec the starter scripts, check webhook receiver / temporal activity describe ...
 
 # 4. Clean up.
 docker stop saa-test && docker rm saa-test

@@ -15,9 +15,9 @@ nohup temporal server start-dev \
   --log-level warn \
   > /var/log/workshop/temporal.log 2>&1 &
 
-# Start echo server in the background
-nohup python /opt/workshop/server/echo_server.py \
-  > /var/log/workshop/echo.log 2>&1 &
+# Start webhook receiver in the background
+nohup python /opt/workshop/server/webhook_receiver.py \
+  > /var/log/workshop/receiver.log 2>&1 &
 
 # Serve the interactive demo HTML on port 9001 (a static file server).
 # Lets Module 02 surface the idempotency comparison as an in-sandbox tab.

@@ -14,7 +14,7 @@ from temporalio.client import Client
 from temporalio.common import Priority
 
 from .activities import deliver_webhook
-from .shared import ECHO_SERVER_URL, TASK_QUEUE, WebhookDelivery
+from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 
 
 async def main() -> None:
@@ -27,7 +27,7 @@ async def main() -> None:
         h = await client.start_activity(
             deliver_webhook,
             args=[WebhookDelivery(
-                url=ECHO_SERVER_URL,
+                url=WEBHOOK_RECEIVER_URL,
                 payload={"event_id": f"bg_{i:03d}", "tenant": "background"},
                 event_id=f"bg_{i:03d}",
             )],
@@ -48,7 +48,7 @@ async def main() -> None:
         h = await client.start_activity(
             deliver_webhook,
             args=[WebhookDelivery(
-                url=ECHO_SERVER_URL,
+                url=WEBHOOK_RECEIVER_URL,
                 payload={"event_id": f"urgent_{i:03d}", "tenant": "urgent"},
                 event_id=f"urgent_{i:03d}",
             )],

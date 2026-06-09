@@ -194,7 +194,7 @@
       <div class="dot" id="dot-without"></div>
     </div>
     <div class="box echo">
-      <div class="echo-label">Echo Server — deliveries</div>
+      <div class="echo-label">Webhook receiver — deliveries</div>
       <div class="counter" id="count-without">0</div>
       <div class="duplicated-badge" id="dup-without">duplicated</div>
     </div>
@@ -210,7 +210,7 @@
       <div class="dot" id="dot-with"></div>
     </div>
     <div class="box echo">
-      <div class="echo-label">Echo Server — deliveries</div>
+      <div class="echo-label">Webhook receiver — deliveries</div>
       <div class="counter" id="count-with">0</div>
       <div class="deduped-badge" id="dedup-with">deduped</div>
     </div>
@@ -230,11 +230,11 @@
 <script>
   const steps = [
     {
-      desc: 'Start: a freshly reset echo server. Click <b>Step</b> or <b>Play</b> to advance.',
+      desc: 'Start: a freshly reset webhook receiver. Click <b>Step</b> or <b>Play</b> to advance.',
       apply: () => { reset(); }
     },
     {
-      desc: 'Step 1: the Client POSTs to the echo server. The activity body is in flight.',
+      desc: 'Step 1: the Client POSTs to the webhook receiver. The activity body is in flight.',
       apply: () => { moveDots('mid'); }
     },
     {

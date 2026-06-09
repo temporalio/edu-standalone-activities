@@ -37,7 +37,7 @@ Pedagogy: **do-then-understand**. Each module gets the learner doing or breaking
 | # | Name | Time | Goal | Fail-then-fix moment |
 |---|------|------|------|----------------------|
 | 01 | **Skip the workflow** (core, build-and-teach) | 10 min | Build a webhook-delivery activity, run it standalone, run it via a workflow, compare **events, actions, retention, latency, throughput**. | "Same activity, two scheduling shapes": learner sees the wrapped version costs more on every axis — the reveal moment. |
-| 02 | Idempotency and crash safety | 10 min | **Dedup against Temporal's own retries.** A worker crash mid-flight makes Temporal retry — without an idempotency key the receiver gets the POST twice; with one, only the first lands. | `pkill` the worker mid-flight; echo server counter climbs to 2; add one line of code; counter stays at 1. |
+| 02 | Idempotency and crash safety | 10 min | **Dedup against Temporal's own retries.** A worker crash mid-flight makes Temporal retry — without an idempotency key the receiver gets the POST twice; with one, only the first lands. | `pkill` the worker mid-flight; webhook receiver counter climbs to 2; add one line of code; counter stays at 1. |
 | 03 | Concurrency, rate limits, priority & fairness | 12 min | Worker config to cap downstream load (`max_concurrent_activities`, `max_activities_per_second`) **and** Task Queue Priority / Fairness to keep one loud tenant from starving others. Flag future Flow Control features. | Unbounded fan-out → downstream returns 429s; add caps + per-tenant priority queues → loud tenant no longer starves the quiet one. |
 | 04 | Dedup via ID reuse | 10 min | **Dedup against duplicate upstream events.** Same event scheduled twice from the client → Temporal rejects / returns the existing handle at the scheduling layer (no second worker run). SDK behavior verified at implementation. | Call `start_activity` twice with same id without a conflict policy; observe wrong behavior; add the policy; correct behavior. |
 | 05 | **Ship to Temporal Cloud** (optional advanced) | 10 min | Swap the local dev server for a Temporal Cloud namespace with mTLS auth; run the same activity against Cloud; verify in the Cloud UI. Requires the learner's own Cloud namespace + cert/key. | — (capstone, not a failure exercise) |
@@ -45,7 +45,7 @@ Pedagogy: **do-then-understand**. Each module gets the learner doing or breaking
 
 ## Use case
 
-Webhook delivery to a local stdlib echo server inside the Instruqt sandbox. No API keys, no new Docker dependency.
+Webhook delivery to a local stdlib webhook receiver inside the Instruqt sandbox. No API keys, no new Docker dependency.
 
 ## Out of scope (for v1)
 

@@ -7,7 +7,7 @@ from datetime import timedelta
 from temporalio.client import Client
 
 from .activities import deliver_webhook
-from .shared import ECHO_SERVER_URL, TASK_QUEUE, WebhookDelivery
+from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 
 
 async def main(count: int = 30) -> None:
@@ -17,7 +17,7 @@ async def main(count: int = 30) -> None:
         h = await client.start_activity(
             deliver_webhook,
             args=[WebhookDelivery(
-                url=ECHO_SERVER_URL,
+                url=WEBHOOK_RECEIVER_URL,
                 payload={"event_id": f"bulk_{i:03d}", "type": "bulk_send"},
                 event_id=f"bulk_{i:03d}",
             )],

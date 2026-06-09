@@ -84,7 +84,7 @@ uv run python -m webhooks.worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send 30 deliveries:
 
 ```bash,run
-scripts/reset-echo.sh
+scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
@@ -121,7 +121,7 @@ uv run python -m webhooks.worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another 30:
 
 ```bash,run
-scripts/reset-echo.sh
+scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
@@ -140,7 +140,7 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab while the 
 There's a demo script in the exercise that does this for you. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
-scripts/reset-echo.sh
+scripts/reset-receiver.sh
 uv run python -m webhooks.send_priority_demo
 ```
 

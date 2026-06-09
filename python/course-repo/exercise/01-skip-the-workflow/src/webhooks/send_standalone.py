@@ -7,7 +7,7 @@ from datetime import timedelta
 from temporalio.client import Client
 
 from .activities import deliver_webhook
-from .shared import ECHO_SERVER_URL, TASK_QUEUE, WebhookDelivery
+from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 
 
 async def main(event_id: str) -> None:
@@ -15,7 +15,7 @@ async def main(event_id: str) -> None:
     result = await client.execute_activity(
         deliver_webhook,
         args=[WebhookDelivery(
-            url=ECHO_SERVER_URL,
+            url=WEBHOOK_RECEIVER_URL,
             payload={"event_id": event_id, "type": "order.created", "amount": 99.99},
             event_id=event_id,
         )],

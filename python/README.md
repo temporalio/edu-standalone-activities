@@ -12,8 +12,8 @@ python/
 ├── sandbox/               # Dockerfile for the Instruqt sandbox base image
 └── course-repo/           # Contents pre-cloned to /opt/workshop inside the sandbox
     ├── pyproject.toml
-    ├── server/            # Stdlib echo server (the webhook receiver)
-    ├── scripts/           # Chaos helpers (kill-worker, reset-echo, ...)
+    ├── server/            # Stdlib webhook receiver
+    ├── scripts/           # Chaos helpers (kill-worker, reset-receiver, ...)
     ├── exercise/<NN>/     # Starter code per module (has TODO markers)
     └── solution/<NN>/     # Completed code per module
 ```
@@ -28,7 +28,7 @@ Currently shipping Module 01 + sandbox skeleton. Modules 02–06 follow in subse
 # From inside the sandbox image (or a local equivalent):
 cd /opt/workshop
 uv sync
-uv run python server/echo_server.py &      # Start echo server on :9000
+uv run python server/webhook_receiver.py &      # Start webhook receiver on :9000
 temporal server start-dev --ui-port 8233 & # Start Temporal dev server
 
 cd exercise/01-skip-the-workflow

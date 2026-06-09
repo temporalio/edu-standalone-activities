@@ -102,11 +102,11 @@ uv run python -m webhooks.worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send one delivery:
 
 ```bash,run
-scripts/reset-echo.sh
+scripts/reset-receiver.sh
 uv run python -m webhooks.send_standalone evt_buggy
 ```
 
-(`scripts/reset-echo.sh` clears the Webhook receiver so each run starts from a clean slate.)
+(`scripts/reset-receiver.sh` clears the Webhook receiver so each run starts from a clean slate.)
 
 The Activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy waits a short backoff between attempts. The whole thing finishes in about 3 seconds.
 
@@ -158,7 +158,7 @@ uv run python -m webhooks.worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another delivery with the fix in place:
 
 ```bash,run
-scripts/reset-echo.sh
+scripts/reset-receiver.sh
 uv run python -m webhooks.send_standalone evt_fixed
 ```
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 TASK_QUEUE = "webhook-queue"
-ECHO_SERVER_URL = "http://localhost:9000/hooks"
+WEBHOOK_RECEIVER_URL = "http://localhost:9000/hooks"
 
 
 @dataclass

@@ -14,7 +14,7 @@ def deliver_webhook(req: WebhookDelivery) -> int:
 
     headers: dict[str, str] = {}
     # TODO: add an Idempotency-Key header from activity.info().activity_id.
-    # The echo server caches by this header and dedupes duplicate deliveries.
+    # The webhook receiver caches by this header and dedupes duplicate deliveries.
     # The key MUST be deterministic across retries - use activity.info()
     # .activity_id (stable), not uuid4() (regenerated each attempt).
 

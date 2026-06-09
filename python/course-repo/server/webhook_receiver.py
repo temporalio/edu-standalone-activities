@@ -1,4 +1,4 @@
-"""Stdlib HTTP echo server used as the webhook receiver in this tutorial.
+"""Stdlib HTTP webhook receiver used as the webhook receiver in this tutorial.
 
 Endpoints:
   POST /hooks      - Receives a webhook delivery. Records it. Returns 200.
@@ -130,7 +130,7 @@ setInterval(refresh, 2000);
 
 def main() -> None:
     server = HTTPServer(("0.0.0.0", 9000), EchoHandler)
-    print("Echo server listening on :9000")
+    print("Webhook receiver listening on :9000")
     server.serve_forever()
 
 
