@@ -26,7 +26,7 @@ notes:
 
     - **Temporal dev server** on `localhost:7233` (single-binary dev mode).
     - **Temporal Web UI** on `localhost:8233` — browse activities and workflows.
-    - **Echo server** on `localhost:9000` — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
+    - **Webhook receiver** on `localhost:9000` — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
 
     You don't need to start any of these. They boot with the sandbox.
 
@@ -37,7 +37,7 @@ notes:
 
     ## How this tutorial works
 
-    - **Blue tab-name buttons** in the instructions (Worker, Terminal, Echo server, Temporal UI) are clickable — they jump to that tab in the sandbox.
+    - **Blue tab-name buttons** in the instructions (Worker, Terminal, Webhook receiver, Temporal UI) are clickable — they jump to that tab in the sandbox.
     - **Code blocks** with a Run button on the right execute in the most recently focused terminal tab. Or copy + paste into the terminal yourself.
     - The **Solution** tab has the finished code for the current module. Peek at it any time you want, especially if you're stuck.
 tabs:
@@ -62,7 +62,7 @@ tabs:
   hostname: workshop
   workdir: /root/workshop/exercises/01-skip-the-workflow/exercise
 - id: sgg6rcekwwk2
-  title: Echo server
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
@@ -159,7 +159,7 @@ await client.execute_activity(
 
 The client tells Temporal "run this Activity once and give me the result." There's no Workflow class anywhere in the script.
 
-Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You should see one delivery recorded. The Echo server tab auto-refreshes every 2 seconds, so leave it open and you'll see new deliveries appear without reloading.
+Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see one delivery recorded. The Webhook receiver tab auto-refreshes every 2 seconds, so leave it open and you'll see new deliveries appear without reloading.
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. You should see `deliver-evt_001` listed.
 
@@ -198,13 +198,13 @@ Open `src/webhooks/send_via_workflow.py` and compare it to `send_standalone.py`:
 - `send_standalone.py` calls `client.execute_activity(deliver_webhook, ...)` — Temporal runs your Activity directly.
 - `send_via_workflow.py` calls `client.execute_workflow(WebhookWorkflow.run, ...)` — Temporal runs a Workflow Execution, which then runs your Activity.
 
-Same `deliver_webhook` Activity gets called both times. The Echo server tab now shows **2** deliveries.
+Same `deliver_webhook` Activity gets called both times. The Webhook receiver tab now shows **2** deliveries.
 
 ---
 
 ## 4. Compare the cost (~3 min)
 
-From the outside, the two runs look identical: one HTTP POST landed at the Echo server each time. But Temporal recorded very different amounts of history for each. Look at both with the CLI in the [button label="Terminal" background="#444CE7"](tab-2) tab:
+From the outside, the two runs look identical: one HTTP POST landed at the Webhook receiver each time. But Temporal recorded very different amounts of history for each. Look at both with the CLI in the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
 temporal activity describe --address localhost:7233 --activity-id deliver-evt_001
@@ -282,7 +282,7 @@ Multiply by millions of executions per day and you have a real line item in rete
 
 The next modules tackle what happens when reality intrudes:
 
-- **Module 02** — Idempotency and crash safety. Crash the worker mid-delivery; watch the echo server show 2 deliveries; fix it.
+- **Module 02** — Idempotency and crash safety. Crash the worker mid-delivery; watch the webhook receiver show 2 deliveries; fix it.
 - **Module 03** — Concurrency, rate limits, priority & fairness. Stop one loud tenant from starving the rest.
 - **Module 04** — Dedup via ID reuse. Same upstream event arrives twice; let Temporal reject the duplicate.
 - **Module 05** — When SAA vs. when Workflow. Three scenarios, your call.

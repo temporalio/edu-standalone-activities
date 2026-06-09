@@ -8,22 +8,20 @@ teaser: Three scenarios. For each one, pick Standalone Activity or Workflow — 
 notes:
 - type: text
   contents: |
-    # When SAA vs when Workflow
+    # When to pick a Standalone Activity vs. a Workflow
 
-    You've built a webhook delivery service four ways now. You've
-    seen the cost shape (Module 01), the durability gap idempotency
-    closes (Module 02), the throughput knobs (Module 03), and the
-    scheduling-layer dedup (Module 04).
+    You've now built a webhook delivery service four ways:
 
-    Time to step back. Standalone Activities are not a replacement
-    for Workflows — they're a *lighter-weight option* when you don't
-    need orchestration.
+    - **Module 1** — events recorded for a Standalone Activity (3) vs. an Activity-in-Workflow (11).
+    - **Module 2** — making retries safe with an idempotency key.
+    - **Module 3** — capping throughput with a per-second rate limit, and using `Priority` to put urgent work ahead of bulk.
+    - **Module 4** — rejecting duplicate `start_activity` calls at the server.
 
-    This module walks through three real-world scenarios. For each
-    one, decide: SAA or Workflow? Then reveal the answer and the
-    reasoning. Two knowledge-check questions at the end.
+    This last module steps back and asks: when should you actually reach for a Standalone Activity in production, and when do you need a real Workflow?
 
-    No code. ~8 minutes.
+    Standalone Activities aren't a replacement for Workflows — they're a lighter-weight option for the cases where you don't need orchestration. This module walks through three concrete scenarios. For each one, decide which to use before revealing the answer. Two short knowledge-check questions follow.
+
+    No code in this module. About 8 minutes.
 tabs:
 - id: ripqsfaeunnx
   title: Exercise
@@ -40,34 +38,34 @@ timelimit: 600
 enhanced_loading: null
 ---
 
-# When SAA vs when Workflow
+# When to pick a Standalone Activity vs. a Workflow
 
-You've built it four ways. Now build a mental model for which to reach for next time.
+You've built four versions of the same service. The next decision is which approach to pick for new work.
 
-The rule of thumb: **if you need orchestration — multi-step state, signals, queries, child workflows, compensation — write a Workflow. Otherwise, write a Standalone Activity and save the events, the retention, and the cost.**
+A simple rule of thumb: **if you need orchestration — multi-step state, signals, queries, child workflows, compensation — write a Workflow. If each unit of work is self-contained, write a Standalone Activity and save the events, the retention, and the cost.**
 
-Three scenarios. Decide your answer for each, then expand the disclosure to see the recommendation.
+Three scenarios below. For each one, decide your answer first, then open the disclosure to see the recommendation and reasoning.
 
 ---
 
-## Scenario 1: Webhook delivery at 10M/day
+## Scenario 1: Webhook delivery at 10 million per day
 
-You're Stripe (or a Stripe-adjacent product). Every payment event triggers a webhook delivery to the customer's endpoint. Each delivery is one HTTP POST with retry on 5xx and exponential backoff. No follow-up, no coordination — fire and forget, durably.
+You're Stripe (or a Stripe-adjacent company). Every payment event triggers a webhook delivery to the customer's endpoint. Each delivery is one HTTP POST with retry on 5xx and exponential backoff. No follow-up steps, no coordination — just one durable POST per event.
 
-**Decide before you peek.**
+**Pick an answer before you reveal.**
 
 <details>
 <summary><b>Reveal the answer</b></summary>
 
 **Standalone Activity.**
 
-Each delivery is a single durable side effect. No multi-step state, no signals, no compensation. A Workflow would pay for orchestration you're not using — extra workflow history events per delivery, full retention, more billed actions. At 10M/day the cost delta is real money.
+Each delivery is a single durable side effect. No multi-step state, no signals, no compensation. A Workflow would record orchestration events you're not using — extra Workflow history per delivery, full retention, more billed actions. At 10 million per day, the cost difference is real money.
 
-The SAA toolkit you've already learned covers everything Stripe needs here:
+Everything Stripe needs in this scenario you've already learned:
 
-- Module 02: Idempotency-Key dedups the retry-after-crash window.
-- Module 03: `max_activities_per_second` keeps you from DDoSing the customer's endpoint.
-- Module 04: `id_conflict_policy=USE_EXISTING` absorbs upstream duplicate events.
+- **Module 2**: an Idempotency-Key on the POST dedupes the retry window.
+- **Module 3**: `max_activities_per_second` protects the customer's endpoint from being overloaded.
+- **Module 4**: `id_conflict_policy=USE_EXISTING` absorbs duplicate events from the upstream payment system.
 
 </details>
 
@@ -81,25 +79,25 @@ A customer places an order. Your system needs to:
 2. Reserve inventory.
 3. Trigger fulfillment.
 4. Send a confirmation email.
-5. **If any step fails after charging**, refund the card and notify ops.
+5. **If any step fails after the card is charged**, refund the card and notify ops.
 
-The whole thing has to look atomic from the customer's perspective — partial completion is unacceptable. The shape is sequential, with conditional compensation.
+The pipeline has to look atomic from the customer's perspective — a partial result is unacceptable. The steps run sequentially, and a later failure has to roll earlier ones back.
 
-**Decide.**
+**Pick an answer before you reveal.**
 
 <details>
 <summary><b>Reveal the answer</b></summary>
 
 **Workflow.**
 
-This is exactly what Workflows exist for. You have:
+This is exactly what Workflows are for. You have:
 
-- Multi-step state (which step are we on, what happened at each).
-- Conditional logic (charge failed? skip the rest. fulfillment failed? compensate the charge).
-- Saga semantics (refund-on-failure is compensation).
-- Long timescales (fulfillment might take days; the workflow waits durably).
+- Multi-step state: which step you're on, what happened at each, what to roll back.
+- Conditional logic: if the charge failed, skip the rest; if fulfillment failed, refund the charge.
+- Saga semantics: refund-on-failure is a compensation step.
+- Long timescales: fulfillment might take days; the Workflow waits durably for it.
 
-You'd write each step as an Activity called from a Workflow. The Activities themselves could be Standalone in a different system, but the *orchestration* belongs in a Workflow.
+You'd write each step as an Activity called from a Workflow. The Activities themselves could be Standalone Activities in a different system, but the *orchestration* belongs in a Workflow.
 
 </details>
 
@@ -107,24 +105,22 @@ You'd write each step as an Activity called from a Workflow. The Activities them
 
 ## Scenario 3: Daily user digest email
 
-Every morning at 9 AM in the user's timezone, send them a digest email summarizing their account activity. The job runs once per user per day. Each user's digest is independent. If it fails, retry with backoff. No coordination with anything else.
+Every morning at 9 AM in the user's timezone, send them an email summarizing their account activity. The job runs once per user per day. Each user's digest is independent of every other user's. If it fails, retry with backoff. No coordination with anything else.
 
-**Decide.**
+**Pick an answer before you reveal.**
 
 <details>
 <summary><b>Reveal the answer</b></summary>
 
 **Standalone Activity.**
 
-Each user's daily digest is a one-shot durable job. A scheduler (Temporal Schedules, cron, or your own logic) fires `client.execute_activity` per user per day. The activity:
+Each user's daily digest is a one-shot durable job. A scheduler (Temporal Schedules, cron, or your own logic) calls `client.execute_activity` once per user per day. The Activity:
 
-1. Reads the user's activity for the last 24h.
+1. Reads the user's activity for the last 24 hours.
 2. Composes the email body.
-3. Sends via your email provider.
+3. Sends the email through your provider.
 
-No orchestration. No multi-step state across activities. The only retry you care about is at the single-activity level, which Temporal handles natively.
-
-A Workflow here would just wrap a single activity call — paying the cost of orchestration semantics you don't use.
+No multi-step state across Activities. No signals. The only retry you care about is at the single-Activity level, which Temporal handles natively. A Workflow here would wrap a single Activity call and pay for orchestration semantics you don't use.
 
 </details>
 
@@ -154,11 +150,11 @@ A `Workflow` execution emits about **11 events** per Activity it runs (`Workflow
 <details>
 <summary>Answer</summary>
 
-**~80 million events per day saved** — and translates to **up to ~50% cheaper** on Temporal Cloud billing.
+**~80 million fewer events per day** — and roughly **half the actions billed** on Temporal Cloud.
 
-10M activities × (11 events − 3 events) = 80M fewer events.
+10M activities × (11 events − 3 events) = 80M fewer events recorded by Temporal each day.
 
-The action-billing math is even more user-friendly: a Workflow + Activity is at least 2 billed actions, a Standalone Activity is 1. That's the headline number behind "up to 50% cheaper" — and it's the empirical answer to "why do Stripe / Coinbase / Roblox keep asking for Standalone Activities as a Job Queue replacement."
+The Cloud-billing math: a Workflow + Activity is at least 2 billed actions. A Standalone Activity is 1. At 10M/day that's the difference between paying for 10M actions and paying for 20M — roughly a 50% cost reduction for this class of one-shot work.
 
 </details>
 
@@ -166,12 +162,12 @@ The action-billing math is even more user-friendly: a Workflow + Activity is at 
 
 ## Wrap-up
 
-You've built and shipped a real Standalone-Activity-as-Job-Queue track. Here's what's in your toolkit now:
+What you can now do with Standalone Activities in Python:
 
-- **`client.execute_activity` / `client.start_activity`** — invoke an activity directly, no Workflow class needed.
-- **`Idempotency-Key` from `activity.info().activity_id`** — make retries safe.
-- **`max_activities_per_second`** on the Worker — cap downstream load.
-- **`ActivityIDConflictPolicy.USE_EXISTING`** — dedup duplicate upstream calls.
-- **`Priority(priority_key, fairness_key, fairness_weight)`** on `start_activity` — express tenant prioritization (covered briefly in Module 03, deeper in a future module).
+- **`client.execute_activity` / `client.start_activity`** — run an Activity directly from a client, with no Workflow class.
+- **`Idempotency-Key` from `activity.info().activity_id`** — make retries safe by giving the receiver a stable dedup key.
+- **`max_activities_per_second`** on the Worker — cap dispatch rate to protect the downstream service.
+- **`ActivityIDConflictPolicy.USE_EXISTING`** — let the server absorb duplicate `start_activity` calls instead of erroring.
+- **`Priority(priority_key, fairness_key, fairness_weight)`** on `start_activity` — push urgent work ahead of bulk when the queue is contended.
 
-That's it. Click **Check** to wrap up the track.
+Click **Check** to finish the track.

@@ -49,7 +49,7 @@ tabs:
   hostname: workshop
   workdir: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
 - id: qjn5ptmaety6
-  title: Echo server
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
@@ -63,34 +63,36 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Dedup via ID reuse
+# Rejecting duplicate requests at the server
 
-By the end you'll have:
+When your upstream system calls `start_activity` twice with the same id, the default behavior is for the second call to raise an error. You'll see that happen, then change one parameter so the second call quietly returns a handle to the in-flight Activity instead.
 
-- Reproduced the default behavior: two `start_activity` calls with the same `id` and the second one errors.
-- Added `id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING` so the duplicate quietly maps to the first call's handle.
-- Understood how this scheduling-layer dedup composes with Module 02's body-level idempotency.
+You'll do three things in this module:
 
-Budget ~10 minutes.
+1. Run two `start_activity` calls with the same id, back-to-back. Watch the second one error out.
+2. Add `id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING` to the call. Re-run. Watch both calls succeed with the same `run_id`.
+3. See how this scheduling-layer dedup composes with the body-level idempotency from Module 2.
+
+The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
 ---
 
 ## 1. See the conflict (~3 min)
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab:
+In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `send_double` — a script that calls `start_activity` twice with the same id, back-to-back:
 
 ```bash,run
 scripts/reset-echo.sh
 uv run python -m webhooks.send_double evt_dup_001
 ```
 
-You'll see something like:
+You should see:
 
 ```
 [call-1] start_activity id=deliver-evt_dup_001
@@ -100,34 +102,32 @@ You'll see something like:
 [call-1] activity completed
 ```
 
-The first call succeeded; the second call errored because Temporal's default `id_conflict_policy` is `FAIL` — refuse to schedule a second activity with an id already in flight.
+The first call succeeded. The second call raised an error because the default `id_conflict_policy` is `FAIL` — the server refuses to schedule a second Activity with an id that's already in flight.
 
-### How to verify this is the right outcome
+### Confirming this is the right outcome
 
-The Temporal UI is sparse here on purpose: **the second call was rejected at the server before any activity was created**, so there's no failed activity record to look at. The verification has to come from the surrounding state. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+The Temporal UI doesn't show much here, because **the server rejected the second call before any second Activity got created**. There's no failed Activity record to look at — the only sign of the rejection is the `ActivityAlreadyStartedError` your Python code caught. To confirm what happened, look at the surrounding state. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
-# Exactly 1 webhook actually delivered (the duplicate never reached the worker).
+# Exactly 1 webhook was actually delivered (the duplicate never reached a Worker).
 curl -s http://localhost:9000/_received | jq '.count, [.deliveries[].body.event_id]'
 
-# Exactly 1 activity exists on the server for deliver-evt_dup_001.
+# Exactly 1 Activity exists on the server for this id.
 temporal activity list --address localhost:7233 \
   --query 'ActivityId="deliver-evt_dup_001"' -o json | jq 'length'
 
-# That one activity ran exactly once (attempt=1, status=Completed).
+# That one Activity ran exactly once (attempt=1, status=Completed).
 temporal activity describe --address localhost:7233 \
   --activity-id deliver-evt_dup_001 -o json | jq '{attempt, status}'
 ```
 
-All three checks point to the same picture: server rejected call-2 instantly, only one activity got scheduled, one webhook delivered, no retries.
-
-> **What just happened?** Temporal's server enforced id uniqueness at *scheduling* time — call-2 never reached a worker, never created a history record, never showed up in the UI. The only place the failure exists is the `ActivityAlreadyStartedError` your Python code caught. That's why your application has to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing a lot.
+All three checks agree: one Activity scheduled, one webhook delivered, one attempt. The rejected call cost zero Worker cycles and left no record on the server — but your application code still had to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing every single call.
 
 ---
 
-## 2. Set the conflict policy (~2 min)
+## 2. Set the conflict policy to USE_EXISTING (~2 min)
 
-Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. Two TODOs:
+Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. There are two `TODO` comments — uncomment the import, and add one keyword argument inside `start_activity(...)`:
 
 ```python
 # At the top of the file, uncomment:
@@ -137,11 +137,13 @@ from temporalio.common import ActivityIDConflictPolicy
 id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,
 ```
 
-`USE_EXISTING` says: if there's already an activity with this id in flight, give me back a handle to *that* one instead of erroring.
+The finished file is in the **Solution** tab.
+
+`USE_EXISTING` tells the server: if there's already an Activity with this id in flight, return a handle to *that* one instead of raising an error.
 
 ---
 
-## 3. Verify (~3 min)
+## 3. Verify the fix (~3 min)
 
 Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, re-run with the policy in place:
 
@@ -161,11 +163,11 @@ Now you should see:
 [call-2] activity completed
 ```
 
-Both calls returned successfully with the **same `run_id`** — call-2 got the existing handle. The [button label="Echo server" background="#444CE7"](tab-4) tab shows **1** delivery for `evt_dup_002`.
+Both calls returned successfully with the **same `run_id`**. The second call got a handle to the Activity the first call scheduled, so `await handle.result()` on either handle resolves to the same outcome.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab — there is exactly **one** activity for `deliver-evt_dup_002`, not two. The duplicate was rejected at scheduling time; no worker cycles were wasted.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1** delivery for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
-> **What just happened?** The server-side scheduling layer absorbed the duplicate. Your application code stayed clean. Combined with Module 02's idempotency, your delivery is at-most-once-effect even when both the upstream system retries *and* Temporal retries.
+> **The takeaway:** the server absorbed the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 2, your delivery is protected from both Temporal's own retries *and* your upstream system's duplicate calls — two different sources of duplication, two different layers of defense.
 
 ---
 

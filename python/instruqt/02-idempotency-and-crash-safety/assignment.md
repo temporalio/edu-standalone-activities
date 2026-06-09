@@ -18,10 +18,10 @@ notes:
 
     ## What you'll do
 
-    1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Echo server record 3 deliveries for one logical event.
-    2. Add a one-line idempotency key to the POST. Re-run. Watch the Echo server record only 1 delivery — the receiver dedupes the retries.
+    1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Webhook receiver record 3 deliveries for one logical event.
+    2. Add a one-line idempotency key to the POST. Re-run. Watch the Webhook receiver record only 1 delivery — the receiver dedupes the retries.
 
-    The same six tabs from Module 1 are available in this module's sandbox (Exercise, Solution, Terminal, Worker, Echo server, Temporal UI). There's also an **Idempotency demo** tab showing an interactive version of the diagram below.
+    The same six tabs from Module 1 are available in this module's sandbox (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). There's also an **Idempotency demo** tab showing an interactive version of the diagram below.
 
     ## The visual version
 
@@ -50,7 +50,7 @@ tabs:
   hostname: workshop
   workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
 - id: jv9klqjfvbkw
-  title: Echo server
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
@@ -75,8 +75,8 @@ When an Activity errors, Temporal retries it. That's the durability you want. Bu
 
 You'll see this happen, then fix it:
 
-1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. Echo server records 3 deliveries for one logical request.
-2. Add one line — an HTTP `Idempotency-Key` header — and re-run. Echo server now records 1 delivery; the receiver dedupes the retries.
+1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. Webhook receiver records 3 deliveries for one logical request.
+2. Add one line — an HTTP `Idempotency-Key` header — and re-run. Webhook receiver now records 1 delivery; the receiver dedupes the retries.
 3. Understand why the key has to come from `activity.info().activity_id` (stable across retries) and not `uuid.uuid4()` (regenerated every attempt).
 
 The **Solution** tab has the finished code for this module. Peek at it whenever you want, especially if you get stuck.
@@ -106,11 +106,11 @@ scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_buggy
 ```
 
-(`scripts/reset-echo.sh` clears the Echo server so each run starts from a clean slate.)
+(`scripts/reset-echo.sh` clears the Webhook receiver so each run starts from a clean slate.)
 
 The Activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy waits a short backoff between attempts. The whole thing finishes in about 3 seconds.
 
-Check the [button label="Echo server" background="#444CE7"](tab-4) tab. You should see **3 deliveries** recorded for `evt_buggy` — one per attempt. The Echo server tab auto-refreshes every 2 seconds, so you'll see the count climb as the retries land.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **3 deliveries** recorded for `evt_buggy` — one per attempt. The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the count climb as the retries land.
 
 ```json
 {
@@ -127,7 +127,7 @@ The receiver had no way to know these were duplicates of the same logical event,
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It shows the retry history — same Activity, three attempts, the last one Completed.
 
-> **What's happening:** each attempt of the Activity body POSTed to the Echo server *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again — and again — because the Activity body is what gets replayed, not the side effect.
+> **What's happening:** each attempt of the Activity body POSTed to the Webhook receiver *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again — and again — because the Activity body is what gets replayed, not the side effect.
 
 ---
 
@@ -141,7 +141,7 @@ headers = {"Idempotency-Key": activity.info().activity_id}
 
 That's the entire fix. The full solution is in the **Solution** tab if you want to copy it.
 
-`activity.info().activity_id` is the id you assigned when starting the Activity (`deliver-evt_buggy` here). It's **stable across retries** of the same Activity execution — every retry sees the same value. The Echo server caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't record a new delivery.
+`activity.info().activity_id` is the id you assigned when starting the Activity (`deliver-evt_buggy` here). It's **stable across retries** of the same Activity execution — every retry sees the same value. The Webhook receiver caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't record a new delivery.
 
 > **Why not `uuid.uuid4()`?** UUIDs are different every time you call them. Each retry would generate a fresh key, the receiver would see N different keys for N retries of one logical request, and your "idempotency" would dedupe nothing. The key has to be deterministic across retries.
 
@@ -162,7 +162,7 @@ scripts/reset-echo.sh
 uv run python -m webhooks.send_standalone evt_fixed
 ```
 
-Check the [button label="Echo server" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed`:
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed`:
 
 ```json
 {

@@ -43,7 +43,7 @@ lab_config:
   - 'Module 04: same event scheduled twice? Temporal rejects the duplicate.'
   - Activity IDs are the dedup key Temporal already gives you for free.
   - Booting your sandbox. Reading the manual is overrated.
-  - Spinning up an echo server. It will receive whatever you POST at it.
+  - Spinning up an webhook receiver. It will receive whatever you POST at it.
   - Provisioning a Python that doesn't time out. Or get lost. Or duplicate.
   - Standalone Activities have been waiting their whole life for this tutorial.
   theme:
@@ -52,5 +52,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "827951646402325647"
+checksum: "11653785507700063928"
 enhanced_loading: false
