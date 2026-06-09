@@ -44,6 +44,8 @@ git commit -m "Pin Instruqt track + challenge IDs"
 
 Script names' suffix MUST match the container name in `config.yml`. Container `workshop` → scripts named `setup-workshop`, `check-workshop`, etc. Mismatched names → `references unknown host` error.
 
+**Seed `pyproject.toml` + `scripts/` into both `exercise/` and `solution/`** in `setup-workshop`. Learners go into `solution/` to run the working code; if only `exercise/` has the project skeleton, `uv run python -m webhooks.worker` from `solution/` fails with `ModuleNotFoundError`. A simple `for SIDE in exercise solution; do cp pyproject.toml scripts ...; done` loop is enough.
+
 **Anything in a challenge folder is treated as a script.** Validator parses every file as `<event>-<container>`. Dropping `cost-comparison.svg` next to `assignment.md` fails with `references unknown event 'cost'` + `references unknown host 'comparison.svg'`. Put diagrams, assets, etc. *outside* the challenge folder (e.g. `python/diagrams/`).
 
 **Challenge directory numbering must be sequential.** Naming directories `01-`, `02-`, `04-` errors with `challenge ids are not sequential, expected: 03 actual: 04`. Either fill in the gap or renumber. The `NN-` prefix is the ordering Instruqt enforces; renumbering on the fly is cheap because the `slug:` in the frontmatter is what's actually stable (the directory prefix can change without breaking links).
@@ -101,8 +103,13 @@ Confirmed rendering: headings, paragraphs, bold/italic, inline code, code fences
 
 **Confirmed working:**
 - `<iframe>` from cross-origin CDN (raw.githack.com tested). Survives Instruqt's notes / assignment-body sanitizer and renders cross-origin content cleanly. **Use this for interactive HTML demos** that need JS — host the HTML page in `docs/` and iframe via raw.githack.com pointing at the branch. The Idempotency demo (Module 02) does this.
+- `<details>` / `<summary>` collapsibles render and toggle. Good for "think first, then reveal the answer" patterns — use a neutral summary like "Reveal the answer" rather than putting the answer in the summary itself.
 
 **Fallback for interactive content:** host the interactive page elsewhere (Vercel, GitHub Pages) and link out with a plain markdown link.
+
+**iframe URLs are branch-pinned and need updating on merge.** A URL like `https://raw.githack.com/<org>/<repo>/feat-branch/docs/demo.html` works while the branch lives but 404s after merge + branch deletion. On merge, swap the branch segment for `main` (or your default branch). Set a calendar reminder, or grep `raw.githack.com.*<feature-branch>` before deleting the branch.
+
+**Use a YAML block scalar (`|`) for `notes:contents`, not a double-quoted string.** Block scalars preserve newlines and don't require escaping HTML attributes' double quotes — much easier to author iframes / SVGs. Switching mid-track is cheap; just replace `contents: "..."` with `contents: |` and unescape.
 
 Test method: add a minimal example to one challenge's `notes:` or body, `instruqt track push`, view. Record results back into this file.
 
@@ -114,10 +121,50 @@ When designing a "kill the worker mid-activity" demo for retry / idempotency:
 - **The starter must be non-blocking.** `client.execute_activity(...)` blocks the calling shell until the activity completes — so the learner can't run `kill-worker.sh` in the same terminal. Use `client.start_activity(...)` for the starter (also a good teaching moment: standalone activities don't tether the starter).
 - **Expect to wait ~`start_to_close_timeout`** between the kill and the retry firing. Without an explicit `heartbeat_timeout`, Temporal can only detect the dead attempt by waiting for the activity-attempt timeout. Pick a `start_to_close_timeout` slightly larger than the activity body's expected duration (e.g. body sleeps 15s → timeout 20s) so the demo doesn't make learners wait minutes.
 - **Standalone activities don't appear in the Workflows tab of the Temporal UI** — that tab is for Workflow Executions only. They live under the **Standalone Activities** tab. Don't claim a specific `attempt =` value in the docs — let learners read what the UI actually shows.
+- **`pkill -f` patterns are picky.** `pkill -f "python -m webhooks.worker"` silently does nothing when the process is `python3 -m webhooks.worker` (which is what `uv run` launches). Use a pattern that doesn't depend on the python binary name: `pkill -f "webhooks.worker"` or `pkill -f "python.*-m webhooks.worker"`. Easy to miss because `pkill` exits 0 with nothing to kill.
 
 ## Free module navigation
 
 Default Instruqt tracks lock modules sequentially. To let learners jump to any module without completing prior ones, add `skipping_enabled: true` at the root of `track.yml`. Prerequisite: every challenge with a `check-<container>` script must also have a `solve-<container>` script (Instruqt rejects the flag otherwise — when a learner skips, Instruqt runs the solve scripts for skipped challenges so the sandbox state stays coherent). Make solve scripts cheap: e.g. `cp -rf /opt/workshop/solution/NN/. $DIR/`. The lock icons in the sidebar disappear and the "Skip to challenge?" dialog stops appearing.
+
+**Pair with an instant Check button.** The default `check-<container>` script validates the learner's work and gates progression — slow, and a friction point when the learner just wants to move on. If you don't need validation, replace each `check-<container>` with a one-liner:
+
+```bash
+#!/usr/bin/env bash
+# Instant pass: lessons advance freely; we don't gate progression on validation.
+exit 0
+```
+
+The Check button click becomes instant. Trade-off: no validation means a learner with broken code can still advance. For exploratory tracks this is usually the right call; for assessment-style tracks, keep the real check script.
+
+## Testing your track locally
+
+Static review misses bugs that only surface when the code actually runs. Boot the sandbox image locally and walk through each module end-to-end:
+
+```bash
+# 1. Run the sandbox image as a daemon.
+docker run -d --name saa-test --platform linux/amd64 \
+  -p 7233:7233 -p 8233:8233 -p 9000:9000 -p 9001:9001 \
+  ghcr.io/<org>/<image>:latest
+
+# 2. Inject the latest track scripts + course-repo (avoids rebuilding the image).
+docker cp <repo>/python/course-repo/. saa-test:/opt/workshop/
+docker cp <repo>/python/instruqt/track_scripts/setup-workshop saa-test:/tmp/setup-workshop
+docker exec saa-test chmod +x /tmp/setup-workshop
+docker exec saa-test /tmp/setup-workshop
+
+# 3. For each module, start a worker and run the starter from BOTH exercise/ and solution/.
+docker exec -d saa-test bash -c \
+  'cd /root/workshop/exercises/NN-slug/solution && uv run python -m webhooks.worker > /tmp/worker.log 2>&1'
+# ... then docker exec the starter scripts, check echo server / temporal activity describe ...
+
+# 4. Clean up.
+docker stop saa-test && docker rm saa-test
+```
+
+This caught real bugs in this track that static review missed: `pkill` pattern not matching `python3` (worker survived every "kill"), `ActivityHandle.first_execution_run_id` doesn't exist (only `WorkflowHandle` has that), solution dir missing `pyproject.toml` (learner gets `ModuleNotFoundError`). All silent until run.
+
+Run from the exercise dir AND the solution dir for every module — different bugs surface on each side.
 
 ## Common errors → root cause
 
