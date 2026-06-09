@@ -8,100 +8,38 @@ teaser: Build a webhook delivery activity, run it standalone, run it via a workf
 notes:
 - type: text
   contents: |
-    # Standalone Activities as a Job Queue
+    # Standalone Activities in Python
 
-    You're about to build a durable webhook-delivery job two ways and
-    see — with real event counts — why one shape costs less than the
-    other.
+    You're going to build a durable webhook delivery service.
 
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 540" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-      <rect width="1100" height="540" fill="#1a1a2e"/>
-      <text x="550" y="30" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="600">Standalone Activity vs. Activity-in-Workflow</text>
-      <g transform="translate(20, 55)">
-        <rect width="500" height="450" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
-        <text x="250" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Standalone Activity</text>
-        <rect x="170" y="38" width="160" height="38" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
-        <text x="250" y="71" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_activity(...)</text>
-        <line x1="250" y1="78" x2="250" y2="98" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="246,94 250,102 254,94" fill="#a0aec0"/>
-        <rect x="20" y="105" width="460" height="200" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
-        <text x="250" y="155" text-anchor="middle" fill="#f6e05e" font-size="22" font-weight="700">3 events<animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/></text>
-        <g font-size="11" font-family="ui-monospace, monospace">
-          <circle cx="55" cy="205" r="3" fill="#7350f7"/>
-          <text x="68" y="209" fill="#cbd5e0">1. ActivityTaskScheduled</text>
-          <circle cx="105" cy="235" r="3" fill="#7350f7"/>
-          <text x="118" y="239" fill="#cbd5e0">2. ActivityTaskStarted</text>
-          <circle cx="155" cy="265" r="3" fill="#7350f7"/>
-          <text x="168" y="269" fill="#cbd5e0">3. ActivityTaskCompleted</text>
-        </g>
-        <line x1="250" y1="309" x2="250" y2="335" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="246,331 250,339 254,331" fill="#a0aec0"/>
-        <rect x="170" y="338" width="160" height="34" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="359" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <line x1="250" y1="376" x2="250" y2="402" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="246,398 250,406 254,398" fill="#a0aec0"/>
-        <rect x="170" y="406" width="160" height="30" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="425" text-anchor="middle" fill="#e2e8f0" font-size="11">Echo Server</text>
-        <circle r="6" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5">
-          <animate attributeName="cx" values="250;250;55;55;105;105;155;155;250;250;250;250" keyTimes="0;0.05;0.15;0.27;0.35;0.47;0.55;0.67;0.77;0.83;0.93;1" dur="7s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="58;58;205;205;235;235;265;265;359;359;421;421" keyTimes="0;0.05;0.15;0.27;0.35;0.47;0.55;0.67;0.77;0.83;0.93;1" dur="7s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0;1;1;1;1;1;1;1;1;1;1;0" keyTimes="0;0.05;0.15;0.27;0.35;0.47;0.55;0.67;0.77;0.83;0.93;1" dur="7s" repeatCount="indefinite"/>
-        </circle>
-      </g>
-      <g transform="translate(580, 55)">
-        <rect width="500" height="450" fill="none" stroke="#4a5568" stroke-dasharray="3 3" rx="6"/>
-        <text x="250" y="22" text-anchor="middle" fill="#b794f6" font-size="14" font-weight="600">Activity-in-Workflow</text>
-        <rect x="170" y="38" width="160" height="38" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="58" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Client</text>
-        <text x="250" y="71" text-anchor="middle" fill="#a0aec0" font-size="10" font-family="ui-monospace, monospace">execute_workflow(...)</text>
-        <line x1="250" y1="78" x2="250" y2="98" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="246,94 250,102 254,94" fill="#a0aec0"/>
-        <rect x="10" y="105" width="480" height="270" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="125" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Temporal Server</text>
-        <text x="250" y="148" text-anchor="middle" fill="#f6e05e" font-size="22" font-weight="700">11 events<animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/></text>
-        <rect x="25" y="160" width="450" height="210" fill="#1a1a2e" stroke="#7350f7" stroke-width="1.2" rx="4"/>
-        <text x="250" y="177" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">Workflow Execution</text>
-        <g font-size="10" font-family="ui-monospace, monospace">
-          <circle cx="40" cy="195" r="3" fill="#7350f7"/>
-          <text x="52" y="199" fill="#cbd5e0">1. WorkflowExecutionStarted</text>
-          <circle cx="55" cy="210" r="3" fill="#7350f7"/>
-          <text x="67" y="214" fill="#cbd5e0">2. WorkflowTaskScheduled</text>
-          <circle cx="70" cy="225" r="3" fill="#7350f7"/>
-          <text x="82" y="229" fill="#cbd5e0">3. WorkflowTaskStarted</text>
-          <circle cx="85" cy="240" r="3" fill="#7350f7"/>
-          <text x="97" y="244" fill="#cbd5e0">4. WorkflowTaskCompleted</text>
-          <circle cx="100" cy="255" r="3" fill="#7350f7"/>
-          <text x="112" y="259" fill="#cbd5e0">5. ActivityTaskScheduled</text>
-          <circle cx="115" cy="270" r="3" fill="#7350f7"/>
-          <text x="127" y="274" fill="#cbd5e0">6. ActivityTaskStarted</text>
-          <circle cx="130" cy="285" r="3" fill="#7350f7"/>
-          <text x="142" y="289" fill="#cbd5e0">7. ActivityTaskCompleted</text>
-          <circle cx="145" cy="300" r="3" fill="#7350f7"/>
-          <text x="157" y="304" fill="#cbd5e0">8. WorkflowTaskScheduled</text>
-          <circle cx="160" cy="315" r="3" fill="#7350f7"/>
-          <text x="172" y="319" fill="#cbd5e0">9. WorkflowTaskStarted</text>
-          <circle cx="175" cy="330" r="3" fill="#7350f7"/>
-          <text x="187" y="334" fill="#cbd5e0">10. WorkflowTaskCompleted</text>
-          <circle cx="190" cy="345" r="3" fill="#7350f7"/>
-          <text x="202" y="349" fill="#cbd5e0">11. WorkflowExecutionCompleted</text>
-        </g>
-        <line x1="250" y1="379" x2="250" y2="402" stroke="#a0aec0" stroke-width="1.5"/>
-        <polygon points="246,398 250,406 254,398" fill="#a0aec0"/>
-        <rect x="130" y="406" width="240" height="38" fill="#2d3748" stroke="#4a5568" rx="4"/>
-        <text x="250" y="423" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Worker</text>
-        <text x="250" y="437" text-anchor="middle" fill="#a0aec0" font-size="9" font-family="ui-monospace, monospace">@workflow.defn + @activity.defn</text>
-        <circle r="6" fill="#f6e05e" stroke="#1a1a2e" stroke-width="1.5">
-          <animate attributeName="cx" values="250;250;40;55;70;85;100;115;130;145;160;175;190;250;250;250" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
-          <animate attributeName="cy" values="58;58;195;210;225;240;255;270;285;300;315;330;345;425;425;425" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0;1;1;1;1;1;1;1;1;1;1;1;1;1;1;0" keyTimes="0;0.03;0.08;0.15;0.22;0.29;0.36;0.43;0.50;0.57;0.64;0.71;0.78;0.86;0.95;1" dur="11s" repeatCount="indefinite"/>
-        </circle>
-      </g>
-      <text x="550" y="530" text-anchor="middle" fill="#cbd5e0" font-size="12">Same @activity.defn. Same HTTP delivery. Up to 50% cheaper on Temporal Cloud.</text>
-    </svg>
+    When something happens in your application — a payment clears, an order ships, a user signs up — you often need to tell another system about it by POSTing to a URL the other team gave you. That POST is called a **webhook**. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
 
-    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/cost-comparison/index.html" width="100%" height="640" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+    The same `deliver_webhook` Activity runs through every module:
+
+    - **Module 1**: Run the Activity directly from a client, with no Workflow. Compare the server-side cost vs. running the same Activity inside a Workflow.
+    - **Module 2**: Make retries safe with an idempotency key.
+    - **Module 3**: Cap throughput so a burst of deliveries doesn't overload the receiver.
+    - **Module 4**: Reject duplicate requests at Temporal's scheduling layer.
+    - **Module 5**: Three real-world scenarios — pick Standalone Activity or Workflow for each.
+
+    ## What's already running in this sandbox
+
+    - **Temporal dev server** on `localhost:7233` (single-binary dev mode).
+    - **Temporal Web UI** on `localhost:8233` — browse activities and workflows.
+    - **Echo server** on `localhost:9000` — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
+
+    You don't need to start any of these. They boot with the sandbox.
+
+    ## Prerequisites
+
+    - Comfortable reading and writing Python (functions, classes, imports).
+    - Familiar with Temporal Activities and Workers at the level [Temporal 101 in Python](https://learn.temporal.io/courses/temporal_101/python/) covers. If those words are new, take that course first and come back.
+
+    ## How this tutorial works
+
+    - **Blue tab-name buttons** in the instructions (Worker, Terminal, Echo server, Temporal UI) are clickable — they jump to that tab in the sandbox.
+    - **Code blocks** with a Run button on the right execute in the most recently focused terminal tab. Or copy + paste into the terminal yourself.
+    - The **Solution** tab has the finished code for the current module. Peek at it any time you want, especially if you're stuck.
 tabs:
 - id: vryel8ovmbex
   title: Exercise
@@ -138,127 +76,198 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Skip the workflow
+# Run an Activity without a Workflow
 
-Workflows are Temporal's primary primitive when you need orchestration — multi-step state, signals, child workflows, compensation logic. But not every durable job needs orchestration. For one-shot work like a webhook delivery, a charge, or a single email, **Standalone Activities** let you skip the workflow scaffolding and run an Activity directly from a Temporal Client — keeping durability, retries, and visibility while paying less for them.
+In Temporal you usually run an Activity from inside a Workflow. In this module you'll do something different: you'll run the same Activity directly from a client, with no Workflow involved. Temporal calls this a **Standalone Activity**.
 
-In this module you'll build one Activity and run it two ways: standalone from a client, and wrapped in a Workflow. Side by side you'll see the cost difference.
+It's still durable. It still retries on failure. It still shows up in the Temporal UI. But because there's no Workflow Execution wrapping it, Temporal records fewer events, retains less history, and bills fewer actions. For one-shot work like sending a webhook, charging a card, or sending an email — where you don't need multi-step orchestration — that overhead is wasted. Standalone Activities let you skip it.
 
-By the end you'll be able to:
+You'll do four things in this module:
 
-- Invoke an Activity directly from a client (no Workflow class needed).
-- Compare a Standalone Activity vs. an Activity-in-Workflow on **events, actions, retention, latency, and throughput**.
-- Decide when wrapping work in a Workflow is worth the cost — and when a Standalone Activity is the better shape.
+1. Write a small `deliver_webhook` Activity in Python.
+2. Run it directly from a client (Standalone Activity).
+3. Run the same Activity wrapped in a tiny Workflow.
+4. Compare how many events Temporal recorded for each, using the CLI.
 
-Budget ~10 minutes.
+Estimated time: 10 minutes.
 
 ---
 
-## 1. Write the activity (~2 min)
+## 1. Write the Activity (~2 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll see a `deliver_webhook` function with three TODOs:
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll see a stub with three `TODO` comments and a `raise NotImplementedError`.
+
+Replace the body of `deliver_webhook` with this code:
 
 ```python
-@activity.defn
-def deliver_webhook(req: WebhookDelivery) -> int:
-    activity.logger.info("Delivering webhook for event %s to %s", req.event_id, req.url)
-    # TODO: POST req.payload to req.url using httpx.post()
-    # TODO: raise on non-2xx response (response.raise_for_status())
-    # TODO: return the HTTP status code
-    raise NotImplementedError("Fill in deliver_webhook")
+response = httpx.post(req.url, json=req.payload, timeout=5.0)
+response.raise_for_status()
+return response.status_code
 ```
 
-Fill it in. `httpx` is already in your environment.
+Three lines:
 
-> **What's happening:** This is a regular `@activity.defn`. Nothing here screams "standalone" yet. Standalone Activities use the same activity definition as Workflow-bound ones — that's the point. The standalone-ness is in how you call it, not how you define it.
+1. POST the payload to the URL using `httpx`. Both come from the `WebhookDelivery` input. `httpx` is already installed.
+2. `raise_for_status()` raises an exception if the response was a 4xx or 5xx — Temporal will see that and retry.
+3. Return the HTTP status code as the Activity's result.
+
+Save the file. The full version is in the **Solution** tab if you'd rather copy it.
+
+> This is a regular `@activity.defn`. There's no "standalone" decorator. Standalone vs. workflow-bound is decided by *how the Activity is called*, not how it's defined.
 
 ---
 
-## 2. Run it standalone (~2 min)
+## 2. Run it as a Standalone Activity (~2 min)
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the worker:
+In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-Expected:
+You should see:
 
 ```
 Worker running on task queue 'webhook-queue'
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, fire one delivery as a Standalone Activity:
+The Worker is now polling Temporal for tasks. Leave it running.
+
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, run the starter script:
 
 ```bash,run
 uv run python -m webhooks.send_standalone evt_001
 ```
 
-Expected:
+You should see:
 
 ```
 Standalone activity completed with status 200
 ```
 
-Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You'll see one delivery in the JSON.
+Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The interesting line is:
 
-> **What's happening:** Look at `send_standalone.py`. The whole call is `await client.execute_activity(deliver_webhook, ...)`. **No `@workflow.defn` anywhere in your code.** The client tells Temporal "schedule this activity"; Temporal hands it to your worker; the result comes back. It's a typed durable job queue.
+```python
+await client.execute_activity(
+    deliver_webhook,
+    args=[WebhookDelivery(...)],
+    id="deliver-evt_001",
+    task_queue=TASK_QUEUE,
+    start_to_close_timeout=timedelta(seconds=10),
+)
+```
 
-In the [button label="Temporal UI" background="#444CE7"](tab-5) tab you will see a record of a completed Standalone Activity:
+The client tells Temporal "run this Activity once and give me the result." There's no Workflow class anywhere in the script.
 
-![Temporal UI showing a completed Standalone Activity in the Standalone Activities tab](https://raw.githubusercontent.com/temporalio/edu-standalone-activities/impl/module-01/python/diagrams/standalone-activity-ui.png)
+Open the [button label="Echo server" background="#444CE7"](tab-4) tab. You should see one delivery recorded. The Echo server tab auto-refreshes every 2 seconds, so leave it open and you'll see new deliveries appear without reloading.
+
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. You should see `deliver-evt_001` listed.
 
 ---
 
-## 3. Run the same activity inside a workflow (~2 min)
+## 3. Run the same Activity inside a Workflow (~2 min)
 
-A 5-line `WebhookWorkflow` is provided in `src/webhooks/workflow.py`. You don't need to edit it — it just wraps `deliver_webhook` and calls it via `workflow.execute_activity`. Open it and read it once so you see the shape.
+`src/webhooks/workflow.py` defines a tiny Workflow that just wraps `deliver_webhook`:
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, fire one delivery through the workflow:
+```python
+@workflow.defn
+class WebhookWorkflow:
+    @workflow.run
+    async def run(self, req: WebhookDelivery) -> int:
+        return await workflow.execute_activity(
+            deliver_webhook,
+            req,
+            start_to_close_timeout=timedelta(seconds=10),
+        )
+```
+
+You don't need to edit anything. Just read it, then in the [button label="Terminal" background="#444CE7"](tab-2) tab run the second starter:
 
 ```bash,run
 uv run python -m webhooks.send_via_workflow evt_002
 ```
 
-Expected:
+You should see:
 
 ```
 Workflow completed with activity returning status 200
 ```
 
-Refresh the [button label="Echo server" background="#444CE7"](tab-4) tab. You should now see **2** deliveries total — one per call.
+Open `src/webhooks/send_via_workflow.py` and compare it to `send_standalone.py`:
 
-> **What's happening:** Same Activity. Same business outcome. But the second one was scheduled inside a Workflow execution. Both are durable. Both are retried on failure (no failures today). Both show up in the Temporal UI. The difference shows up in how much Temporal had to record to make that happen.
+- `send_standalone.py` calls `client.execute_activity(deliver_webhook, ...)` — Temporal runs your Activity directly.
+- `send_via_workflow.py` calls `client.execute_workflow(WebhookWorkflow.run, ...)` — Temporal runs a Workflow Execution, which then runs your Activity.
+
+Same `deliver_webhook` Activity gets called both times. The Echo server tab now shows **2** deliveries.
 
 ---
 
 ## 4. Compare the cost (~3 min)
 
-The two ways look identical from the outside — but Temporal did very different amounts of work under the hood. Run these side by side in the [button label="Terminal" background="#444CE7"](tab-2) tab:
+From the outside, the two runs look identical: one HTTP POST landed at the Echo server each time. But Temporal recorded very different amounts of history for each. Look at both with the CLI in the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
-# Standalone Activity — look for "StateTransitionCount: 3"
 temporal activity describe --address localhost:7233 --activity-id deliver-evt_001
+```
 
-# Activity-in-Workflow — count the rows in "Progress" (11 events)
+Near the bottom of the output, look for `StateTransitionCount`:
+
+```
+  ActivityId               deliver-evt_001
+  Type                     deliver_webhook
+  Status                   Completed
+  Attempt                  1
+  StateTransitionCount     3
+```
+
+**3** state transitions for the Standalone Activity: scheduled, started, completed. Now the Workflow version:
+
+```bash,run
 temporal workflow show --address localhost:7233 --workflow-id wf-evt_002
 ```
 
-You should see something like:
+Output:
 
-<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/impl/module-01/docs/cost-comparison/index.html" width="100%" height="640" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+```
+Progress:
+  ID           Type
+    1  WorkflowExecutionStarted
+    2  WorkflowTaskScheduled
+    3  WorkflowTaskStarted
+    4  WorkflowTaskCompleted
+    5  ActivityTaskScheduled
+    6  ActivityTaskStarted
+    7  ActivityTaskCompleted
+    8  WorkflowTaskScheduled
+    9  WorkflowTaskStarted
+   10  WorkflowTaskCompleted
+   11  WorkflowExecutionCompleted
+```
 
-\* Approximate; check current Temporal Cloud pricing for the exact billing model.
+**11** events for the Workflow run. The Activity itself took 3 events (5, 6, 7). The other 8 events are Workflow bookkeeping — start, end, and the Workflow Task events that bracket the Activity.
 
-Also open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and click into both executions. The workflow view has a full timeline with task events around the activity; the standalone view has just the activity itself.
+At low volume that's nothing. At 10 million webhook deliveries a day:
 
-> **What's happening:** Wrapping an Activity in a Workflow gives you orchestration — signals, queries, child workflows, multi-step state. If you don't need any of that, you're paying the wrapping cost (events, actions, retention, latency) for nothing. Standalone is the right shape for one-shot durable work.
+- 30 million events vs. 110 million events. 80 million fewer events recorded.
+- Roughly half the actions billed on Temporal Cloud.
+- Less event history retained per delivery.
+
+You also lose some things by going standalone:
+
+| You get | You give up |
+| --- | --- |
+| Fewer events, less retention, fewer billed actions | Multi-step orchestration |
+| Lower latency overhead | Signals, queries, child workflows |
+| Higher throughput per Worker | Workflow-level compensation / saga semantics |
+| Activity still shows in the Temporal UI | Full timeline view (you get the Activity record, not a Workflow history) |
+
+If your delivery is a single self-contained POST, the Workflow scaffolding is paying for features you're not using. If you ever need to coordinate multiple steps (charge the card, then reserve inventory, then send the email, with compensation if any step fails), you want a Workflow.
 
 ---
 
 ## Check your understanding
 
-> Your Workflow calls 5 Activities sequentially before returning. Roughly how many _more_ events does that emit compared to firing the same 5 Activities as Standalone Activities?
+> Your Workflow calls 5 Activities sequentially before returning. Roughly how many _more_ events does that emit compared to running the same 5 Activities as Standalone Activities?
 
 <details>
 <summary>Answer</summary>
