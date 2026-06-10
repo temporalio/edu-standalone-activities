@@ -15,17 +15,19 @@
 set -uo pipefail  # no -e: we want to run every check and report all failures.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TOP_ROOT="$(cd "$REPO_ROOT/.." && pwd)"
 INSTRUQT_DIR="$REPO_ROOT/instruqt"
 COURSE_DIR="$REPO_ROOT/course-repo"
 PRD="$REPO_ROOT/PRD.md"
+DIAGRAMS_DIR="$REPO_ROOT/diagrams"
+DOCS_DIR="$TOP_ROOT/docs"
 
 FAIL=0
 
 # ---------------------------------------------------------------------------
 echo "=== 1. Banned messaging phrases ==="
 BANNED='Skip the [Ww]orkflow|\b(3|11) events\b|events vs\.? [0-9]+|\b50% cheaper\b|half the actions|Compare the cost|workflow scaffolding|[Ww]ithout a [Ww]orkflow|costs less than'
-HITS=$(grep -rnE --include='*.md' --include='*.yml' "$BANNED" "$INSTRUQT_DIR" "$PRD" 2>/dev/null || true)
-if [ -n "$HITS" ]; then
+HITS=$(grep -rnE --include='*.md' --include='*.yml' --include='*.html' --include='*.svg' "$BANNED" "$INSTRUQT_DIR" "$PRD" "$DIAGRAMS_DIR" "$DOCS_DIR" 2>/dev/null || true)
   echo "FAIL banned phrases found:"
   echo "$HITS"
   FAIL=1
