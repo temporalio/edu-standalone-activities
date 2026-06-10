@@ -3,7 +3,7 @@ slug: idempotency-and-crash-safety
 id: mowdyyydsf1e
 type: challenge
 title: Idempotency and crash safety
-teaser: Crash the worker mid-flight; watch the receiver get two deliveries; fix it
+teaser: Crash the Worker mid-flight; watch the receiver get two deliveries; fix it
   with one line.
 notes:
 - type: text

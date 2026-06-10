@@ -4,7 +4,7 @@ id: bm0pif1ryecr
 type: challenge
 title: Dedup via ID reuse
 teaser: Upstream sends the same event twice. Make Temporal reject the duplicate before
-  any worker sees it.
+  any Worker sees it.
 notes:
 - type: text
   contents: |

@@ -3,7 +3,7 @@ slug: concurrency-and-rate-limits
 id: 4bet4jkgwomj
 type: challenge
 title: Concurrency and rate limits
-teaser: Cap your worker's throughput so a runaway fan-out doesn't DDoS the downstream
+teaser: Cap your Worker's throughput so a runaway fan-out doesn't DDoS the downstream
   service.
 notes:
 - type: text
