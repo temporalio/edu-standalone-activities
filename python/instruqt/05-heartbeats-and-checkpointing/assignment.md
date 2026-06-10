@@ -86,18 +86,23 @@ In the [button label="Terminal" background="#444CE7"](tab-2) tab, send a 10-item
 scripts/reset-receiver.sh
 uv run python -m webhooks.send_batch 10 &
 sleep 4 && scripts/kill-worker.sh
-wait
 ```
 
 That sequence:
 - Submits a batch of 10 items (the Activity sleeps 1s between each — total ~10s).
 - Waits 4 seconds (so ~4 items are delivered), then kills the Worker.
-- Waits for the `send_batch` call to finish.
+- Leaves the `send_batch` client waiting in the background for the retry to finish.
 
 Restart the Worker so the retry has somewhere to run:
 
 ```bash,run
 uv run python -m webhooks.worker
+```
+
+Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait for the background client to finish:
+
+```bash,run
+wait
 ```
 
 In about 5 seconds, `heartbeat_timeout` fires on the server (no heartbeat for 5s = attempt is dead), Temporal triggers a retry, and the new Worker picks it up. The retry replays the Activity body **from the top** — including items already delivered.
@@ -149,13 +154,18 @@ In the [button label="Terminal" background="#444CE7"](tab-2) tab, repeat the kil
 scripts/reset-receiver.sh
 uv run python -m webhooks.send_batch 10 &
 sleep 4 && scripts/kill-worker.sh
-wait
 ```
 
 Restart the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
+```
+
+Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait for the background client to finish:
+
+```bash,run
+wait
 ```
 
 In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab, count climbs to exactly **10**. The retry read `heartbeat_details`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
