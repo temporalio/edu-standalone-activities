@@ -59,9 +59,11 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Concurrency and rate limits
+# Pace your jobs and prioritize urgent work
 
-Your `deliver_webhook` Activity retries safely now. The next problem is that without any rate control, a burst of work will run as fast as your Worker can dispatch it — and that's often too fast for whatever the Activity is calling.
+Traditional job queues let slow consumers starve everything behind them. One loud tenant fans out a million submissions and the rest of your traffic stalls. There's no fairness under load, no priority lane for urgent work — and most queues have no rate control at all, so the consumer either implements backoff itself or hammers the downstream API into 429s.
+
+Standalone Activities give you both knobs at the platform level: `max_activities_per_second` paces dispatch so a fan-out doesn't DDoS the receiver, and `Priority` puts urgent jobs ahead of bulk ones when the queue is contended.
 
 You'll do three things in this module:
 
@@ -156,19 +158,19 @@ For **multi-tenant fairness** — where you want "loud" tenants to not starve "q
 
 ## Check your understanding
 
-> Your downstream API has a hard rate limit of **100 req/sec**. You configure `max_activities_per_second=10` on your worker and deploy. Are you safe?
+> Your downstream API has a hard rate limit of **100 req/sec**. You configure `max_activities_per_second=10` on your Worker and deploy. Are you safe?
 
 <details>
 <summary>Answer</summary>
 
 Safe but **probably underutilizing**.
 
-10/sec is 10% of your downstream's headroom. Unless you have ~10 workers each at 10/sec polling the same task queue (aggregating to 100/sec), you're leaving most of the downstream's capacity unused.
+10/sec is 10% of your downstream's headroom. Unless you have ~10 Workers each at 10/sec polling the same Task Queue (aggregating to 100/sec), you're leaving most of the downstream's capacity unused.
 
 Two knobs to remember:
 
-- `max_activities_per_second` is **per worker**. If N workers are polling the same task queue, the aggregate is `N × max_activities_per_second`. Tune by dividing your safe rate budget across the worker fleet.
-- `max_task_queue_activities_per_second` is **queue-wide** — a hard cap regardless of worker count. Use this when you can't predict how many workers will be running.
+- `max_activities_per_second` is **per Worker**. If N Workers are polling the same Task Queue, the aggregate is `N × max_activities_per_second`. Tune by dividing your safe rate budget across the Worker fleet.
+- `max_task_queue_activities_per_second` is **queue-wide** — a hard cap regardless of Worker count. Use this when you can't predict how many Workers will be running.
 
 </details>
 
@@ -176,4 +178,4 @@ Two knobs to remember:
 
 ## Coming up
 
-**Module 04** — Dedup via ID reuse. Module 02 made each delivery safe under retry. Module 04 makes each delivery happen at most once even when the upstream system sends the same event twice.
+**Module 05** — Heartbeats and checkpointing. Your jobs are fast, fair, and rate-capped. Next: long-running jobs that report progress every few seconds and resume from the last checkpoint after a Worker crash.

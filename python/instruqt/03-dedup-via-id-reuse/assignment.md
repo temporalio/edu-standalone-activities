@@ -10,7 +10,7 @@ notes:
   contents: |
     # Dedup via ID reuse
 
-    Module 02 made each activity safe under **Temporal's own retries**.
+    Module 02 made each Activity safe under **Temporal's own retries**.
     This module handles a different duplicate problem: the upstream
     system (Stripe, GitHub, your own customer's service) sends the
     same logical event twice and calls `start_activity` twice.
@@ -18,13 +18,13 @@ notes:
     Without a policy, the second call to `start_activity` with the same
     `id` errors by default (`ActivityIDConflictPolicy.FAIL`). The fix
     is to set the policy to `USE_EXISTING` — the second call quietly
-    returns the existing handle, no new activity is scheduled, no
+    returns the existing handle, no new Activity is scheduled, no
     error to handle in your application code.
 
     Two layers of dedup, working together:
 
-    - Module 02 (idempotency in the activity body): protects against
-      Temporal's *own* retries after the worker crashes.
+    - Module 02 (idempotency in the Activity body): protects against
+      Temporal's *own* retries after the Worker crashes.
     - This module (scheduling-layer id policy): protects against
       duplicate `start_activity` calls from your application.
 tabs:
@@ -63,15 +63,17 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Rejecting duplicate requests at the server
+# Reject duplicate jobs at the platform
 
-When your upstream system calls `start_activity` twice with the same id, the default behavior is for the second call to raise an error. You'll see that happen, then change one parameter so the second call quietly returns a handle to the in-flight Activity instead.
+Traditional job queues either dedupe in the wrong place (the consumer, after a Worker has already picked up the job) or not at all — so you end up writing per-service dedup logic that behaves a little differently every time.
+
+Standalone Activities dedupe at the Temporal server, before any Worker sees the job. When your upstream calls `start_activity` twice with the same id, you control what happens: error out (the default), or quietly return the existing handle (`USE_EXISTING`). Zero Worker cycles spent on the duplicate.
 
 You'll do three things in this module:
 
 1. Run two `start_activity` calls with the same id, back-to-back. Watch the second one error out.
 2. Add `id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING` to the call. Re-run. Watch both calls succeed with the same `run_id`.
-3. See how this scheduling-layer dedup composes with the body-level idempotency from Module 2.
+3. See how this scheduling-layer dedup composes with the body-level idempotency from Module 02.
 
 The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
@@ -167,7 +169,7 @@ Both calls returned successfully with the **same `run_id`**. The second call got
 
 The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1** delivery for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
-> **The takeaway:** the server absorbed the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 2, your delivery is protected from both Temporal's own retries *and* your upstream system's duplicate calls — two different sources of duplication, two different layers of defense.
+> **The takeaway:** the server absorbed the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 02, your delivery is protected from both Temporal's own retries *and* your upstream system's duplicate calls — two different sources of duplication, two different layers of defense.
 
 ---
 
@@ -184,9 +186,9 @@ The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1*
 <details>
 <summary>Answer</summary>
 
-A **new** activity execution starts.
+A **new** Activity execution starts.
 
-`id_conflict_policy` only governs duplicates while the original is **in flight**. Once the first activity completes, `id_reuse_policy` takes over — and the default (`ALLOW_DUPLICATE`) accepts a fresh execution with the same id.
+`id_conflict_policy` only governs duplicates while the original is **in flight**. Once the first Activity completes, `id_reuse_policy` takes over — and the default (`ALLOW_DUPLICATE`) accepts a fresh execution with the same id.
 
 For full dedup across both windows, set both:
 
@@ -199,4 +201,4 @@ id_reuse_policy=ActivityIDReusePolicy.REJECT_DUPLICATE,     # completed duplicat
 
 ## Coming up
 
-**Module 05** — When to choose Standalone Activity vs. Workflow. Three scenarios, your call.
+**Module 04** — Concurrency, rate limits, and priority. Your jobs dedupe correctly now. Next: cap how many run at the same time so a burst of submissions doesn't DDoS the receiver — and prioritize urgent ones over bulk.

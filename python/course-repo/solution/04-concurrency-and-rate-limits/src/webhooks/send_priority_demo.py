@@ -1,10 +1,11 @@
 """Fan-out 10 background + 3 urgent deliveries, with Priority on each call.
 
-Demonstrates the Priority kwarg on start_activity. With a rate-capped worker
-and a contended queue, lower-numbered priority_keys are dispatched ahead of
-higher-numbered ones.
+Demonstrates the Priority kwarg on start_activity. With a rate-capped Worker
+and a contended Task Queue, lower-numbered priority_keys are dispatched ahead
+of higher-numbered ones — urgent jobs jump bulk jobs.
 
-Run with the rate-capped worker from Module 03 (max_activities_per_second=5).
+Run alongside the rate-capped Worker configured earlier in this module
+(max_activities_per_second=5).
 """
 
 import asyncio

@@ -29,6 +29,9 @@ async def start(client: Client, event_id: str, label: str):
             id=f"deliver-{event_id}",
             task_queue=TASK_QUEUE,
             start_to_close_timeout=timedelta(seconds=30),
+            # USE_EXISTING: second submission with the same id returns the
+            # existing handle instead of erroring. Server-side dedup; the
+            # duplicate never reaches a Worker.
             id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,
         )
         print(f"[{label}] handle ok (run_id={handle.run_id})")
