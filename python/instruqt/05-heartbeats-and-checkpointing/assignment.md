@@ -93,7 +93,14 @@ That sequence:
 - Waits 4 seconds (so ~4 items are delivered), then kills the Worker.
 - Leaves the `send_batch` client waiting in the background for the retry to finish.
 
-Restart the Worker so the retry has somewhere to run:
+### Observe the state while the Worker is down
+
+Before you restart the Worker, take a look at where things stand:
+
+- Click the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You'll see **about 4 deliveries** — the items that landed before the kill. Real partial progress, sitting at the receiver.
+- Click the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → click into `deliver-batch-10`. The Activity is still listed as a running Standalone Activity. Temporal hasn't given up on it — it's waiting for a Worker to come back and finish the job. **It stays in this in-flight state until you restart the Worker.**
+
+Now restart the Worker so the retry has somewhere to run:
 
 ```bash,run
 uv run python -m webhooks.worker
@@ -155,6 +162,13 @@ scripts/reset-receiver.sh
 uv run python -m webhooks.send_batch 10 &
 sleep 4 && scripts/kill-worker.sh
 ```
+
+### Observe the state while the Worker is down (again)
+
+Same drill as section 1 — peek before restarting:
+
+- Click the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. **About 4 deliveries** so far (items 0–3 or thereabouts). The first attempt heartbeated its progress to the server before it died.
+- Click the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → `deliver-batch-10`. The Activity is still in flight, waiting for a Worker. **It will stay in this state until you restart the Worker** — and this time, when the retry runs, it'll read `heartbeat_details` and pick up from item 4 instead of item 0.
 
 Restart the Worker:
 
