@@ -110,9 +110,20 @@
     z-index: 3;
     text-shadow: 0 0 12px rgba(229, 62, 62, 0.6);
   }
-  .echo-label { font-size: 0.78em; color: #a0aec0; }
+  .echo-label { font-size: 0.78em; color: #a0aec0; margin-bottom: 0.25em; }
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45em;
+  }
+  .metric-label {
+    color: #a0aec0;
+    font-size: 0.68em;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
   .counter {
-    font-size: 1.8em;
+    font-size: 1.55em;
     font-weight: 700;
     margin: 0.05em 0 0 0;
     transition: color 0.3s;
@@ -186,7 +197,7 @@
   <div class="lane without">
     <div class="lane-title">Without Idempotency-Key</div>
     <div class="box client">
-      <div class="box-label">Client</div>
+      <div class="box-label">Activity attempt</div>
       <div class="box-sub">POST /hooks</div>
     </div>
     <div class="conduit">
@@ -194,15 +205,24 @@
       <div class="dot" id="dot-without"></div>
     </div>
     <div class="box echo">
-      <div class="echo-label">Webhook receiver — deliveries</div>
-      <div class="counter" id="count-without">0</div>
+      <div class="echo-label">Webhook receiver</div>
+      <div class="metrics">
+        <div>
+          <div class="metric-label">HTTP attempts</div>
+          <div class="counter" id="attempts-without">0</div>
+        </div>
+        <div>
+          <div class="metric-label">Recorded deliveries</div>
+          <div class="counter" id="recorded-without">0</div>
+        </div>
+      </div>
       <div class="duplicated-badge" id="dup-without">duplicated</div>
     </div>
   </div>
   <div class="lane with">
     <div class="lane-title">With Idempotency-Key</div>
     <div class="box client">
-      <div class="box-label">Client</div>
+      <div class="box-label">Activity attempt</div>
       <div class="box-sub">POST /hooks (key=ABC)</div>
     </div>
     <div class="conduit">
@@ -210,9 +230,18 @@
       <div class="dot" id="dot-with"></div>
     </div>
     <div class="box echo">
-      <div class="echo-label">Webhook receiver — deliveries</div>
-      <div class="counter" id="count-with">0</div>
-      <div class="deduped-badge" id="dedup-with">deduped</div>
+      <div class="echo-label">Webhook receiver</div>
+      <div class="metrics">
+        <div>
+          <div class="metric-label">HTTP attempts</div>
+          <div class="counter" id="attempts-with">0</div>
+        </div>
+        <div>
+          <div class="metric-label">Recorded deliveries</div>
+          <div class="counter" id="recorded-with">0</div>
+        </div>
+      </div>
+      <div class="deduped-badge" id="dedup-with">deduped by receiver</div>
     </div>
   </div>
 </div>
@@ -225,7 +254,7 @@
   <div class="progress" id="progress"></div>
 </div>
 
-<div class="footer">Same error. Same retry. The header is the only difference.</div>
+<div class="footer">Same error. Same retry. The receiver uses the header to dedupe the effect.</div>
 
 <script>
   const steps = [
@@ -234,27 +263,27 @@
       apply: () => { reset(); }
     },
     {
-      desc: 'Step 1: the Client POSTs to the webhook receiver. The activity body is in flight.',
+      desc: 'Step 1: the Activity attempt POSTs to the webhook receiver. The activity body is in flight.',
       apply: () => { moveDots('mid'); }
     },
     {
-      desc: 'Step 2: the POST arrives. Echo records delivery #1 — on both sides.',
-      apply: () => { moveDots('echo'); setCounts(1, 1); }
+      desc: 'Step 2: the POST arrives. The receiver sees attempt #1 and records delivery #1 on both sides.',
+      apply: () => { moveDots('echo'); setMetrics(1, 1, 1, 1); }
     },
     {
       desc: 'Step 3: 💥 the activity raises a transient error <em>after</em> the POST succeeded but <em>before</em> Temporal heard "done".',
       apply: () => { hideDots(); crash(true); }
     },
     {
-      desc: 'Step 4: Temporal\'s default retry kicks in. The Client POSTs the activity again.',
+      desc: 'Step 4: Temporal\'s default retry kicks in. The next Activity attempt POSTs again.',
       apply: () => { crash(false); moveDots('mid'); }
     },
     {
-      desc: 'Step 5: the retry arrives. Without a key, echo records #2. With the key, echo sees the duplicate and dedupes.',
-      apply: () => { moveDots('echo'); setCounts(2, 1); flashDedup(); flashDuplicated(); }
+      desc: 'Step 5: the retry arrives. Without a key, the receiver records #2. With the key, the receiver sees attempt #2 but returns the cached/deduped result without recording a second delivery.',
+      apply: () => { moveDots('echo'); setMetrics(2, 2, 2, 1); flashDedup(); flashDuplicated(); }
     },
     {
-      desc: 'Final: <span style="color:#fc8181">2 deliveries</span> vs <span style="color:#9ae6b4">1 delivery</span>. Same code, same error, same retry. The header is the only difference.',
+      desc: 'Final: 2 POST attempts on both sides; <span style="color:#fc8181">2 recorded deliveries</span> without the key; <span style="color:#9ae6b4">1 recorded delivery</span> with the key.',
       apply: () => {}
     }
   ];
@@ -269,7 +298,7 @@
   function reset() {
     setDot('dot-without', 'top', 0);
     setDot('dot-with', 'top', 0);
-    setCounts(0, 0);
+    setMetrics(0, 0, 0, 0);
     crash(false);
     hideDedup();
   }
@@ -292,9 +321,11 @@
     $('dot-with').style.opacity = 0;
   }
 
-  function setCounts(left, right) {
-    $('count-without').textContent = left;
-    $('count-with').textContent = right;
+  function setMetrics(attemptsWithout, recordedWithout, attemptsWith, recordedWith) {
+    $('attempts-without').textContent = attemptsWithout;
+    $('recorded-without').textContent = recordedWithout;
+    $('attempts-with').textContent = attemptsWith;
+    $('recorded-with').textContent = recordedWith;
   }
 
   function crash(on) {
