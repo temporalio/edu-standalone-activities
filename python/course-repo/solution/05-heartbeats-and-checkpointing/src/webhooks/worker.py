@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from .activities import deliver_webhook
+from .activities import deliver_webhook_batch
 from .shared import TASK_QUEUE
 
 
@@ -13,13 +13,10 @@ async def main() -> None:
     worker = Worker(
         client,
         task_queue=TASK_QUEUE,
-        activities=[deliver_webhook],
-        activity_executor=ThreadPoolExecutor(10),
-        # Cap dispatch rate so we don't 429 the downstream service.
-        # The server holds excess work durably in the task queue.
-        max_activities_per_second=5.0,
+        activities=[deliver_webhook_batch],
+        activity_executor=ThreadPoolExecutor(5),
     )
-    print(f"Worker running on task queue '{TASK_QUEUE}' (rate cap: 5/sec)")
+    print(f"Worker running on task queue '{TASK_QUEUE}'")
     await worker.run()
 
 
