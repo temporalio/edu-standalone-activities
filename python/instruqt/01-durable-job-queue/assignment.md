@@ -10,6 +10,8 @@ notes:
   contents: |
     # Standalone Activities in Python
 
+    *By [Nikolay Advolodkin](https://www.linkedin.com/in/nikolayadvolodkin/), Staff Developer Advocate at Temporal*
+
     You're going to build a durable webhook delivery service.
 
     When something happens in your application — a payment clears, an order ships, a user signs up — you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
