@@ -1,12 +1,15 @@
 slug: standalone-activities-python
 id: d4xnvujmv3rf
 title: Standalone Activities as a Durable Job Queue (Python)
-teaser: Build a durable webhook-delivery job with a Standalone Activity, and see how
-  it costs less than wrapping the same work in a workflow.
+teaser: Build a durable webhook-delivery service with Standalone Activities — Temporal's
+  durable job queue. No broker, no scheduler, no retry library to operate.
 description: |
-  Standalone Activities give you Temporal's durability, retries, and visibility
-  for one-shot jobs without writing a workflow. You'll build a webhook delivery
-  job, run it standalone and inside a workflow, and compare the cost of each.
+  Standalone Activities are Temporal's durable job queue. Submit jobs as top-level
+  Activities with one API call — durably persisted, retried on failure, addressable
+  in the UI. No broker or scheduler to operate. The same Activity code runs inside
+  a Workflow later when the job grows into multi-step work. You'll build a durable
+  webhook delivery service across six modules — covering crash safety, deduplication,
+  rate limits, heartbeats, and the Activity-in-Workflow upgrade path.
 icon: ""
 tags:
 - activities
@@ -26,31 +29,31 @@ lab_config:
   feedback_recap_enabled: true
   feedback_tab_enabled: true
   loadingMessages:
-  - Same activity, 3 events vs 11. That's the standalone story.
-  - Standalone Activities are up to 50% cheaper than the same work in a workflow.
-  - 'Workflow history: 11 events. Standalone activity: 3. Same delivery.'
-  - The same @activity.defn from a workflow runs as a Standalone Activity.
-  - 'Server-driven retries: your client can disconnect, the activity still finishes.'
-  - No @workflow.defn required. client.execute_activity is the whole API.
-  - Standalone Activities support RetryPolicy, timeouts, and heartbeats.
+  - Standalone Activities are Temporal's durable job queue.
+  - Same @activity.defn code. Standalone today, Workflow step tomorrow.
+  - 5 SDKs. 1 action per job. 0 infrastructure to manage.
+  - Jobs persist before acknowledgment. Survive deploys, crashes, restarts.
+  - Declarative retries. No retry library to wire up per service.
+  - Every job is addressable. UI, CLI, SDK, API.
+  - client.start_activity returns a handle. Cancel, terminate, describe.
+  - Standalone Activities support RetryPolicy, timeouts, heartbeats.
   - temporal activity list shows every Standalone Activity, in flight or done.
-  - 'Three state transitions: Scheduled, Started, Completed. That''s the lifecycle.'
-  - No workflow history means no retention overhead. That's the cost win.
-  - Pause a running activity with temporal activity pause. Resume it later.
-  - Same worker hosts Standalone and workflow-bound activities alike.
-  - 'Module 02: crash the worker. Without idempotency, you double-deliver.'
-  - 'Module 03: cap your worker''s rate so you don''t DDoS your own customers.'
-  - 'Module 04: same event scheduled twice? Temporal rejects the duplicate.'
+  - Pause a running Activity with temporal activity pause. Resume later.
+  - Same Worker hosts Standalone Activities and Workflows alike.
   - Activity IDs are the dedup key Temporal already gives you for free.
+  - Server-driven retries. Your client can disconnect; the Activity finishes.
+  - 'Module 02: crash the Worker. Without idempotency, you double-deliver.'
+  - 'Module 03: same job ID submitted twice? Temporal returns the existing one.'
+  - 'Module 04: cap your Worker''s rate so a fan-out doesn''t DDoS the receiver.'
+  - 'Module 05: long-running jobs heartbeat progress and resume after a crash.'
+  - 'Module 06: same Activity called from a Workflow. Same code, two job types.'
   - Booting your sandbox. Reading the manual is overrated.
-  - Spinning up an webhook receiver. It will receive whatever you POST at it.
-  - Provisioning a Python that doesn't time out. Or get lost. Or duplicate.
-  - Standalone Activities have been waiting their whole life for this tutorial.
+  - Spinning up a webhook receiver. It will receive whatever you POST at it.
   theme:
     name: modern-dark
   override_challenge_layout: true
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "812446055571439964"
+checksum: "16053555958974813924"
 enhanced_loading: false
