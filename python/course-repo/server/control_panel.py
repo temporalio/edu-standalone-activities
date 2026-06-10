@@ -16,7 +16,7 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 FAILURE_RATE_FILE = "/tmp/failure_rate"
-DEFAULT_FAILURE_RATE = 75
+DEFAULT_FAILURE_RATE = 0
 
 
 def _read_failure_rate() -> int:
