@@ -12,17 +12,7 @@ notes:
 
     You're going to build a durable webhook delivery service.
 
-    When something happens in your application — a payment clears, an order ships, a user signs up — you often need to tell another system about it by POSTing to a URL the other team gave you. That POST is called a **webhook**. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
-
-    The traditional way to handle background work like this is a job queue — and it leaves you holding the bag:
-
-    - Jobs vanish during deploys, crashes, and restarts.
-    - Bring your own broker, result store, scheduler, and monitoring.
-    - Retry logic is reimplemented in every service, all behaving differently.
-    - No upgrade path when you outgrow it.
-    - It's a Tier-0 service nobody wants to maintain.
-
-    **Standalone Activities are Temporal's durable job queue.** Same `@activity.defn` you already know — submitted as a top-level job, durably persisted, retried on failure, addressable in the UI. No broker, no scheduler, no result store to operate. And the same Activity code runs inside a Workflow later when the job grows into a multi-step process.
+    When something happens in your application — a payment clears, an order ships, a user signs up — you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
 
     The same `deliver_webhook` Activity runs through every module of this tutorial:
 
@@ -116,11 +106,19 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Submit a durable job — no Workflow required
+# Submit a durable job with one API call
 
-In Temporal you usually run an Activity from inside a Workflow. In this module you'll do something different: you'll run the same Activity directly from a client, with no Workflow involved. Temporal calls this a **Standalone Activity** — and it's the durable job queue at the heart of this tutorial.
+Traditional job queues leave you holding the bag:
 
-It's still durable. It still retries on failure. It's addressable in the Temporal UI. You can submit it from any of five SDKs. And the Activity code itself is unchanged — same `@activity.defn` you'd use inside a Workflow. The only thing different is *how it's called*.
+- Jobs vanish during deploys, crashes, and restarts.
+- Bring your own broker, result store, scheduler, and monitoring.
+- Retry logic reimplemented in every service, all behaving differently.
+- Slow consumers starve everything behind them — no fairness under load.
+- Dead-end architecture — outgrow the queue, rewrite everything.
+- No polyglot support in most job queue frameworks.
+- A Tier-0 service nobody wants to maintain.
+
+**Standalone Activities are Temporal's durable job queue.** A regular `@activity.defn`, submitted with one API call — durably persisted, retried on failure, addressable in the UI. No broker, no scheduler, no result store to operate.
 
 You'll do three things in this module:
 

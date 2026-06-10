@@ -4,6 +4,7 @@ from temporalio import activity
 from .shared import WebhookDelivery
 
 
+# Same @activity.defn whether this runs standalone or as a step inside a Workflow.
 @activity.defn
 def deliver_webhook(req: WebhookDelivery) -> int:
     activity.logger.info(
