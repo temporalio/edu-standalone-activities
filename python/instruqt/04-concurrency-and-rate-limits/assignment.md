@@ -28,22 +28,22 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
+  path: /root/workshop/exercises/04-concurrency-and-rate-limits/exercise
 - id: mjbp2e2we8ey
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/03-concurrency-and-rate-limits/solution
+  path: /root/workshop/exercises/04-concurrency-and-rate-limits/solution
 - id: pw9qli7adehb
   title: Terminal
   type: terminal
   hostname: workshop
-  workdir: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
+  workdir: /root/workshop/exercises/04-concurrency-and-rate-limits/exercise
 - id: fnuv9fjixrx8
   title: Worker
   type: terminal
   hostname: workshop
-  workdir: /root/workshop/exercises/03-concurrency-and-rate-limits/exercise
+  workdir: /root/workshop/exercises/04-concurrency-and-rate-limits/exercise
 - id: fax22gfly8rd
   title: Webhook receiver
   type: service

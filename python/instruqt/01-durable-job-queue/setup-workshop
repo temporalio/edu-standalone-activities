@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-DIR=/root/workshop/exercises/01-skip-the-workflow/exercise
+DIR=/root/workshop/exercises/01-durable-job-queue/exercise
 # Track-level setup already populated $DIR; just make sure deps are synced
 # (idempotent — fast no-op after the first sync).
 [ -d "$DIR/.venv" ] || (cd "$DIR" && uv sync)

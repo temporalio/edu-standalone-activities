@@ -31,7 +31,7 @@ uv sync
 uv run python server/webhook_receiver.py &      # Start webhook receiver on :9000
 temporal server start-dev --ui-port 8233 & # Start Temporal dev server
 
-cd exercise/01-skip-the-workflow
+cd exercise/01-durable-job-queue
 uv run python -m webhooks.worker &         # Start the worker
 uv run python -m webhooks.send_standalone evt_001
 uv run python -m webhooks.send_via_workflow evt_002

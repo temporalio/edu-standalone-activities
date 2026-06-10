@@ -39,10 +39,11 @@ done
 # Both dirs are fully runnable projects (pyproject.toml + scripts + src) so
 # learners can `uv run python -m webhooks.worker` from either side.
 for NN in \
-    01-skip-the-workflow \
+    01-durable-job-queue \
     02-idempotency-and-crash-safety \
-    03-concurrency-and-rate-limits \
-    04-dedup-via-id-reuse; do
+    03-dedup-via-id-reuse \
+    04-concurrency-and-rate-limits \
+    05-heartbeats-and-checkpointing; do
   DIR=/root/workshop/exercises/$NN
   for SIDE in exercise solution; do
     mkdir -p "$DIR/$SIDE"
@@ -56,4 +57,4 @@ done
 # Pre-sync deps for Module 01 (where the learner starts). Other modules will
 # sync on first entry; deps are identical across modules so the cache makes
 # subsequent syncs near-instant.
-cd /root/workshop/exercises/01-skip-the-workflow/exercise && uv sync
+cd /root/workshop/exercises/01-durable-job-queue/exercise && uv sync

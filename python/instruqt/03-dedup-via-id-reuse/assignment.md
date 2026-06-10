@@ -32,22 +32,22 @@ tabs:
   title: Exercise
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
+  path: /root/workshop/exercises/03-dedup-via-id-reuse/exercise
 - id: xfjezxxvtuiy
   title: Solution
   type: code
   hostname: workshop
-  path: /root/workshop/exercises/04-dedup-via-id-reuse/solution
+  path: /root/workshop/exercises/03-dedup-via-id-reuse/solution
 - id: 0dwpyxjjjkbf
   title: Terminal
   type: terminal
   hostname: workshop
-  workdir: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
+  workdir: /root/workshop/exercises/03-dedup-via-id-reuse/exercise
 - id: y8joxegs9dvn
   title: Worker
   type: terminal
   hostname: workshop
-  workdir: /root/workshop/exercises/04-dedup-via-id-reuse/exercise
+  workdir: /root/workshop/exercises/03-dedup-via-id-reuse/exercise
 - id: qjn5ptmaety6
   title: Webhook receiver
   type: service

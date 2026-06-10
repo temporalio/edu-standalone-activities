@@ -1,5 +1,5 @@
 ---
-slug: when-saa-vs-workflow
+slug: same-code-runs-anywhere
 id: qsxxv9y7a5oh
 type: challenge
 title: When SAA vs when Workflow
