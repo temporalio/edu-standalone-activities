@@ -21,13 +21,28 @@ COURSE_DIR="$REPO_ROOT/course-repo"
 PRD="$REPO_ROOT/PRD.md"
 DIAGRAMS_DIR="$REPO_ROOT/diagrams"
 DOCS_DIR="$TOP_ROOT/docs"
+AGENTS="$TOP_ROOT/AGENTS.md"
+
+# Build a list of dirs/files that actually exist, so the grep scope adjusts
+# automatically if any of these surfaces are added/removed later.
+SCAN_PATHS=()
+for p in "$INSTRUQT_DIR" "$COURSE_DIR" "$DIAGRAMS_DIR" "$DOCS_DIR" "$PRD" "$AGENTS"; do
+  [ -e "$p" ] && SCAN_PATHS+=("$p")
+done
 
 FAIL=0
 
 # ---------------------------------------------------------------------------
 echo "=== 1. Banned messaging phrases ==="
+# Scope covers learner-facing surfaces (assignment.md, track.yml, PRD),
+# diagrams (SVG), externally-hostable demo pages (HTML), and agent-instruction
+# files (AGENTS.md). Python code is excluded — its docstrings and comments
+# are reviewed module-by-module rather than grep-gated.
 BANNED='Skip the [Ww]orkflow|\b(3|11) events\b|events vs\.? [0-9]+|\b50% cheaper\b|half the actions|Compare the cost|workflow scaffolding|[Ww]ithout a [Ww]orkflow|costs less than'
-HITS=$(grep -rnE --include='*.md' --include='*.yml' --include='*.html' --include='*.svg' "$BANNED" "$INSTRUQT_DIR" "$PRD" "$DIAGRAMS_DIR" "$DOCS_DIR" 2>/dev/null || true)
+HITS=$(grep -rnE \
+  --include='*.md' --include='*.yml' --include='*.svg' --include='*.html' \
+  "$BANNED" "${SCAN_PATHS[@]}" 2>/dev/null || true)
+if [ -n "$HITS" ]; then
   echo "FAIL banned phrases found:"
   echo "$HITS"
   FAIL=1
@@ -38,8 +53,17 @@ fi
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== 2. Competitor product names ==="
+# AGENTS.md is excluded — it's the file that DEFINES the no-competitor-names
+# rule for human/agent readers, so it has to be allowed to list the names
+# (as examples of what NOT to do). Every other file is fair game.
 COMPETITORS='\b(Celery|Sidekiq|Sidekick|Faktory|Factory|BullMQ|Resque)\b'
-HITS=$(grep -rnE --include='*.md' --include='*.py' "$COMPETITORS" "$INSTRUQT_DIR" "$COURSE_DIR" 2>/dev/null || true)
+COMPETITOR_SCAN_PATHS=()
+for p in "${SCAN_PATHS[@]}"; do
+  [ "$p" = "$AGENTS" ] || COMPETITOR_SCAN_PATHS+=("$p")
+done
+HITS=$(grep -rnE \
+  --include='*.md' --include='*.py' --include='*.svg' --include='*.html' --include='*.yml' \
+  "$COMPETITORS" "${COMPETITOR_SCAN_PATHS[@]}" 2>/dev/null || true)
 if [ -n "$HITS" ]; then
   echo "FAIL competitor names found:"
   echo "$HITS"
