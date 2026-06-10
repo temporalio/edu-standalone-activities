@@ -12,7 +12,10 @@ from .shared import WebhookDelivery
 
 @workflow.defn
 class WebhookWorkflow:
-    """Tiny wrapper around deliver_webhook for the cost comparison in Module 01."""
+    """Tiny Workflow wrapper around deliver_webhook. The standalone caller in
+    send_standalone.py and this Workflow both use the same Activity function —
+    the "same code, two job types" demo lands fully in Module 06.
+    """
 
     @workflow.run
     async def run(self, req: WebhookDelivery) -> int:

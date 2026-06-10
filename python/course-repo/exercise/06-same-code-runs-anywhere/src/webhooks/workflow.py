@@ -2,8 +2,9 @@ from datetime import timedelta
 
 from temporalio import workflow
 
-# Pass-through import: brings the typed activity reference into the workflow
-# without pulling it into the Python SDK's per-task workflow sandbox reload.
+# This Workflow uses the SAME deliver_webhook function from activities.py
+# that the standalone caller uses. No copies, no rewrites — write the
+# Activity once, compose it into a multi-step Workflow when the job grows.
 with workflow.unsafe.imports_passed_through():
     from .activities import deliver_webhook
 
@@ -12,9 +13,10 @@ from .shared import WebhookDelivery
 
 @workflow.defn
 class WebhookWorkflow:
-    """Tiny Workflow wrapper around deliver_webhook. Not used in Module 01's
-    narrative — Module 06 ("same code runs anywhere") uses this pattern to
-    show the same Activity called via execute_activity or as a Workflow step.
+    """Thin Workflow that calls deliver_webhook as a step.
+
+    Demonstrates that the same Activity code runs as a top-level job
+    (client.execute_activity) or as a Workflow step (workflow.execute_activity).
     """
 
     @workflow.run

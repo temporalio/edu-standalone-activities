@@ -1,4 +1,8 @@
-"""Fire the same webhook delivery wrapped in a Workflow - the comparison shape."""
+"""Submit the same deliver_webhook Activity as a step inside a Workflow.
+
+Not used in Module 01's narrative (Module 01 is the standalone introduction).
+Kept for reference and as the basis for Module 06's "same code runs anywhere".
+"""
 
 import asyncio
 import sys
@@ -21,7 +25,7 @@ async def main(event_id: str) -> None:
         id=f"wf-{event_id}",
         task_queue=TASK_QUEUE,
     )
-    print(f"Workflow completed with activity returning status {result}")
+    print(f"Workflow completed with Activity returning status {result}")
 
 
 if __name__ == "__main__":

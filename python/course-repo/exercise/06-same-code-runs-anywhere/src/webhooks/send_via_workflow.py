@@ -1,7 +1,7 @@
 """Submit the same deliver_webhook Activity as a step inside a Workflow.
 
-Not used in Module 01's narrative (Module 01 is the standalone introduction).
-Kept for reference and as the basis for Module 06's "same code runs anywhere".
+Pairs with send_standalone.py — same Activity code, second submission path.
+This is the "graduate to a Workflow" upgrade with no rewrite of the Activity.
 """
 
 import asyncio
@@ -15,6 +15,8 @@ from .workflow import WebhookWorkflow
 
 async def main(event_id: str) -> None:
     client = await Client.connect("localhost:7233")
+    # execute_workflow runs the Workflow, which internally calls
+    # deliver_webhook — the same Activity send_standalone.py submits directly.
     result = await client.execute_workflow(
         WebhookWorkflow.run,
         args=[WebhookDelivery(
