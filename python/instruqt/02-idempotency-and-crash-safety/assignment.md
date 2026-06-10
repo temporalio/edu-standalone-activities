@@ -64,6 +64,11 @@ tabs:
   type: service
   hostname: workshop
   port: 9001
+- id: cpanel9002m02
+  title: Control Panel
+  type: service
+  hostname: workshop
+  port: 9002
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null

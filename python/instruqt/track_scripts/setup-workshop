@@ -19,6 +19,10 @@ nohup temporal server start-dev \
 nohup python /opt/workshop/server/webhook_receiver.py \
   > /var/log/workshop/receiver.log 2>&1 &
 
+# Start Control Panel in the background (failure-rate slider on port 9002)
+nohup python /opt/workshop/server/control_panel.py \
+  > /var/log/workshop/control_panel.log 2>&1 &
+
 # Serve the interactive demo HTML on port 9001 (a static file server).
 # Lets Module 02 surface the idempotency comparison as an in-sandbox tab.
 nohup python -m http.server 9001 --directory /opt/workshop/demo \
@@ -29,7 +33,8 @@ for i in {1..30}; do
   if (echo > /dev/tcp/localhost/7233) 2>/dev/null \
      && (echo > /dev/tcp/localhost/8233) 2>/dev/null \
      && (echo > /dev/tcp/localhost/9000) 2>/dev/null \
-     && (echo > /dev/tcp/localhost/9001) 2>/dev/null; then
+     && (echo > /dev/tcp/localhost/9001) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9002) 2>/dev/null; then
     break
   fi
   sleep 1
