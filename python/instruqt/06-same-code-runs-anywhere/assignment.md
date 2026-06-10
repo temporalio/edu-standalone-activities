@@ -3,8 +3,8 @@ slug: same-code-runs-anywhere
 id: qsxxv9y7a5oh
 type: challenge
 title: Same code runs anywhere
-teaser: The same Activity you've been writing — now called from a Workflow. One
-  platform, two job types, zero rewrites.
+teaser: The same Activity you've been writing — now called from a Workflow. One platform,
+  two job types, zero rewrites.
 notes:
 - type: text
   contents: |
@@ -21,7 +21,8 @@ tabs:
   type: code
   hostname: workshop
   path: /root/workshop/exercises/06-same-code-runs-anywhere/exercise
-- title: Solution
+- id: ivz6nmbhlxf9
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/06-same-code-runs-anywhere/solution
@@ -30,15 +31,18 @@ tabs:
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/06-same-code-runs-anywhere/exercise
-- title: Worker
+- id: a3r5xefivotx
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/06-same-code-runs-anywhere/exercise
-- title: Webhook receiver
+- id: 2eam4nnuhacf
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: s5duvkctvcpf
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
@@ -159,7 +163,7 @@ This is the upgrade path traditional job queues don't have. When the requirement
 
 ## Coinbase did exactly this
 
-At Replay 2026, Coinbase described migrating their custom Background Jobs Service — 200–600 million jobs per day across 186 namespaces — onto Standalone Activities. Same activity code now runs standalone today and is positioned to be composed into Workflows tomorrow. One platform replaces a separate job queue and a separate orchestrator.
+At Replay 2026, Coinbase described migrating their custom Background Jobs Service — 200–600 million jobs per day across 186 namespaces — onto Standalone Activities. The same Activity code runs standalone today and is positioned to be composed into Workflows tomorrow. One platform replaces a separate job queue and a separate orchestrator.
 
 The full talk: [Standalone Activities for durable job processing — Coinbase at Replay 2026](https://www.youtube.com/watch?v=zsF5Y-IOMOw).
 

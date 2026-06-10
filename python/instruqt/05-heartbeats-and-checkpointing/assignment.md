@@ -1,9 +1,10 @@
 ---
 slug: heartbeats-and-checkpointing
+id: uzjyqxsnftd8
 type: challenge
 title: Heartbeats and checkpointing
-teaser: Resume a long-running Standalone Activity from where it left off after a
-  Worker crash.
+teaser: Resume a long-running Standalone Activity from where it left off after a Worker
+  crash.
 notes:
 - type: text
   contents: |
@@ -18,27 +19,33 @@ notes:
     1. Run a long-running Activity that delivers 10 webhooks. Kill the Worker mid-batch. Watch the retry start from item 0 — the receiver records duplicates of items already delivered.
     2. Add one line to read `heartbeat_details` on retry. Re-run. Kill again. Watch the retry pick up where it left off — no duplicates.
 tabs:
-- title: Exercise
+- id: pxzal47h0ue3
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- title: Solution
+- id: o7wtppqqzxxy
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/05-heartbeats-and-checkpointing/solution
-- title: Terminal
+- id: pixhhhhpmchi
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- title: Worker
+- id: 0le9qjmg7tpy
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- title: Webhook receiver
+- id: a9zpxxxduxi2
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: f9litgnhwwoy
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
