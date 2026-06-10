@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Idempotency-Key: with vs without</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0.8em 1em;
+    min-height: 100vh;
+  }
+  h1 { text-align: center; margin: 0 0 0.15em 0; font-size: 1.25em; font-weight: 600; }
+  .subtitle { text-align: center; color: #a0aec0; margin-bottom: 0.7em; font-size: 0.85em; }
+  .step {
+    text-align: center;
+    color: #b794f6;
+    font-size: 0.9em;
+    margin: 0 auto 0.8em;
+    max-width: 900px;
+    min-height: 2.4em;
+    line-height: 1.35;
+  }
+  .lanes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  @media (max-width: 700px) {
+    .lanes { grid-template-columns: 1fr; }
+  }
+  .lane {
+    border: 1.5px dashed;
+    border-radius: 6px;
+    padding: 0.7em 0.7em;
+    position: relative;
+  }
+  .lane.without { border-color: #e53e3e; }
+  .lane.with { border-color: #38a169; }
+  .lane-title {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95em;
+    margin-bottom: 0.5em;
+  }
+  .lane.without .lane-title { color: #fc8181; }
+  .lane.with .lane-title { color: #9ae6b4; }
+  .box {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    padding: 0.4em 0.8em;
+    width: 70%;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .box.client { margin-bottom: 0; }
+  .box.echo { margin-top: 0; padding: 0.5em 0.8em; }
+  .box-label { font-weight: 600; font-size: 0.88em; }
+  .box-sub {
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.72em;
+    color: #a0aec0;
+    margin-top: 0.15em;
+  }
+  .conduit {
+    position: relative;
+    height: 5em;
+    margin: 0.2em auto;
+    width: 70%;
+  }
+  .conduit::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px dashed #4a5568;
+  }
+  .dot {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #f6e05e;
+    border: 2px solid #1a1a2e;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(246, 224, 94, 0.5);
+    transition: top 1s cubic-bezier(0.4, 0, 0.6, 1), opacity 0.25s;
+    opacity: 0;
+    top: 0;
+    z-index: 2;
+  }
+  .crash {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    font-size: 1.8em;
+    opacity: 0;
+    transition: opacity 0.25s;
+    z-index: 3;
+    text-shadow: 0 0 12px rgba(229, 62, 62, 0.6);
+  }
+  .echo-label { font-size: 0.78em; color: #a0aec0; }
+  .counter {
+    font-size: 1.8em;
+    font-weight: 700;
+    margin: 0.05em 0 0 0;
+    transition: color 0.3s;
+    font-family: ui-monospace, monospace;
+    line-height: 1.1;
+  }
+  .lane.without .counter { color: #fc8181; }
+  .lane.with .counter { color: #9ae6b4; }
+  .deduped-badge, .duplicated-badge {
+    display: inline-block;
+    color: #1a1a2e;
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    margin-top: 0.15em;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .deduped-badge { background: #38a169; }
+  .duplicated-badge { background: #e53e3e; color: #fff; }
+  .controls {
+    text-align: center;
+    margin-top: 0.9em;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  button {
+    background: #444ce7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.4em 0.9em;
+    margin: 0 0.2em;
+    font-size: 0.85em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: #5a61f0; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 0.55em;
+  }
+  .progress-pip {
+    width: 7px;
+    height: 7px;
+    background: #4a5568;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+  .progress-pip.active { background: #b794f6; }
+  .footer {
+    text-align: center;
+    color: #a0aec0;
+    margin-top: 0.6em;
+    font-size: 0.78em;
+  }
+</style>
+</head>
+<body>
+<h1>Idempotency-Key: with vs without</h1>
+<div class="subtitle">Activity errors after the POST lands. Temporal retries. Watch what the receiver does.</div>
+<div class="step" id="step-desc"></div>
+
+<div class="lanes">
+  <div class="lane without">
+    <div class="lane-title">Without Idempotency-Key</div>
+    <div class="box client">
+      <div class="box-label">Client</div>
+      <div class="box-sub">POST /hooks</div>
+    </div>
+    <div class="conduit">
+      <div class="crash" id="crash-without">💥</div>
+      <div class="dot" id="dot-without"></div>
+    </div>
+    <div class="box echo">
+      <div class="echo-label">Webhook receiver — deliveries</div>
+      <div class="counter" id="count-without">0</div>
+      <div class="duplicated-badge" id="dup-without">duplicated</div>
+    </div>
+  </div>
+  <div class="lane with">
+    <div class="lane-title">With Idempotency-Key</div>
+    <div class="box client">
+      <div class="box-label">Client</div>
+      <div class="box-sub">POST /hooks (key=ABC)</div>
+    </div>
+    <div class="conduit">
+      <div class="crash" id="crash-with">💥</div>
+      <div class="dot" id="dot-with"></div>
+    </div>
+    <div class="box echo">
+      <div class="echo-label">Webhook receiver — deliveries</div>
+      <div class="counter" id="count-with">0</div>
+      <div class="deduped-badge" id="dedup-with">deduped</div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btn-prev">⏮ Back</button>
+  <button id="btn-step">⏭ Step</button>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-reset">⟲ Reset</button>
+  <div class="progress" id="progress"></div>
+</div>
+
+<div class="footer">Same error. Same retry. The header is the only difference.</div>
+
+<script>
+  const steps = [
+    {
+      desc: 'Start: a freshly reset webhook receiver. Click <b>Step</b> or <b>Play</b> to advance.',
+      apply: () => { reset(); }
+    },
+    {
+      desc: 'Step 1: the Client POSTs to the webhook receiver. The activity body is in flight.',
+      apply: () => { moveDots('mid'); }
+    },
+    {
+      desc: 'Step 2: the POST arrives. Echo records delivery #1 — on both sides.',
+      apply: () => { moveDots('echo'); setCounts(1, 1); }
+    },
+    {
+      desc: 'Step 3: 💥 the activity raises a transient error <em>after</em> the POST succeeded but <em>before</em> Temporal heard "done".',
+      apply: () => { hideDots(); crash(true); }
+    },
+    {
+      desc: 'Step 4: Temporal\'s default retry kicks in. The Client POSTs the activity again.',
+      apply: () => { crash(false); moveDots('mid'); }
+    },
+    {
+      desc: 'Step 5: the retry arrives. Without a key, echo records #2. With the key, echo sees the duplicate and dedupes.',
+      apply: () => { moveDots('echo'); setCounts(2, 1); flashDedup(); flashDuplicated(); }
+    },
+    {
+      desc: 'Final: <span style="color:#fc8181">2 deliveries</span> vs <span style="color:#9ae6b4">1 delivery</span>. Same code, same error, same retry. The header is the only difference.',
+      apply: () => {}
+    }
+  ];
+
+  let current = 0;
+  let playing = false;
+  let playTimer = null;
+  const STEP_INTERVAL_MS = 2400;
+
+  function $(id) { return document.getElementById(id); }
+
+  function reset() {
+    setDot('dot-without', 'top', 0);
+    setDot('dot-with', 'top', 0);
+    setCounts(0, 0);
+    crash(false);
+    hideDedup();
+  }
+
+  function setDot(id, where, opacity) {
+    const el = $(id);
+    el.style.opacity = opacity;
+    if (where === 'top') el.style.top = '0';
+    if (where === 'mid') el.style.top = '50%';
+    if (where === 'echo') el.style.top = '100%';
+  }
+
+  function moveDots(where) {
+    setDot('dot-without', where, 1);
+    setDot('dot-with', where, 1);
+  }
+
+  function hideDots() {
+    $('dot-without').style.opacity = 0;
+    $('dot-with').style.opacity = 0;
+  }
+
+  function setCounts(left, right) {
+    $('count-without').textContent = left;
+    $('count-with').textContent = right;
+  }
+
+  function crash(on) {
+    $('crash-without').style.opacity = on ? 1 : 0;
+    $('crash-with').style.opacity = on ? 1 : 0;
+  }
+
+  function flashDedup() {
+    $('dedup-with').style.opacity = 1;
+  }
+
+  function flashDuplicated() {
+    $('dup-without').style.opacity = 1;
+  }
+
+  function hideDedup() {
+    $('dedup-with').style.opacity = 0;
+    $('dup-without').style.opacity = 0;
+  }
+
+  function renderProgress() {
+    const wrap = $('progress');
+    wrap.innerHTML = '';
+    steps.forEach((_, i) => {
+      const p = document.createElement('div');
+      p.className = 'progress-pip' + (i === current ? ' active' : '');
+      wrap.appendChild(p);
+    });
+  }
+
+  function setStep(i) {
+    current = Math.max(0, Math.min(steps.length - 1, i));
+    $('step-desc').innerHTML = steps[current].desc;
+    steps[current].apply();
+    $('btn-step').disabled = current >= steps.length - 1;
+    $('btn-prev').disabled = current <= 0;
+    renderProgress();
+  }
+
+  function play() {
+    playing = true;
+    $('btn-play').textContent = '⏸ Pause';
+    if (current >= steps.length - 1) setStep(0);
+    playTimer = setInterval(() => {
+      if (current < steps.length - 1) {
+        setStep(current + 1);
+      } else {
+        stopPlay();
+      }
+    }, STEP_INTERVAL_MS);
+  }
+
+  function stopPlay() {
+    playing = false;
+    $('btn-play').textContent = '▶ Play';
+    if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  }
+
+  $('btn-step').onclick = () => { stopPlay(); setStep(current + 1); };
+  $('btn-prev').onclick = () => { stopPlay(); setStep(current - 1); };
+  $('btn-reset').onclick = () => { stopPlay(); setStep(0); };
+  $('btn-play').onclick = () => { playing ? stopPlay() : play(); };
+
+  setStep(0);
+</script>
+</body>
+</html>

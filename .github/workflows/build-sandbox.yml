@@ -1,0 +1,64 @@
+name: Build sandbox image
+
+# Builds the Instruqt sandbox image used by the Python standalone-activities
+# track and pushes it to GitHub Container Registry.
+#
+# Triggers on changes to the Dockerfile or to the pre-cloned course repo, since
+# course-repo is COPY'd into the image at build time. Also runnable on demand.
+
+on:
+  push:
+    branches:
+      - main
+      - standalone-pre
+    paths:
+      - 'python/sandbox/**'
+      - 'python/course-repo/**'
+      - '.github/workflows/build-sandbox.yml'
+  pull_request:
+    paths:
+      - 'python/sandbox/**'
+      - 'python/course-repo/**'
+      - '.github/workflows/build-sandbox.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/temporalio/edu-standalone-activities-sandbox
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        # Only log in for events that should publish. PRs build but don't push.
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (and push, if not a PR)
+        uses: docker/build-push-action@v6
+        with:
+          # Context is python/ so the Dockerfile's `COPY course-repo/` resolves.
+          context: python
+          file: python/sandbox/Dockerfile
+          # Instruqt sandboxes run linux/amd64. Pin explicitly so this matches
+          # regardless of who triggers the build or what host arch they're on.
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
