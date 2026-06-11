@@ -1,0 +1,78 @@
+name: Course feedback
+description: Share structured feedback about this tutorial.
+title: "[Course Feedback]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reviewing this tutorial. Please share concise, specific feedback so we can keep improving the course.
+
+  - type: textarea
+    id: improvements
+    attributes:
+      label: What are the top 3 things that you would improve about this tutorial?
+      description: List the three highest-impact improvements you would recommend.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: going-well
+    attributes:
+      label: What are the top 3 things going well which we should continue in this tutorial?
+      description: List the three most useful parts of the tutorial experience.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: rating
+    attributes:
+      label: On a scale of 1 (worst) - 5 (outstanding), how would you rate this tutorial?
+      options:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+    validations:
+      required: true
+
+  - type: textarea
+    id: rating-reason
+    attributes:
+      label: Why did you choose that rating?
+      description: Share the main reasons for your score.
+      placeholder: What most influenced your rating?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: temporal-errors
+    attributes:
+      label: Did you find any technical errors related to Temporal usage?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: true
+
+  - type: textarea
+    id: temporal-error-details
+    attributes:
+      label: If yes, what technical Temporal errors did you find?
+      description: Include file names, exercise numbers, commands, or error messages where helpful.
+      placeholder: Describe any Temporal-related technical issues you noticed.
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else you'd like to share?
+      description: Add any other feedback that does not fit above.
+      placeholder: Share any additional comments here.
