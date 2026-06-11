@@ -190,6 +190,28 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 
 ---
 
+## Handle cancellation cleanly
+
+Heartbeating gives you something else for free: **cancellation delivery**. When someone runs `temporal activity cancel deliver-batch-10` (or an enclosing Workflow cancels), Temporal can't interrupt your Python code directly — it sets a flag on the server, and the next `activity.heartbeat()` call sees it and raises an exception.
+
+For a sync threaded Activity like this one, that exception is `temporalio.exceptions.CancelledError`. Long-running Activities should catch it and exit cleanly:
+
+```python
+from temporalio.exceptions import CancelledError
+
+try:
+    for i in range(start_index, len(req.items)):
+        # ...do work...
+        activity.heartbeat(delivered)
+except CancelledError:
+    activity.logger.info("Cancelled at index %d", i)
+    raise
+```
+
+If you don't heartbeat, cancellation cannot reach the Activity at all — it'll run to completion regardless. That's another reason heartbeats matter beyond progress checkpoints.
+
+---
+
 ## Check your understanding
 
 > Your batch Activity has `heartbeat_timeout=5s` and processes one item per second. Mid-batch, the Worker hangs (deadlock, not crash) — it stops calling heartbeat but the process is still alive. What does Temporal do?

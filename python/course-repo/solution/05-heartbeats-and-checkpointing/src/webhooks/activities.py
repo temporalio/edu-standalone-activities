@@ -2,6 +2,7 @@ import time
 
 import httpx
 from temporalio import activity
+from temporalio.exceptions import CancelledError
 
 from .shared import WebhookDeliveryBatch
 
@@ -24,15 +25,27 @@ def deliver_webhook_batch(req: WebhookDeliveryBatch) -> int:
         )
 
     delivered = start_index
-    for i in range(start_index, len(req.items)):
-        item = req.items[i]
-        response = httpx.post(req.url, json=item, timeout=5.0)
-        response.raise_for_status()
-        delivered += 1
-        # Checkpoint after each item — Temporal stores this so a future
-        # retry reads it back from activity.info().heartbeat_details.
-        activity.heartbeat(delivered)
-        # Slow enough that you can run kill-worker.sh mid-batch in the demo.
-        time.sleep(1)
+    try:
+        for i in range(start_index, len(req.items)):
+            item = req.items[i]
+            response = httpx.post(req.url, json=item, timeout=5.0)
+            response.raise_for_status()
+            delivered += 1
+            # Checkpoint after each item — Temporal stores this so a future
+            # retry reads it back from activity.info().heartbeat_details.
+            # heartbeat() is also where cancellation is delivered: if the
+            # Activity has been cancelled, the next call raises CancelledError.
+            activity.heartbeat(delivered)
+            # Slow enough that you can run kill-worker.sh mid-batch in the demo.
+            time.sleep(1)
+    except CancelledError:
+        # Cancellation handler — runs when `temporal activity cancel ...` or
+        # an enclosing Workflow cancels this Activity. delivered is already
+        # heartbeated, so a retry (if one is scheduled) resumes from here.
+        activity.logger.info(
+            "Cancelled at index %d (delivered=%d of %d)",
+            i, delivered, len(req.items)
+        )
+        raise
 
     return delivered

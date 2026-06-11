@@ -2,12 +2,11 @@ from datetime import timedelta
 
 from temporalio import workflow
 
-# Pass-through import: brings the typed activity reference into the workflow
-# without pulling it into the Python SDK's per-task workflow sandbox reload.
+# Pass-through imports: bring activity + shared types into the workflow
+# without pulling them into the Python SDK's per-task workflow sandbox reload.
 with workflow.unsafe.imports_passed_through():
     from .activities import deliver_webhook
-
-from .shared import WebhookDelivery
+    from .shared import WebhookDelivery
 
 
 @workflow.defn

@@ -183,6 +183,26 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 
 ---
 
+## Bound the retries in production
+
+Temporal's **default RetryPolicy is unbounded** — initial interval 1s, exponential backoff to 100s, no maximum attempts. Great for transient failures, dangerous for permanently-broken receivers: a customer who turned off their webhook endpoint will hammer your queue with retries forever.
+
+Pass an explicit `retry_policy=` to bound it. The solution starter does this:
+
+```python
+from temporalio.common import RetryPolicy
+
+await client.execute_activity(
+    deliver_webhook,
+    ...,
+    retry_policy=RetryPolicy(maximum_attempts=5),
+)
+```
+
+For permanent failures the Activity itself can flag — bad input, auth rejection — raise `ApplicationError(..., non_retryable=True)` instead of the retryable form. Temporal stops retrying immediately rather than burning through your `maximum_attempts`.
+
+---
+
 ## Check your understanding
 
 > Your Activity body generates a random discount code (`code = random.choice(codes)`) for each delivery, and you build the `Idempotency-Key` from `code`. The Activity body works on the happy path. What goes wrong on a retry, and how do you fix it?
