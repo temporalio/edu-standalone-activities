@@ -16,7 +16,7 @@ notes:
 
     When something happens in your application — a payment clears, an order ships, a user signs up — you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
 
-    The same `deliver_webhook` Activity runs through every module of this tutorial:
+    The same deliver_webhook Activity runs through every module of this tutorial:
 
     - **Module 1**: Run the Activity directly from a client. Inspect it in the Temporal UI.
     - **Module 2**: Make retries safe with an idempotency key.
@@ -27,9 +27,9 @@ notes:
 
     ## What's already running in this sandbox
 
-    - **Temporal dev server** on `localhost:7233` (single-binary dev mode).
-    - **Temporal Web UI** on `localhost:8233` — browse Activities and Workflows.
-    - **Webhook receiver** on `localhost:9000` — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
+    - **Temporal dev server** on localhost:7233 (single-binary dev mode).
+    - **Temporal Web UI** on localhost:8233 — browse Activities and Workflows.
+    - **Webhook receiver** on localhost:9000 — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
 
     You don't need to start any of these. They boot with the sandbox.
 
