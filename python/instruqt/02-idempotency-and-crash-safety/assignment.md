@@ -3,7 +3,7 @@ slug: idempotency-and-crash-safety
 id: mowdyyydsf1e
 type: challenge
 title: Idempotency and crash safety
-teaser: Crash the Worker mid-flight; watch the receiver get two deliveries; fix it
+teaser: Crash the Worker mid-flight; watch duplicate deliveries; fix them
   with one line.
 notes:
 - type: text
@@ -18,8 +18,8 @@ notes:
 
     ## What you'll do
 
-    1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Webhook receiver record 3 deliveries for one logical event.
-    2. Add a one-line idempotency key to the POST. Re-run. Watch the Webhook receiver record only 1 delivery — the receiver dedupes the retries.
+    1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Webhook receiver process 3 deliveries for one logical event.
+    2. Add a one-line idempotency key to the POST. Re-run. Watch the Webhook receiver receive 3 requests but process only 1 delivery — the receiver dedupes the retries.
 
     The same six tabs from Module 1 are available in this module's sandbox (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). There's also an **Idempotency demo** tab showing an interactive version of the diagram below.
 
@@ -27,7 +27,7 @@ notes:
 
     Step through it with the controls below, or click **Play** to watch it run. Left lane: without an idempotency key. Right lane: with one.
 
-    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/standalone-pre/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+    <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/main/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
 - id: 1e8ceyilglde
   title: Exercise
@@ -77,8 +77,8 @@ Standalone Activities retry for you automatically as part of the platform — bu
 
 You'll do three things in this module:
 
-1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. The Webhook receiver records 3 deliveries for one logical request.
-2. Add a one-line `Idempotency-Key` header derived from `activity.info().activity_id`. Re-run. The Webhook receiver now records 1 delivery.
+1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. The Webhook receiver processes 3 deliveries for one logical request.
+2. Add a one-line idempotency key derived from the webhook event id. Re-run. The Webhook receiver receives 3 requests but processes only 1 delivery.
 3. Understand why the key has to be stable across retries (and not `uuid.uuid4()`).
 
 The **Solution** tab has the finished code for this module. Peek at it whenever you want.
@@ -112,10 +112,13 @@ uv run python -m webhooks.send_standalone evt_buggy
 
 The Activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy waits a short backoff between attempts. The whole thing finishes in about 3 seconds.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **3 deliveries** recorded for `evt_buggy` — one per attempt. The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the count climb as the retries land.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **3 requests received** and **3 deliveries processed** for `evt_buggy` — one per attempt. The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the counts climb as the retries land.
 
 ```json
 {
+  "received_count": 3,
+  "processed_count": 3,
+  "deduped_count": 0,
   "count": 3,
   "deliveries": [
     { "body": { "event_id": "evt_buggy", ... }, "idempotency_key": null },
@@ -138,12 +141,12 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch
 Back in the [button label="Exercise" background="#444CE7"](tab-0) tab, find the `TODO` in `deliver_webhook`. Replace the empty `headers` dict with this line:
 
 ```python
-headers = {"Idempotency-Key": activity.info().activity_id}
+headers = {"Idempotency-Key": f"webhook:{req.event_id}"}
 ```
 
 That's the entire fix. The full solution is in the **Solution** tab if you want to copy it.
 
-`activity.info().activity_id` is the id you assigned when starting the Activity (`deliver-evt_buggy` here). It's **stable across retries** of the same Activity execution — every retry sees the same value. The Webhook receiver caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't record a new delivery.
+`req.event_id` is the logical event this Activity is delivering. Prefixing it gives the receiver a clear delivery key (`webhook:evt_buggy`) that is **stable across retries** of the same logical webhook. The Webhook receiver caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't process a new delivery.
 
 > **Why not `uuid.uuid4()`?** UUIDs are different every time you call them. Each retry would generate a fresh key, the receiver would see N different keys for N retries of one logical request, and your "idempotency" would dedupe nothing. The key has to be deterministic across retries.
 
@@ -164,22 +167,114 @@ scripts/reset-receiver.sh
 uv run python -m webhooks.send_standalone evt_fixed
 ```
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. **1 delivery** for `evt_fixed`:
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **3 requests received** and **1 delivery processed** for `evt_fixed`:
 
 ```json
 {
+  "received_count": 3,
+  "processed_count": 1,
+  "deduped_count": 2,
   "count": 1,
   "deliveries": [
-    { "body": { "event_id": "evt_fixed", ... }, "idempotency_key": "deliver-evt_fixed" }
+    { "body": { "event_id": "evt_fixed", ... }, "idempotency_key": "webhook:evt_fixed" }
   ]
 }
 ```
 
-Three POSTs still landed at the receiver — the Activity still retried three times. But the receiver saw the same `Idempotency-Key` on each one and returned a cached response to attempts 2 and 3 without recording new deliveries.
+Three POSTs still landed at the receiver — the Activity still retried three times. But the receiver saw the same idempotency key on each one and returned a cached response to attempts 2 and 3 without processing new deliveries.
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-evt_fixed`. Same retry history as the buggy run. The Activity didn't change. The receiver dedupes — that's where exactly-once *effect* lives.
 
 > **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
+
+---
+
+## Production idempotency best practices
+
+<details>
+<summary>Use the right idempotency key</summary>
+
+In this standalone webhook exercise, the event id is the logical delivery identity, so `webhook:{req.event_id}` is the right key.
+
+For workflow-bound Activities, use the Workflow Run ID plus the Activity ID:
+
+```python
+from temporalio import activity
+
+@activity.defn
+async def process_payment(amount: float, account: str):
+    info = activity.info()
+    idempotency_key = f"{info.workflow_run_id}-{info.activity_id}"
+    return await payment_service.charge(
+        amount=amount,
+        account=account,
+        idempotency_key=idempotency_key,
+    )
+```
+
+Use the **Run ID**, not the Workflow ID. Workflow IDs can be reused; Run IDs identify one Workflow Execution. The external service you call, such as a payment processor or webhook receiver, enforces the idempotency key.
+
+Temporal docs: [Activity idempotency](https://docs.temporal.io/activity-definition#idempotency) and [Python error handling](https://docs.temporal.io/develop/python/error-handling#make-activities-idempotent).
+
+</details>
+
+<details>
+<summary>Standalone Activity idempotency keys</summary>
+
+Standalone Activities do not run inside a parent Workflow, so they do not have a Workflow Run ID to combine with the Activity ID. Prefer a natural business key when one exists:
+
+```python
+headers = {"Idempotency-Key": f"webhook:{req.event_id}"}
+```
+
+That key is meaningful to the receiver and does not depend on Temporal internals.
+
+If there is no natural business key, a Standalone Activity can use its Activity ID directly because Standalone Activities have their own ID space and the ID is stable across retries:
+
+```python
+info = activity.info()
+headers = {"Idempotency-Key": info.activity_id}
+```
+
+Treat that as a fallback rather than the first choice. Temporal documents the separate Standalone Activity ID space, but does not currently publish a Python-specific recommended idempotency-key pattern for Standalone Activities. When a stable business identifier exists, use that.
+
+Temporal docs: [Standalone Activities](https://docs.temporal.io/standalone-activity) and [Activity ID](https://docs.temporal.io/activity-execution#activity-id).
+
+</details>
+
+<details>
+<summary>Keep Activities atomic</summary>
+
+An Activity retry re-runs the whole Activity body. If one Activity does three writes and fails after write two, the retry starts again at write one. Keep write Activities focused on one side effect when you can, or make each side effect idempotent with its own key.
+
+</details>
+
+<details>
+<summary>Tune retry policy for the failure mode</summary>
+
+Retries are for failures that can self-resolve. Bound retry attempts, choose sensible backoff, and mark permanent failures non-retryable so Temporal does not keep retrying bad input or rejected credentials.
+
+```python
+from datetime import timedelta
+from temporalio.common import RetryPolicy
+
+RetryPolicy(
+    initial_interval=timedelta(seconds=1),
+    backoff_coefficient=2.0,
+    maximum_interval=timedelta(seconds=10),
+    maximum_attempts=5,
+    non_retryable_error_types=["ValueError"],
+)
+```
+
+</details>
+
+<details>
+<summary>When a side effect cannot be idempotent</summary>
+
+If a downstream system cannot dedupe by key, set `maximum_attempts=1` for that Activity so Temporal will not retry the non-idempotent call automatically. Then handle failure explicitly, often with a compensating Activity or a manual repair path.
+
+</details>
 
 ---
 
@@ -215,7 +310,7 @@ Each retry generates a **different** random code, so the idempotency key changes
 The fix is to make the key deterministic across retries:
 
 - Derive it from input fields the caller already chose (e.g. `req.event_id`), or
-- Use `activity.info().activity_id`, which is stable across retries.
+- For workflow-bound Activities, use `workflow_run_id + activity_id` as described above.
 
 If you need a random code as part of the side effect, generate it **outside** the Activity (in the caller / starter) and pass it in as Activity input.
 

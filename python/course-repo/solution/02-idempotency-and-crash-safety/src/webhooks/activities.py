@@ -12,9 +12,9 @@ def deliver_webhook(req: WebhookDelivery) -> int:
         "Delivering webhook for event %s (attempt %d)", req.event_id, info.attempt
     )
 
-    # activity_id is stable across retries — every retry POSTs the same key,
-    # so the receiver can dedupe and return the cached response.
-    headers = {"Idempotency-Key": info.activity_id}
+    # The webhook event id is stable across retries, so every retry POSTs the
+    # same logical delivery key and the receiver can dedupe the side effect.
+    headers = {"Idempotency-Key": f"webhook:{req.event_id}"}
 
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()

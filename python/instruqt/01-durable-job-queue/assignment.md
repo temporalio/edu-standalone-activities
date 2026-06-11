@@ -150,7 +150,7 @@ Three lines:
 2. `raise_for_status()` raises an exception if the response was a 4xx or 5xx — Temporal will see that and retry.
 3. Return the HTTP status code as the Activity's result.
 
-Save the file. The full version is in the **Solution** tab if you'd rather copy it.
+Instruqt auto-saves your edits. The full version is in the **Solution** tab if you'd rather copy it.
 
 > This is a regular `@activity.defn`. There's no "standalone" decorator. Standalone vs. inside-a-Workflow is decided by *how the Activity is called*, not how it's defined.
 
@@ -184,7 +184,7 @@ You should see:
 Standalone Activity completed with status 200
 ```
 
-Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The interesting line is:
+Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. This call submits the durable job:
 
 ```python
 await client.execute_activity(

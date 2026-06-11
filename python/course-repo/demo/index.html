@@ -208,7 +208,7 @@
       <div class="echo-label">Webhook receiver</div>
       <div class="metrics">
         <div>
-          <div class="metric-label">HTTP attempts</div>
+          <div class="metric-label">Requests received</div>
           <div class="counter" id="attempts-without">0</div>
         </div>
         <div>
@@ -233,7 +233,7 @@
       <div class="echo-label">Webhook receiver</div>
       <div class="metrics">
         <div>
-          <div class="metric-label">HTTP attempts</div>
+          <div class="metric-label">Requests received</div>
           <div class="counter" id="attempts-with">0</div>
         </div>
         <div>
@@ -283,7 +283,7 @@
       apply: () => { moveDots('echo'); setMetrics(2, 2, 2, 1); flashDedup(); flashDuplicated(); }
     },
     {
-      desc: 'Final: 2 POST attempts on both sides; <span style="color:#fc8181">2 recorded deliveries</span> without the key; <span style="color:#9ae6b4">1 recorded delivery</span> with the key.',
+      desc: 'Final: 2 requests received on both sides; <span style="color:#fc8181">2 recorded deliveries</span> without the key; <span style="color:#9ae6b4">1 recorded delivery</span> with the key.',
       apply: () => {}
     }
   ];

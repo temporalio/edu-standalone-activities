@@ -73,7 +73,7 @@ You'll do three things in this module:
 
 1. Run two `start_activity` calls with the same id, back-to-back. Watch the second one error out.
 2. Add `id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING` to the call. Re-run. Watch both calls succeed with the same `run_id`.
-3. See how this scheduling-layer dedup composes with the body-level idempotency from Module 02.
+3. See how this scheduling-layer dedup composes with the receiver-side idempotency key from Module 02.
 
 The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
@@ -112,7 +112,7 @@ The Temporal UI doesn't show much here, because **the server rejected the second
 
 ```bash,run
 # Exactly 1 webhook was actually delivered (the duplicate never reached a Worker).
-curl -s http://localhost:9000/_received | jq '.count, [.deliveries[].body.event_id]'
+curl -s http://localhost:9000/_received | jq '.processed_count, [.deliveries[].body.event_id]'
 
 # Exactly 1 Activity exists on the server for this id.
 temporal activity list --address localhost:7233 \
@@ -167,7 +167,7 @@ Now you should see:
 
 Both calls returned successfully with the **same `run_id`**. The second call got a handle to the Activity the first call scheduled, so `await handle.result()` on either handle resolves to the same outcome.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1** delivery for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1 processed delivery** for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
 > **The takeaway:** the server absorbed the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 02, your delivery is protected from both Temporal's own retries *and* your upstream system's duplicate calls — two different sources of duplication, two different layers of defense.
 
