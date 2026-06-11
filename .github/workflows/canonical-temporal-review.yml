@@ -1,0 +1,150 @@
+name: Canonical Temporal Review
+
+# Implements edu-standalone-activities#18 — agent-driven canonical-usage review
+# on every PR. Findings are posted as a GitHub Check Run with line-anchored
+# annotations. High-priority findings fail the check; Medium/Low are advisory.
+#
+# The rule corpus is pinned to a SHA of temporalio/skill-temporal-developer in
+# .github/canonical-temporal-review/skill-ref.txt. Bump that file in a PR to
+# pick up rule updates.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '**/uv.lock'
+      - '**/poetry.lock'
+      - '**/package-lock.json'
+      - '**/*.generated.*'
+      - 'vendor/**'
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+  id-token: write
+
+concurrency:
+  group: canonical-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Read pinned skill-ref SHA
+        id: skill_ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          pinned="$(tr -d '[:space:]' < .github/canonical-temporal-review/skill-ref.txt)"
+          if [[ -z "$pinned" ]]; then
+            echo "skill-ref.txt is empty" >&2
+            exit 1
+          fi
+          echo "sha=$pinned" >> "$GITHUB_OUTPUT"
+          echo "Using skill-temporal-developer @ $pinned"
+
+      - name: Checkout skill-temporal-developer (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: temporalio/skill-temporal-developer
+          ref: ${{ steps.skill_ref.outputs.sha }}
+          path: .skill-ref
+
+      - name: Collect changed files
+        shell: bash
+        run: .github/canonical-temporal-review/scripts/collect-changes.sh changes.json
+
+      - name: Short-circuit when no in-scope files changed
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          count="$(jq '.files | length' changes.json)"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [[ "$count" -eq 0 ]]; then
+            echo "No in-scope files. Posting a success Check Run and exiting." >&2
+            jq -n \
+              --arg head_sha "$HEAD_SHA" \
+              '{
+                 name: "Canonical Temporal Review",
+                 head_sha: $head_sha,
+                 status: "completed",
+                 conclusion: "success",
+                 output: {
+                   title: "Canonical Temporal Review: no in-scope files",
+                   summary: "No Python source or tutorial Markdown files changed in this PR."
+                 }
+               }' \
+              | gh api --method POST \
+                  -H "Accept: application/vnd.github+json" \
+                  "/repos/${GITHUB_REPOSITORY}/check-runs" \
+                  --input - > /dev/null
+          fi
+
+      - name: Run canonical-usage review agent
+        if: steps.scope.outputs.count != '0'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Read `.github/canonical-temporal-review/prompt.md` and follow its
+            instructions exactly. Inputs are `changes.json` (already written to
+            the workspace root) and `./.skill-ref/references/`. Your only
+            output is `findings.json` at the workspace root.
+          claude_args: |
+            --model claude-opus-4-7
+            --allowed-tools "Read,Grep,Bash,WebFetch"
+            --mcp-config .github/canonical-temporal-review/mcp-config.json
+
+      - name: Post findings as Check Run
+        id: post
+        if: steps.scope.outputs.count != '0'
+        shell: bash
+        run: |
+          set +e
+          .github/canonical-temporal-review/scripts/post-findings.sh
+          rc=$?
+          # Always signal that the real Check Run was posted so the fallback
+          # step below does NOT overwrite a legitimate failure conclusion with
+          # a neutral one.
+          echo "posted=true" >> "$GITHUB_OUTPUT"
+          exit $rc
+
+      - name: Neutral Check Run on agent failure
+        if: failure() && steps.scope.outputs.count != '0' && steps.post.outputs.posted != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg head_sha "$HEAD_SHA" \
+            '{
+               name: "Canonical Temporal Review",
+               head_sha: $head_sha,
+               status: "completed",
+               conclusion: "neutral",
+               output: {
+                 title: "Canonical Temporal Review: manual review required",
+                 summary: "The canonical-usage review agent could not complete (LLM unavailable, token budget exceeded, or schema violation). Please review this PR manually against the rule corpus in temporalio/skill-temporal-developer. The workflow run log has details."
+               }
+             }' \
+            | gh api --method POST \
+                -H "Accept: application/vnd.github+json" \
+                "/repos/${GITHUB_REPOSITORY}/check-runs" \
+                --input - > /dev/null
+          # Per issue: failure mode is neutral, never fail-open silently. The
+          # neutral Check Run is visible to reviewers; the workflow itself
+          # should exit 0 so this branch isn't surfaced twice (once as a
+          # neutral check, once as a red workflow). Exit 0 here.
+          exit 0
