@@ -3,7 +3,7 @@ from datetime import timedelta
 from temporalio import workflow
 
 # This Workflow uses the SAME deliver_webhook function from activities.py
-# that the standalone caller uses. No copies, no rewrites — write the
+# that the standalone caller uses. No copies, no rewrites - write the
 # Activity once, compose it into a multi-step Workflow when the job grows.
 # Both imports go through imports_passed_through so the Python SDK
 # sandbox doesn't reload activities.py / shared.py on every workflow task.

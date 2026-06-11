@@ -3,24 +3,24 @@ slug: concurrency-and-rate-limits
 id: 4bet4jkgwomj
 type: challenge
 title: Concurrency and rate limits
-teaser: Cap your Worker's throughput so a runaway fan-out doesn't DDoS the downstream
+teaser: Cap your Worker's throughput so a large fan-out doesn't overwhelm the downstream
   service.
 notes:
 - type: text
   contents: |
     # Concurrency and rate limits
 
-    Your Activity retries safely now. But by default, Temporal dispatches Activities as fast as the Worker can pull them off the task queue — and that's almost always too fast for whatever the Activity is calling.
+    Your Activity retries safely now. By default, though, Temporal dispatches Activities as fast as the Worker can pull them off the task queue. That is often faster than the service your Activity is calling can handle.
 
     The downstream service (Stripe's API, the customer's webhook endpoint, your own internal queue) has a rate limit. POST faster than that limit and you get 429s back, the receiver throttles you, and your delivery latency goes up.
 
-    The fix is one keyword argument on the Worker: `max_activities_per_second`. The Worker dispatches Activities at the configured pace; everything else waits durably in the task queue on the server. Nothing is dropped — it's just paced.
+    The fix is one keyword argument on the Worker: max_activities_per_second. The Worker dispatches Activities at the configured pace. Everything else waits in the task queue on the server, so work is paced instead of dropped.
 
     ## What you'll do
 
     1. Run 30 deliveries with no rate cap. They all land in about a second.
-    2. Add `max_activities_per_second=5.0` to the Worker. Re-run. The same 30 deliveries now spread out over several seconds.
-    3. Use the `Priority` parameter to push urgent deliveries ahead of bulk ones when the queue is contended.
+    2. Add max_activities_per_second=5.0 to the Worker. Re-run. The same 30 deliveries now spread out over several seconds.
+    3. Use the Priority parameter to push urgent deliveries ahead of bulk ones when the queue is contended.
 
     The same six tabs from Module 1 are available (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). The **Solution** tab has the finished code if you'd rather copy than type.
 tabs:
@@ -61,9 +61,9 @@ enhanced_loading: null
 
 # Pace your jobs and prioritize urgent work
 
-Traditional job queues let slow consumers starve everything behind them. One loud tenant fans out a million submissions and the rest of your traffic stalls. There's no fairness under load, no priority lane for urgent work — and most queues have no rate control at all, so the consumer either implements backoff itself or hammers the downstream API into 429s.
+Many job queues make rate control the consumer's problem. One busy tenant can fan out a huge batch and slow everyone else down. If the queue has no priority or rate controls, the consumer has to back off on its own or it can hammer the downstream API into 429s.
 
-Standalone Activities give you both knobs at the platform level: `max_activities_per_second` paces dispatch so a fan-out doesn't DDoS the receiver, and `Priority` puts urgent jobs ahead of bulk ones when the queue is contended.
+Standalone Activities give you both controls in one place: `max_activities_per_second` paces dispatch so a fan-out does not overwhelm the receiver, and `Priority` puts urgent jobs ahead of bulk ones when the queue is contended.
 
 You'll do three things in this module:
 
@@ -90,7 +90,7 @@ scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
-The `time` prefix prints how long the batch took. With no rate cap, the 30 deliveries should complete in **under a couple of seconds** — the Worker dispatches them as fast as the `ThreadPoolExecutor(10)` running the Activities can keep up.
+The `time` prefix prints how long the batch took. With no rate cap, the 30 deliveries should complete in **under a couple of seconds**. The Worker dispatches them as fast as the `ThreadPoolExecutor(10)` running the Activities can keep up.
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. Count should be 30, and the `received_at` timestamps will all be clustered tight together (within a second or so). The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the count climb live.
 
@@ -108,7 +108,7 @@ max_activities_per_second=5.0,
 
 The Worker now dispatches at most 5 Activities per second. The full version is in the **Solution** tab.
 
-> **Where does the excess go?** It waits in the task queue on the Temporal server. The Worker polls; the server hands it work at the configured rate. Unscheduled work sits durably in the queue — nothing is lost or dropped.
+> **Where does the excess go?** It waits in the task queue on the Temporal server. The Worker polls, and the server hands it work at the configured rate. Unscheduled work stays in the queue. Nothing is lost or dropped.
 
 ---
 
@@ -127,9 +127,9 @@ scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
-This time the wall-clock time is noticeably longer — typically **4–6 seconds** for 30 deliveries at 5/sec. (The rate limiter allows a small initial burst, then enforces the cap.) In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab the `received_at` timestamps will visibly spread out instead of clustering.
+This time the wall-clock time is noticeably longer, typically **4 to 6 seconds** for 30 deliveries at 5/sec. The rate limiter allows a small initial burst, then enforces the cap. In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab the `received_at` timestamps will visibly spread out instead of clustering.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab while the batch runs and switch to the **Standalone Activities** view. You'll see some Activities still in `Scheduled` state — the server holding them durably while the Worker dispatches at 5/sec.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab while the batch runs and switch to the **Standalone Activities** view. You'll see some Activities still in `Scheduled` state because the server is holding them while the Worker dispatches at 5/sec.
 
 > **What's happening:** same 30 units of work, same delivery outcome. The Worker just dispatched them at a steady pace instead of all at once. Pair `max_activities_per_second` with `max_concurrent_activities` (which caps how many run in parallel) when you need both dispatch-rate and in-flight-count controls.
 
@@ -137,7 +137,7 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab while the 
 
 ## 4. Priority: send urgent work ahead of bulk (~3 min)
 
-`max_activities_per_second` controls *how fast* dispatch happens. `Priority` controls *in what order* when the queue is contended. Lower `priority_key` means higher priority — `priority_key=1` runs before `priority_key=5`.
+`max_activities_per_second` controls *how fast* dispatch happens. `Priority` controls *in what order* when the queue is contended. Lower `priority_key` means higher priority, so `priority_key=1` runs before `priority_key=5`.
 
 There's a demo script in the exercise that does this for you. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
@@ -146,11 +146,11 @@ scripts/reset-receiver.sh
 uv run python -m webhooks.send_priority_demo
 ```
 
-The script submits 10 background deliveries (`priority_key=5`) and then 3 urgent ones (`priority_key=1`). The Worker is rate-capped at 5/sec, so the queue is contended — exactly the situation where priority matters.
+The script submits 10 background deliveries (`priority_key=5`) and then 3 urgent ones (`priority_key=1`). The Worker is rate-capped at 5/sec, so the queue is contended. That is the situation where priority matters.
 
 Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab and look at the `received_at` order. The `urgent_*` deliveries land ahead of most of the `bg_*` ones, even though they were submitted later.
 
-For **multi-tenant fairness** — where you want "loud" tenants to not starve "quiet" ones rather than always pushing one priority ahead of another — pass `fairness_key=<tenant_id>` and `fairness_weight=<float>` on the same `Priority(...)` object. A deeper multi-tenant example lives in a future module.
+For **multi-tenant fairness**, where you want busy tenants to avoid starving quieter ones, pass `fairness_key=<tenant_id>` and `fairness_weight=<float>` on the same `Priority(...)` object. A deeper multi-tenant example belongs in a future module.
 
 > **What's happening:** `Priority` is metadata Temporal's server uses when deciding which task to dispatch next. Combined with the rate cap from Section 3, you control both how fast work runs and which work runs first.
 
@@ -170,7 +170,7 @@ Safe but **probably underutilizing**.
 Two knobs to remember:
 
 - `max_activities_per_second` is **per Worker**. If N Workers are polling the same Task Queue, the aggregate is `N × max_activities_per_second`. Tune by dividing your safe rate budget across the Worker fleet.
-- `max_task_queue_activities_per_second` is **queue-wide** — a hard cap regardless of Worker count. Use this when you can't predict how many Workers will be running.
+- `max_task_queue_activities_per_second` is **queue-wide**. It sets a hard cap regardless of Worker count. Use this when you can't predict how many Workers will be running.
 
 </details>
 
@@ -178,4 +178,4 @@ Two knobs to remember:
 
 ## Coming up
 
-**Module 05** — Heartbeats and checkpointing. Your jobs are fast, fair, and rate-capped. Next: long-running jobs that report progress every few seconds and resume from the last checkpoint after a Worker crash.
+**Module 05**: Heartbeats and checkpointing. Your jobs are fast, fair, and rate-capped. Next, long-running jobs report progress every few seconds and resume from the last checkpoint after a Worker crash.

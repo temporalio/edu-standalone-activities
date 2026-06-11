@@ -36,7 +36,7 @@ FAIL=0
 echo "=== 1. Banned messaging phrases ==="
 # Scope covers learner-facing surfaces (assignment.md, track.yml, PRD),
 # diagrams (SVG), externally-hostable demo pages (HTML), and agent-instruction
-# files (AGENTS.md). Python code is excluded — its docstrings and comments
+# files (AGENTS.md). Python code is excluded - its docstrings and comments
 # are reviewed module-by-module rather than grep-gated.
 BANNED='Skip the [Ww]orkflow|\b(3|11) events\b|events vs\.? [0-9]+|\b50% cheaper\b|half the actions|Compare the cost|workflow scaffolding|[Ww]ithout a [Ww]orkflow|costs less than'
 HITS=$(grep -rnE \
@@ -53,7 +53,7 @@ fi
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== 2. Competitor product names ==="
-# AGENTS.md is excluded — it's the file that DEFINES the no-competitor-names
+# AGENTS.md is excluded - it's the file that DEFINES the no-competitor-names
 # rule for human/agent readers, so it has to be allowed to list the names
 # (as examples of what NOT to do). Every other file is fair game.
 COMPETITORS='\b(Celery|Sidekiq|Sidekick|Faktory|Factory|BullMQ|Resque)\b'

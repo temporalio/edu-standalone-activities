@@ -23,7 +23,7 @@ async def main(event_id: str) -> None:
         id=f"deliver-{event_id}",
         task_queue=TASK_QUEUE,
         start_to_close_timeout=timedelta(seconds=10),
-        # Default RetryPolicy is unbounded — fine for the demo, dangerous in prod.
+        # Default RetryPolicy is unbounded - fine for the demo, dangerous in prod.
         # Cap attempts so a permanently-broken receiver doesn't retry forever.
         retry_policy=RetryPolicy(maximum_attempts=5),
     )

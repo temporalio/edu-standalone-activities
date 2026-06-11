@@ -41,7 +41,7 @@ async def main() -> None:
     # Small pause so the background work is solidly queued.
     await asyncio.sleep(0.3)
 
-    # Submit 3 urgent deliveries — lower priority_key = higher priority.
+    # Submit 3 urgent deliveries - lower priority_key = higher priority.
     urgent_handles = []
     print("Submitting 3 urgent deliveries (priority_key=1)...")
     for i in range(3):

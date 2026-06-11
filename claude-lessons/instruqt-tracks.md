@@ -1,6 +1,6 @@
-# Creating Instruqt tracks — playbook
+# Creating Instruqt tracks - playbook
 
-Concise lessons from getting `edu-standalone-activities` to "Play" on Instruqt. Append as new lessons arrive — Claude maintains this file when working on Instruqt-shaped repos.
+Concise lessons from getting `edu-standalone-activities` to "Play" on Instruqt. Append as new lessons arrive - Claude maintains this file when working on Instruqt-shaped repos.
 
 ## Quick start
 
@@ -54,9 +54,9 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 
 - **Per-challenge metadata** lives in YAML frontmatter at the top of `assignment.md`. There is no `challenge.yml` file.
 - **Slug** in challenge frontmatter drops the `NN-` directory prefix: directory `01-skip-the-workflow` → `slug: skip-the-workflow`.
-- **`challenges:` list in track.yml is unused** — challenges are auto-discovered from subdirectories.
-- **Service tabs** (in-sandbox HTTP services): `type: service` with `hostname:` + `port:`. NOT `type: website`. The `website` type requires HTTPS — `http://localhost:PORT` is rejected.
-- **Service tabs open at `/`** — design in-sandbox HTTP services with a useful root endpoint, not just specific paths.
+- **`challenges:` list in track.yml is unused** - challenges are auto-discovered from subdirectories.
+- **Service tabs** (in-sandbox HTTP services): `type: service` with `hostname:` + `port:`. NOT `type: website`. The `website` type requires HTTPS - `http://localhost:PORT` is rejected.
+- **Service tabs open at `/`** - design in-sandbox HTTP services with a useful root endpoint, not just specific paths.
 - **`lab_config.theme`** is an object: `theme: { name: modern-dark }`. Not a string.
 - **`lab_config.sidebar_enabled`** is flat boolean. No `sidebar: {enabled, width}` nesting.
 - **Layout fields**: `default_layout: AssignmentRight`, `default_layout_sidebar_size: 40`, `override_challenge_layout: true`.
@@ -66,7 +66,7 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 - **Instruqt does NOT build your Dockerfile.** You build and push.
 - **Default registry: GHCR** (`ghcr.io/<org>/<image>`).
 - **Build for `linux/amd64`.** Instruqt sandboxes are amd64. Apple Silicon's default arm64 causes "Fail to Start" *with no logs* (container never boots). Use `docker buildx build --platform linux/amd64 --push`.
-- **GHCR packages start private** — toggle to Public in package settings or Instruqt can't pull. One-time UI action per package: `https://github.com/orgs/<org>/packages/container/<name>/settings` → Danger Zone → Change visibility.
+- **GHCR packages start private** - toggle to Public in package settings or Instruqt can't pull. One-time UI action per package: `https://github.com/orgs/<org>/packages/container/<name>/settings` → Danger Zone → Change visibility.
 - **`gh` token needs `write:packages` scope** to push images: `gh auth refresh -h github.com -s write:packages,read:packages`.
 - **Build context** is the parent of `sandbox/` AND `course-repo/` (usually `<lang>/`) so the Dockerfile's `COPY course-repo/` resolves.
 - **CI workflow** at `.github/workflows/build-sandbox.yml`: `docker/build-push-action@v6` with `platforms: linux/amd64`, triggered on changes under sandbox/ or course-repo/.
@@ -75,7 +75,7 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 
 - First `instruqt track push` writes `id:` into track.yml and `id:` + per-tab IDs into challenge frontmatter. **Commit these.** Subsequent pushes match by id; without them the CLI creates a new track each time.
 - If a push half-succeeds, remote has a stub. Run `instruqt track pull` → writes `*.remote` files → manually merge `id:` + `checksum:` into local, delete `.remote` files, push.
-- Always `instruqt track validate` first — same schema/script checks as push but no network.
+- Always `instruqt track validate` first - same schema/script checks as push but no network.
 
 ## Content authoring
 
@@ -85,34 +85,37 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 - **Do not tell learners to save files in Instruqt.** The editor auto-saves. Say "Instruqt auto-saves your edits" if the learner needs reassurance.
 - **Label observable outcomes precisely.** When retries, duplicate attempts, cached responses, skipped work, or partial success are involved, distinguish requests received, attempts made, work processed, deliveries recorded, and responses returned.
 - **Keep inline code visually restrained.** Reserve backticks for names the learner must notice or type; avoid highlighting every host, port, identifier, or common noun.
+- **Avoid em dashes in learner-facing copy.** They make the prose feel generated and often hide sentences that should be shorter. Use a period, comma, colon, or a new sentence instead.
+- **Inline code is louder in `notes:` than in assignment bodies.** The pre-challenge notes renderer can show backticked text as large high-contrast pills. Avoid backticks in `notes:` unless the term truly needs to dominate the welcome screen.
+- **Do not over-explain infrastructure in welcome notes.** If a service is already exposed as a tab, learners usually do not need hostnames or ports on the welcome screen; name only the services and why they matter.
 
-### `code` tab `path` field — limitation
+### `code` tab `path` field - limitation
 
-`path: <dir>` opens the editor with the file tree rooted at that directory; **no file is pre-opened**. `path: <file>` opens with the file shown but the tree only contains that single file. Instruqt has NO field for "tree at directory + file pre-opened" — only the three fields `title`, `hostname`, `path` are supported on `type: code` tabs (per docs + CLI source). Pick which trade-off you want and call out the file in the assignment text.
+`path: <dir>` opens the editor with the file tree rooted at that directory; **no file is pre-opened**. `path: <file>` opens with the file shown but the tree only contains that single file. Instruqt has NO field for "tree at directory + file pre-opened" - only the three fields `title`, `hostname`, `path` are supported on `type: code` tabs (per docs + CLI source). Pick which trade-off you want and call out the file in the assignment text.
 - **Tab-jump buttons** (clickable in-body link that focuses a tab): use the markdown-link-with-attributes form `[button label="Worker" background="#444CE7"](tab-N)` where `N` is the zero-indexed position in the `tabs:` list, NOT the tab id. Nexus reference uses `#444CE7` as the standard accent color.
 
-### Advanced content types — known and unknown
+### Advanced content types - known and unknown
 
 Confirmed rendering: headings, paragraphs, bold/italic, inline code, code fences, lists, links, blockquotes, tables.
 
 **Tested working:**
-- Inline `<svg>` element in markdown body / `notes:contents:` — renders cleanly. Embed the SVG XML directly in a YAML `|` block scalar; no external file dependency, no sanitization issues observed.
+- Inline `<svg>` element in markdown body / `notes:contents:` - renders cleanly. Embed the SVG XML directly in a YAML `|` block scalar; no external file dependency, no sanitization issues observed.
 
-- SMIL animations (`<animate>` on text, circle attributes, etc.) — render and loop cleanly. Confirmed working.
+- SMIL animations (`<animate>` on text, circle attributes, etc.) - render and loop cleanly. Confirmed working.
 
 **Untested:**
-- Static SVG via `![alt](diagram.svg)` — Instruqt likely doesn't serve adjacent files.
-- Inline `<script>` or event handlers — almost certainly stripped.
+- Static SVG via `![alt](diagram.svg)` - Instruqt likely doesn't serve adjacent files.
+- Inline `<script>` or event handlers - almost certainly stripped.
 
 **Confirmed working:**
-- `<iframe>` from cross-origin CDN (raw.githack.com tested). Survives Instruqt's notes / assignment-body sanitizer and renders cross-origin content cleanly. **Use this for interactive HTML demos** that need JS — host the HTML page in `docs/` and iframe via raw.githack.com pointing at the branch. The Idempotency demo (Module 02) does this.
-- `<details>` / `<summary>` collapsibles render and toggle. Good for "think first, then reveal the answer" patterns — use a neutral summary like "Reveal the answer" rather than putting the answer in the summary itself.
+- `<iframe>` from cross-origin CDN (raw.githack.com tested). Survives Instruqt's notes / assignment-body sanitizer and renders cross-origin content cleanly. **Use this for interactive HTML demos** that need JS - host the HTML page in `docs/` and iframe via raw.githack.com pointing at the branch. The Idempotency demo (Module 02) does this.
+- `<details>` / `<summary>` collapsibles render and toggle. Good for "think first, then reveal the answer" patterns - use a neutral summary like "Reveal the answer" rather than putting the answer in the summary itself.
 
 **Fallback for interactive content:** host the interactive page elsewhere (Vercel, GitHub Pages) and link out with a plain markdown link.
 
 **iframe URLs are branch-pinned and need updating on merge.** A URL like `https://raw.githack.com/<org>/<repo>/feat-branch/docs/demo.html` works while the branch lives but 404s after merge + branch deletion. On merge, swap the branch segment for `main` (or your default branch). Set a calendar reminder, or grep `raw.githack.com.*<feature-branch>` before deleting the branch.
 
-**Use a YAML block scalar (`|`) for `notes:contents`, not a double-quoted string.** Block scalars preserve newlines and don't require escaping HTML attributes' double quotes — much easier to author iframes / SVGs. Switching mid-track is cheap; just replace `contents: "..."` with `contents: |` and unescape.
+**Use a YAML block scalar (`|`) for `notes:contents`, not a double-quoted string.** Block scalars preserve newlines and don't require escaping HTML attributes' double quotes - much easier to author iframes / SVGs. Switching mid-track is cheap; just replace `contents: "..."` with `contents: |` and unescape.
 
 Test method: add a minimal example to one challenge's `notes:` or body, `instruqt track push`, view. Record results back into this file.
 
@@ -120,17 +123,17 @@ Test method: add a minimal example to one challenge's `notes:` or body, `instruq
 
 When designing a "kill the worker mid-activity" demo for retry / idempotency:
 
-- **SIGKILL (`pkill -9`), not SIGTERM.** The Temporal Python SDK + a sync activity in a `ThreadPoolExecutor` will gracefully drain in-flight work on SIGTERM — the activity finishes normally, no retry, no chaos. SIGKILL is the only way to guarantee the kind of mid-flight crash the lesson requires.
-- **The starter must be non-blocking.** `client.execute_activity(...)` blocks the calling shell until the activity completes — so the learner can't run `kill-worker.sh` in the same terminal. Use `client.start_activity(...)` for the starter (also a good teaching moment: standalone activities don't tether the starter).
+- **SIGKILL (`pkill -9`), not SIGTERM.** The Temporal Python SDK + a sync activity in a `ThreadPoolExecutor` will gracefully drain in-flight work on SIGTERM - the activity finishes normally, no retry, no chaos. SIGKILL is the only way to guarantee the kind of mid-flight crash the lesson requires.
+- **The starter must be non-blocking.** `client.execute_activity(...)` blocks the calling shell until the activity completes - so the learner can't run `kill-worker.sh` in the same terminal. Use `client.start_activity(...)` for the starter (also a good teaching moment: standalone activities don't tether the starter).
 - **Expect to wait ~`start_to_close_timeout`** between the kill and the retry firing. Without an explicit `heartbeat_timeout`, Temporal can only detect the dead attempt by waiting for the activity-attempt timeout. Pick a `start_to_close_timeout` slightly larger than the activity body's expected duration (e.g. body sleeps 15s → timeout 20s) so the demo doesn't make learners wait minutes.
-- **Standalone activities don't appear in the Workflows tab of the Temporal UI** — that tab is for Workflow Executions only. They live under the **Standalone Activities** tab. Don't claim a specific `attempt =` value in the docs — let learners read what the UI actually shows.
+- **Standalone activities don't appear in the Workflows tab of the Temporal UI** - that tab is for Workflow Executions only. They live under the **Standalone Activities** tab. Don't claim a specific `attempt =` value in the docs - let learners read what the UI actually shows.
 - **`pkill -f` patterns are picky.** `pkill -f "python -m webhooks.worker"` silently does nothing when the process is `python3 -m webhooks.worker` (which is what `uv run` launches). Use a pattern that doesn't depend on the python binary name: `pkill -f "webhooks.worker"` or `pkill -f "python.*-m webhooks.worker"`. Easy to miss because `pkill` exits 0 with nothing to kill.
 
 ## Free module navigation
 
-Default Instruqt tracks lock modules sequentially. To let learners jump to any module without completing prior ones, add `skipping_enabled: true` at the root of `track.yml`. Prerequisite: every challenge with a `check-<container>` script must also have a `solve-<container>` script (Instruqt rejects the flag otherwise — when a learner skips, Instruqt runs the solve scripts for skipped challenges so the sandbox state stays coherent). Make solve scripts cheap: e.g. `cp -rf /opt/workshop/solution/NN/. $DIR/`. The lock icons in the sidebar disappear and the "Skip to challenge?" dialog stops appearing.
+Default Instruqt tracks lock modules sequentially. To let learners jump to any module without completing prior ones, add `skipping_enabled: true` at the root of `track.yml`. Prerequisite: every challenge with a `check-<container>` script must also have a `solve-<container>` script (Instruqt rejects the flag otherwise - when a learner skips, Instruqt runs the solve scripts for skipped challenges so the sandbox state stays coherent). Make solve scripts cheap: e.g. `cp -rf /opt/workshop/solution/NN/. $DIR/`. The lock icons in the sidebar disappear and the "Skip to challenge?" dialog stops appearing.
 
-**Pair with an instant Check button.** The default `check-<container>` script validates the learner's work and gates progression — slow, and a friction point when the learner just wants to move on. If you don't need validation, replace each `check-<container>` with a one-liner:
+**Pair with an instant Check button.** The default `check-<container>` script validates the learner's work and gates progression - slow, and a friction point when the learner just wants to move on. If you don't need validation, replace each `check-<container>` with a one-liner:
 
 ```bash
 #!/usr/bin/env bash
@@ -167,7 +170,7 @@ docker stop saa-test && docker rm saa-test
 
 This caught real bugs in this track that static review missed: `pkill` pattern not matching `python3` (worker survived every "kill"), `ActivityHandle.first_execution_run_id` doesn't exist (only `WorkflowHandle` has that), solution dir missing `pyproject.toml` (learner gets `ModuleNotFoundError`). All silent until run.
 
-Run from the exercise dir AND the solution dir for every module — different bugs surface on each side.
+Run from the exercise dir AND the solution dir for every module - different bugs surface on each side.
 
 ## Common errors → root cause
 
@@ -180,7 +183,7 @@ Run from the exercise dir AND the solution dir for every module — different bu
 | `url: must be a valid HTTPS URL` | Tab uses `type: website` with `http://`. Switch to `type: service` + hostname + port. |
 | `denied: permission_denied` on `docker push` to GHCR | gh token lacks `write:packages`. Run `gh auth refresh -s write:packages,read:packages`. |
 | `There are remote changes for this track` on push | Earlier push created stub. Run `instruqt track pull`, merge, retry. |
-| 401 from `curl https://ghcr.io/v2/...` on a "public" image | Normal — GHCR public reads still need an anonymous bearer token from `https://ghcr.io/token?scope=repository:<path>:pull`. Use that to verify visibility, not raw curl. |
+| 401 from `curl https://ghcr.io/v2/...` on a "public" image | Normal - GHCR public reads still need an anonymous bearer token from `https://ghcr.io/token?scope=repository:<path>:pull`. Use that to verify visibility, not raw curl. |
 
 ## Recommended defaults (Temporal-flavored)
 
@@ -189,7 +192,7 @@ Run from the exercise dir AND the solution dir for every module — different bu
 - Pre-warm `uv sync` at image-build time so the first challenge boots fast.
 - Container memory: `4096` MB (matches Nexus reference; less may be tight).
 - `lab_config`: `extend_ttl: 900`, `sidebar_enabled: true`, `default_layout: AssignmentRight`, `default_layout_sidebar_size: 40`, `theme: { name: modern-dark }`.
-- CI: auto-build the sandbox image; do NOT auto-push the track (Temporal convention — manual `instruqt track push` keeps releases deliberate).
+- CI: auto-build the sandbox image; do NOT auto-push the track (Temporal convention - manual `instruqt track push` keeps releases deliberate).
 - Use the CLI's own template as the source of truth for unfamiliar formats: `instruqt track create` + `instruqt challenge create` generate canonical files.
 
 ## Reference repos
