@@ -130,7 +130,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 
 The receiver had no way to know these were duplicates of the same logical event, so it accepted all three.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It shows the retry history: same Activity, three attempts, the last one Completed.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It's a single Activity execution, now **Completed** — and its **Attempt** count shows it took more than one try to get there, with the most recent failure recorded in the details. One Activity that retried, not several separate runs.
 
 > **What's happening:** each attempt of the Activity body POSTed to the Webhook receiver *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again because Temporal retries the Activity body, not the external side effect.
 
@@ -181,9 +181,9 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 }
 ```
 
-Three POSTs still landed at the receiver because the Activity still retried three times. The receiver saw the same idempotency key on each one, so it returned a cached response to attempts 2 and 3 without processing new deliveries.
+Multiple POSTs still landed at the receiver — the Activity still retried. But the receiver saw the same idempotency key on each one and returned a cached response on subsequent attempts without processing new deliveries.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. The retry history is the same as the buggy run. The Activity still retried, but the receiver deduped the repeated requests.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-evt_fixed`. It looks just like the buggy run in the UI — one **Completed** Activity whose **Attempt** count shows it retried. The Activity didn't change. The receiver dedupes — that's where exactly-once *effect* lives.
 
 > **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 
