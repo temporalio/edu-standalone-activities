@@ -39,10 +39,10 @@ Pick **one title per angle** for the final top-5 poll so the votes spread on int
 
 Score each candidate 0–5 on each dimension; total out of 20. Highest total wins, ties broken by character count (lower is better).
 
-1. **SEO weight** — front-loaded feature name + tutorial signal + language. Max 5.
-2. **Hook strength** — does the first 30 chars create a click? Numbers, value verbs, curiosity. Max 5.
-3. **Truthfulness fit** — does the actual tutorial content back the title? Max 5.
-4. **Character efficiency** — ≤50 = 5, 51–55 = 4, 56–60 = 3, >60 = 0 (disqualified). Max 5.
+1. **SEO weight** - front-loaded feature name + tutorial signal + language. Max 5.
+2. **Hook strength** - does the first 30 chars create a click? Numbers, value verbs, curiosity. Max 5.
+3. **Truthfulness fit** - does the actual tutorial content back the title? Max 5.
+4. **Character efficiency** - ≤50 = 5, 51–55 = 4, 56–60 = 3, >60 = 0 (disqualified). Max 5.
 
 Aim for ~10 candidates total. Show the full ranked table in the PR comment. Pick the top 5 (one per distinct angle) for the Slack poll.
 
@@ -85,8 +85,8 @@ Polly auto-detects 1️⃣–5️⃣ at the start of consecutive lines and turns
 
 Customize the first paragraph per tutorial:
 
-- `[N]` — ordinal of the tutorial in the series (`1st`, `2nd`, `3rd`).
-- `[TOPIC]` — short topic label (`SAA`, `Nexus`, `Workflows`, etc.). Acronyms are OK inside Slack — the audience knows them.
+- `[N]` - ordinal of the tutorial in the series (`1st`, `2nd`, `3rd`).
+- `[TOPIC]` - short topic label (`SAA`, `Nexus`, `Workflows`, etc.). Acronyms are OK inside Slack - the audience knows them.
 - Keep the three-criterion stem ("catchy, SEO friendly, truthful") since that's how the team has been voting.
 - Keep the product-leader sign-off line if a stakeholder review is part of the loop; drop it for purely internal-comms tutorials.
 

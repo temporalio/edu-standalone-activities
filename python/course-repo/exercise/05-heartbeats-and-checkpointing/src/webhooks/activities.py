@@ -27,7 +27,7 @@ def deliver_webhook_batch(req: WebhookDeliveryBatch) -> int:
             response = httpx.post(req.url, json=item, timeout=5.0)
             response.raise_for_status()
             delivered += 1
-            # Report progress to Temporal — the server uses this for liveness
+            # Report progress to Temporal - the server uses this for liveness
             # detection (heartbeat_timeout) and stores it so the NEXT attempt
             # can read it back via activity.info().heartbeat_details.
             # heartbeat() is also where cancellation is delivered: if the
@@ -36,7 +36,7 @@ def deliver_webhook_batch(req: WebhookDeliveryBatch) -> int:
             # Slow enough that you can run kill-worker.sh mid-batch in the demo.
             time.sleep(1)
     except CancelledError:
-        # Cancellation handler — runs when `temporal activity cancel ...` or
+        # Cancellation handler - runs when `temporal activity cancel ...` or
         # an enclosing Workflow cancels this Activity. delivered is already
         # heartbeated, so a retry (if one is scheduled) resumes from here.
         activity.logger.info(

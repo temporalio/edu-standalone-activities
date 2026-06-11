@@ -1,6 +1,6 @@
 """Submit the same deliver_webhook Activity as a step inside a Workflow.
 
-Pairs with send_standalone.py — same Activity code, second submission path.
+Pairs with send_standalone.py - same Activity code, second submission path.
 This is the "graduate to a Workflow" upgrade with no rewrite of the Activity.
 """
 
@@ -16,7 +16,7 @@ from .workflow import WebhookWorkflow
 async def main(event_id: str) -> None:
     client = await Client.connect("localhost:7233")
     # execute_workflow runs the Workflow, which internally calls
-    # deliver_webhook — the same Activity send_standalone.py submits directly.
+    # deliver_webhook - the same Activity send_standalone.py submits directly.
     result = await client.execute_workflow(
         WebhookWorkflow.run,
         args=[WebhookDelivery(

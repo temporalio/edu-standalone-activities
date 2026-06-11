@@ -30,7 +30,7 @@ async def main(count: int) -> None:
         task_queue=TASK_QUEUE,
         start_to_close_timeout=timedelta(minutes=5),
         # heartbeat_timeout: if no heartbeat for 5s, Temporal treats the
-        # attempt as dead and retries — picking up from the last checkpoint.
+        # attempt as dead and retries - picking up from the last checkpoint.
         # Without this, a crashed attempt is only noticed at start_to_close,
         # which could be many minutes.
         heartbeat_timeout=timedelta(seconds=5),

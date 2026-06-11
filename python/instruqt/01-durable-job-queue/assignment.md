@@ -2,8 +2,8 @@
 slug: durable-job-queue
 id: yuewx9heodgi
 type: challenge
-title: Standalone Activities — the durable job queue
-teaser: Run a webhook delivery as a durable job — no broker, no scheduler, no result
+title: 'Standalone Activities: the durable job queue'
+teaser: Run a webhook delivery as a durable job, with no broker, scheduler, or result
   store to operate.
 notes:
 - type: text
@@ -14,9 +14,9 @@ notes:
 
     You're going to build a durable webhook delivery service.
 
-    When something happens in your application — a payment clears, an order ships, a user signs up — you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
+    When something happens in your application, such as a payment clearing, an order shipping, or a user signing up, you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry does not double-deliver.
 
-    The same `deliver_webhook` Activity runs through every module of this tutorial:
+    The same deliver_webhook Activity runs through every module of this tutorial:
 
     - **Module 1**: Run the Activity directly from a client. Inspect it in the Temporal UI.
     - **Module 2**: Make retries safe with an idempotency key.
@@ -27,9 +27,8 @@ notes:
 
     ## What's already running in this sandbox
 
-    - **Temporal dev server** on `localhost:7233` (single-binary dev mode).
-    - **Temporal Web UI** on `localhost:8233` — browse Activities and Workflows.
-    - **Webhook receiver** on `localhost:9000` — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
+    - **Temporal Service and Web UI**: already running and ready for the exercises.
+    - **Webhook receiver**: records webhook deliveries so you can verify what left your Worker actually landed.
 
     You don't need to start any of these. They boot with the sandbox.
 
@@ -69,7 +68,7 @@ notes:
         <rect x="224" y="42" width="36" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
         <text x="242" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">...</text>
         <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Solution tab</text>
-        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">has the answer — peek any time</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">has the answer. Peek any time</text>
       </g>
     </svg>
 tabs:
@@ -110,17 +109,17 @@ enhanced_loading: null
 
 # Submit a durable job with one API call
 
-Traditional job queues leave you holding the bag:
+With many job queues, you still have to solve the hard parts yourself:
 
 - Jobs vanish during deploys, crashes, and restarts.
 - Bring your own broker, result store, scheduler, and monitoring.
 - Retry logic reimplemented in every service, all behaving differently.
-- Slow consumers starve everything behind them — no fairness under load.
-- Dead-end architecture — outgrow the queue, rewrite everything.
+- Slow consumers can block everything behind them.
+- If the work grows into orchestration, you often have to rewrite it elsewhere.
 - No polyglot support in most job queue frameworks.
 - A Tier-0 service nobody wants to maintain.
 
-**Standalone Activities are Temporal's durable job queue.** A regular `@activity.defn`, submitted with one API call — durably persisted, retried on failure, addressable in the UI. No broker, no scheduler, no result store to operate.
+**Standalone Activities are Temporal's durable job queue.** You write a regular `@activity.defn` and submit it with one API call. Temporal persists it, retries it on failure, and makes it visible in the UI. You do not have to run a broker, scheduler, or result store.
 
 You'll do three things in this module:
 
@@ -147,7 +146,7 @@ return response.status_code
 Three lines:
 
 1. POST the payload to the URL using `httpx`. Both come from the `WebhookDelivery` input. `httpx` is already installed.
-2. `raise_for_status()` raises an exception if the response was a 4xx or 5xx — Temporal will see that and retry.
+2. `raise_for_status()` raises an exception if the response was a 4xx or 5xx. Temporal will see that and retry.
 3. Return the HTTP status code as the Activity's result.
 
 Instruqt auto-saves your edits. The full version is in the **Solution** tab if you'd rather copy it.
@@ -196,7 +195,7 @@ await client.execute_activity(
 )
 ```
 
-One API call. The client tells Temporal "run this Activity once and give me the result." There's no Workflow class anywhere in the script — and there's no broker, scheduler, or result store you had to deploy either. Temporal persisted the job to durable storage before acknowledging it, dispatched it to your Worker, and stored the result for you.
+One API call. The client tells Temporal, "run this Activity once and give me the result." There is no Workflow class in the script, and there is no broker, scheduler, or result store for you to deploy. Temporal persisted the job before acknowledging it, dispatched it to your Worker, and stored the result.
 
 Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see one delivery recorded. The Webhook receiver tab auto-refreshes every 2 seconds, so leave it open and you'll see new deliveries appear without reloading.
 
@@ -208,13 +207,13 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch
 
 ![Temporal UI showing a completed Standalone Activity in the Standalone Activities tab](https://raw.githubusercontent.com/temporalio/edu-standalone-activities/standalone-pre/python/diagrams/standalone-activity-ui.png)
 
-Click into it. Three things you get for free from the platform — without operating any of them yourself:
+Click into it. Temporal is now handling three things you would otherwise have to build or operate:
 
-- **Addressable.** Every job has a stable ID (`deliver-evt_001` here). You can query its status, fetch its result, terminate it, or delete it — from the UI, the CLI, the SDK, or the API.
+- **Addressable.** Every job has a stable ID (`deliver-evt_001` here). You can query its status, fetch its result, terminate it, or delete it from the UI, the CLI, the SDK, or the API.
 - **Durable.** The job was persisted before your Worker even saw it. If the Worker had crashed mid-delivery, the same job would have been redispatched to another Worker on retry.
-- **Observable.** Failed attempts, retry timing, payload, result — all there. No separate logging pipeline.
+- **Observable.** Failed attempts, retry timing, payload, and result are visible without a separate logging pipeline.
 
-This is what your job queue should have been doing all along. It's running on Temporal, not on infrastructure you built and operate.
+That is the shape we want from a job queue: durable execution, retries, status, and results without extra infrastructure to operate.
 
 ---
 
@@ -225,7 +224,7 @@ This is what your job queue should have been doing all along. It's running on Te
 <details>
 <summary>Answer</summary>
 
-Temporal sees the exception, waits the initial retry interval (1s by default), and dispatches the job again. The retry policy is exponential: subsequent failures back off further. You didn't write any retry code — it's declarative on the Activity options. The job stays "Running" in the UI through every retry; you can watch the attempt counter increment.
+Temporal sees the exception, waits the initial retry interval (1s by default), and dispatches the job again. The retry policy is exponential, so later failures wait longer before retrying. You did not write retry code; you configured it on the Activity options. The job stays "Running" in the UI through every retry, and you can watch the attempt counter increment.
 
 Contrast: in a traditional job queue, retry behavior is something you re-implement per service, with subtle differences each time.
 
@@ -235,8 +234,8 @@ Contrast: in a traditional job queue, retry behavior is something you re-impleme
 
 The next modules tackle what happens when reality intrudes:
 
-- **Module 02** — Idempotency and crash safety. Crash the Worker mid-delivery; watch the receiver show duplicates; fix it.
-- **Module 03** — Deduplication via ID reuse. Same job ID submitted twice; let Temporal return the existing handle.
-- **Module 04** — Concurrency, rate limits, priority and fairness. Stop one loud tenant from starving the rest.
-- **Module 05** — Heartbeats and checkpointing. Long-running jobs that resume from the last reported progress after a crash.
-- **Module 06** — Same code runs anywhere. The same `deliver_webhook` Activity, now called from a Workflow.
+- **Module 02**: Idempotency and crash safety. Crash the Worker mid-delivery, watch the receiver show duplicates, then fix it.
+- **Module 03**: Deduplication via ID reuse. Submit the same job ID twice and let Temporal return the existing handle.
+- **Module 04**: Concurrency, rate limits, priority and fairness. Stop one busy tenant from slowing everyone else down.
+- **Module 05**: Heartbeats and checkpointing. Resume long-running jobs from the last reported progress after a crash.
+- **Module 06**: Same code runs anywhere. Call the same `deliver_webhook` Activity from a Workflow.
