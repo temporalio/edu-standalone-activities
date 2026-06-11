@@ -69,6 +69,12 @@ Many job queues dedupe in the wrong place, after a Worker has already picked up 
 
 Standalone Activities dedupe at the Temporal server, before any Worker sees the job. When your upstream calls `start_activity` twice with the same id, you control what happens: error out (the default), or quietly return the existing handle (`USE_EXISTING`). Zero Worker cycles spent on the duplicate.
 
+## The visual version
+
+Press **Play** to watch both lanes side-by-side, or step through each phase. Left lane: default policy, the duplicate errors. Right lane: `USE_EXISTING`, the duplicate gets the same handle. Same Worker in both lanes.
+
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/conflict-policy-demo/docs/conflict-policy-demo/index.html" width="100%" height="640" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+
 You'll do three things in this module:
 
 1. Run two `start_activity` calls with the same id, back-to-back. Watch the second one error out.
