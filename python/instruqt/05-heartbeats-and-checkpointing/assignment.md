@@ -116,7 +116,7 @@ In about 5 seconds, `heartbeat_timeout` fires on the server. No heartbeat for 5s
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **14+ deliveries** for a 10-item batch: items 0–3 (or however many got through before the kill) are recorded *twice*. The receiver had no way to know these were duplicates because each carries a different `event_id`.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-batch-10`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The recorded failure on the earlier attempt is a heartbeat timeout — the Worker you killed. One execution that died and got retried, not two separate runs.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-batch-10`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The recorded failure on the earlier attempt is a heartbeat timeout from when you killed the Worker. This is one execution that timed out and was retried, not two separate runs.
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeat_details`. So it starts `start_index = 0` and redoes everything.
 
