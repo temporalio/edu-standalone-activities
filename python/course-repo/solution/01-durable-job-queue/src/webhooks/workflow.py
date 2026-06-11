@@ -12,7 +12,7 @@ with workflow.unsafe.imports_passed_through():
 @workflow.defn
 class WebhookWorkflow:
     """Tiny Workflow wrapper around deliver_webhook. The standalone caller in
-    send_standalone.py and this Workflow both use the same Activity function —
+    send_standalone.py and this Workflow both use the same Activity function -
     the "same code, two job types" demo lands fully in Module 06.
     """
 

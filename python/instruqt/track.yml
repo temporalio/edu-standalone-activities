@@ -1,14 +1,14 @@
 slug: standalone-activities-python
 id: d4xnvujmv3rf
 title: Standalone Activities as a Durable Job Queue (Python)
-teaser: Build a durable webhook-delivery service with Standalone Activities — Temporal's
+teaser: Build a durable webhook-delivery service with Standalone Activities, Temporal's
   durable job queue. No broker, no scheduler, no retry library to operate.
 description: |
   Standalone Activities are Temporal's durable job queue. Submit jobs as top-level
-  Activities with one API call — durably persisted, retried on failure, addressable
+  Activities with one API call. They are persisted, retried on failure, and addressable
   in the UI. No broker or scheduler to operate. The same Activity code runs inside
   a Workflow later when the job grows into multi-step work. You'll build a durable
-  webhook delivery service across six modules — covering crash safety, deduplication,
+  webhook delivery service across six modules covering crash safety, deduplication,
   rate limits, heartbeats, and the Activity-in-Workflow upgrade path.
 icon: ""
 tags:
@@ -44,7 +44,7 @@ lab_config:
   - Server-driven retries. Your client can disconnect; the Activity finishes.
   - 'Module 02: crash the Worker. Without idempotency, you double-deliver.'
   - 'Module 03: same job ID submitted twice? Temporal returns the existing one.'
-  - 'Module 04: cap your Worker''s rate so a fan-out doesn''t DDoS the receiver.'
+  - 'Module 04: cap your Worker''s rate so a fan-out does not overwhelm the receiver.'
   - 'Module 05: long-running jobs heartbeat progress and resume after a crash.'
   - 'Module 06: same Activity called from a Workflow. Same code, two job types.'
   - Booting your sandbox and starting the local services.
@@ -55,5 +55,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "1220776021906330236"
+checksum: "12203087299244186201"
 enhanced_loading: false

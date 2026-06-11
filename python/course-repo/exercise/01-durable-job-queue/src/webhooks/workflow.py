@@ -12,7 +12,7 @@ with workflow.unsafe.imports_passed_through():
 @workflow.defn
 class WebhookWorkflow:
     """Tiny Workflow wrapper around deliver_webhook. Not used in Module 01's
-    narrative — Module 06 ("same code runs anywhere") uses this pattern to
+    narrative - Module 06 ("same code runs anywhere") uses this pattern to
     show the same Activity called via execute_activity or as a Workflow step.
     """
 

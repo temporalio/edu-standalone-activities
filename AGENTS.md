@@ -5,8 +5,8 @@ Guidance for Claude Code (and other coding agents) working on this tutorial repo
 ## PRs developed via plan mode
 
 When a change was scoped through Claude Code's **plan mode**, the PR body must
-include the plan's content — context, scope, file/module changes, and
-verification steps — so reviewers can evaluate the change against the intent,
+include the plan's content - context, scope, file/module changes, and
+verification steps - so reviewers can evaluate the change against the intent,
 not reconstruct it from the diff.
 
 Plan files live at `~/.claude/plans/` on the author's machine. Paste the
@@ -30,12 +30,12 @@ Quick reference:
 - **Open each module body** with the traditional-job-queue pain the module
   addresses, then position Standalone Activities as the platform-level fix.
   Never lead with a Workflow-vs-Standalone comparison.
-- **Generic framing** ("traditional job queues", "DIY job queue") — do not
+- **Generic framing** ("traditional job queues", "DIY job queue") - do not
   name specific competitor products (Celery, Sidekiq, Faktory, etc.) in
   learner-facing copy.
 - **Capitalize Temporal primitives** (Activity, Workflow, Worker, Task Queue,
   Standalone Activity, etc.) when referring to the Temporal concept. The
-  phrase **"job queue" stays lowercase** — it's descriptive SEO vocabulary,
+  phrase **"job queue" stays lowercase** - it's descriptive SEO vocabulary,
   not a Temporal primitive.
 - **Each module's exercise/solution code** should carry concise inline
   comments highlighting the feature(s) that module is teaching. One short

@@ -22,12 +22,12 @@ python/
 
 All six modules in place:
 
-1. **`01-durable-job-queue`** — the durable job queue introduction.
-2. **`02-idempotency-and-crash-safety`** — idempotency under Temporal's own retries.
-3. **`03-dedup-via-id-reuse`** — server-side dedup via `id_conflict_policy`.
-4. **`04-concurrency-and-rate-limits`** — rate cap, Priority and fairness.
-5. **`05-heartbeats-and-checkpointing`** — long-running Activity, `activity.heartbeat()`, resumption from `heartbeat_details`.
-6. **`06-same-code-runs-anywhere`** — the same Activity submitted directly and as a Workflow step.
+1. **`01-durable-job-queue`** - the durable job queue introduction.
+2. **`02-idempotency-and-crash-safety`** - idempotency under Temporal's own retries.
+3. **`03-dedup-via-id-reuse`** - server-side dedup via `id_conflict_policy`.
+4. **`04-concurrency-and-rate-limits`** - rate cap, Priority and fairness.
+5. **`05-heartbeats-and-checkpointing`** - long-running Activity, `activity.heartbeat()`, resumption from `heartbeat_details`.
+6. **`06-same-code-runs-anywhere`** - the same Activity submitted directly and as a Workflow step.
 
 ## Local development
 
@@ -48,8 +48,8 @@ curl http://localhost:9000/_received
 ## Implementation decisions (verified locally)
 
 - HTTP client: `httpx` (sync mode).
-- `temporalio>=1.27` — verified that `Client.execute_activity` and `Client.start_activity` are exposed in 1.27.2 (built and smoke-tested locally).
-- Temporal CLI: `v1.6.2-standalone-activity` — verified as a real published release; ships `temporal activity describe/list/count` (all marked Experimental).
+- `temporalio>=1.27` - verified that `Client.execute_activity` and `Client.start_activity` are exposed in 1.27.2 (built and smoke-tested locally).
+- Temporal CLI: `v1.6.2-standalone-activity` - verified as a real published release; ships `temporal activity describe/list/count` (all marked Experimental).
 
 ## Open questions
 

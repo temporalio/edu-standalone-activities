@@ -17,7 +17,7 @@ notes:
 
     Without a policy, the second call to start_activity with the same
     id errors by default (ActivityIDConflictPolicy.FAIL). The fix
-    is to set the policy to USE_EXISTING — the second call quietly
+    is to set the policy to USE_EXISTING. The second call quietly
     returns the existing handle, no new Activity is scheduled, no
     error to handle in your application code.
 
@@ -65,7 +65,7 @@ enhanced_loading: null
 
 # Reject duplicate jobs at the platform
 
-Traditional job queues either dedupe in the wrong place (the consumer, after a Worker has already picked up the job) or not at all — so you end up writing per-service dedup logic that behaves a little differently every time.
+Many job queues dedupe in the wrong place, after a Worker has already picked up the job, or they do not dedupe at all. You end up writing per-service dedup logic, and it behaves a little differently each time.
 
 Standalone Activities dedupe at the Temporal server, before any Worker sees the job. When your upstream calls `start_activity` twice with the same id, you control what happens: error out (the default), or quietly return the existing handle (`USE_EXISTING`). Zero Worker cycles spent on the duplicate.
 
@@ -87,7 +87,7 @@ In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `send_double` — a script that calls `start_activity` twice with the same id, back-to-back:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `send_double`, a script that calls `start_activity` twice with the same id, back-to-back:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -104,11 +104,11 @@ You should see:
 [call-1] activity completed
 ```
 
-The first call succeeded. The second call raised an error because the default `id_conflict_policy` is `FAIL` — the server refuses to schedule a second Activity with an id that's already in flight.
+The first call succeeded. The second call raised an error because the default `id_conflict_policy` is `FAIL`. The server refuses to schedule a second Activity with an id that's already in flight.
 
 ### Confirming this is the right outcome
 
-The Temporal UI doesn't show much here, because **the server rejected the second call before any second Activity got created**. There's no failed Activity record to look at — the only sign of the rejection is the `ActivityAlreadyStartedError` your Python code caught. To confirm what happened, look at the surrounding state. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+The Temporal UI doesn't show much here because **the server rejected the second call before any second Activity got created**. There is no failed Activity record to inspect. The only sign of the rejection is the `ActivityAlreadyStartedError` your Python code caught. To confirm what happened, look at the surrounding state in the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
 # Exactly 1 webhook was actually delivered (the duplicate never reached a Worker).
@@ -123,13 +123,13 @@ temporal activity describe --address localhost:7233 \
   --activity-id deliver-evt_dup_001 -o json | jq '{attempt, status}'
 ```
 
-All three checks agree: one Activity scheduled, one webhook delivered, one attempt. The rejected call cost zero Worker cycles and left no record on the server — but your application code still had to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing every single call.
+All three checks agree: one Activity scheduled, one webhook delivered, one attempt. The rejected call never reached a Worker and left no server record, but your application code still had to handle the exception. If your upstream sends some events more than once, that exception handling becomes part of your normal path.
 
 ---
 
 ## 2. Set the conflict policy to USE_EXISTING (~2 min)
 
-Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. There are two `TODO` comments — uncomment the import, and add one keyword argument inside `start_activity(...)`:
+Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. There are two `TODO` comments. Uncomment the import, and add one keyword argument inside `start_activity(...)`:
 
 ```python
 # At the top of the file, uncomment:
@@ -169,13 +169,13 @@ Both calls returned successfully with the **same `run_id`**. The second call got
 
 The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1 processed delivery** for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
-> **The takeaway:** the server absorbed the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 02, your delivery is protected from both Temporal's own retries *and* your upstream system's duplicate calls — two different sources of duplication, two different layers of defense.
+> **The takeaway:** the server handled the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 02, your delivery is protected from Temporal retries and from duplicate calls in your own application.
 
 ---
 
 ## Going further: the reuse policy
 
-`id_conflict_policy` handles duplicates while the original is **in flight**. Its sibling `id_reuse_policy` handles duplicates **after the original completed** — values include `REJECT_DUPLICATE` (refuse to re-run a completed id), `ALLOW_DUPLICATE_FAILED_ONLY` (re-run only if previous failed), and the default `ALLOW_DUPLICATE`. The two policies pair: conflict for "right now," reuse for "ever ran before."
+`id_conflict_policy` handles duplicates while the original is **in flight**. Its sibling `id_reuse_policy` handles duplicates **after the original completed**. Values include `REJECT_DUPLICATE` (refuse to re-run a completed id), `ALLOW_DUPLICATE_FAILED_ONLY` (re-run only if previous failed), and the default `ALLOW_DUPLICATE`. Think of conflict as "right now" and reuse as "has this id run before?"
 
 ---
 
@@ -188,7 +188,7 @@ The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1 
 
 A **new** Activity execution starts.
 
-`id_conflict_policy` only governs duplicates while the original is **in flight**. Once the first Activity completes, `id_reuse_policy` takes over — and the default (`ALLOW_DUPLICATE`) accepts a fresh execution with the same id.
+`id_conflict_policy` only governs duplicates while the original is **in flight**. Once the first Activity completes, `id_reuse_policy` takes over. The default (`ALLOW_DUPLICATE`) accepts a fresh execution with the same id.
 
 For full dedup across both windows, set both:
 
@@ -201,4 +201,4 @@ id_reuse_policy=ActivityIDReusePolicy.REJECT_DUPLICATE,     # completed duplicat
 
 ## Coming up
 
-**Module 04** — Concurrency, rate limits, and priority. Your jobs dedupe correctly now. Next: cap how many run at the same time so a burst of submissions doesn't DDoS the receiver — and prioritize urgent ones over bulk.
+**Module 04**: Concurrency, rate limits, and priority. Your jobs dedupe correctly now. Next, cap how many run at the same time so a burst of submissions does not overwhelm the receiver, and prioritize urgent ones over bulk.
