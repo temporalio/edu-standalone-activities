@@ -181,7 +181,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 }
 ```
 
-Three POSTs still landed at the receiver — the Activity still retried three times. But the receiver saw the same idempotency key on each one and returned a cached response to attempts 2 and 3 without processing new deliveries.
+Multiple POSTs still landed at the receiver — the Activity still retried. But the receiver saw the same idempotency key on each one and returned a cached response on subsequent attempts without processing new deliveries.
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-evt_fixed`. It looks just like the buggy run in the UI — one **Completed** Activity whose **Attempt** count shows it retried. The Activity didn't change. The receiver dedupes — that's where exactly-once *effect* lives.
 
