@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from temporalio.client import Client
@@ -6,6 +7,10 @@ from temporalio.worker import Worker
 
 from .activities import deliver_webhook
 from .shared import TASK_QUEUE
+
+
+# Show activity.logger.info(...) output; default WARNING would drop INFO.
+logging.basicConfig(level=logging.INFO)
 
 
 async def main() -> None:
