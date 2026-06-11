@@ -87,7 +87,7 @@ In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `send_double`, a script that calls `start_activity` twice with the same id, back-to-back:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `send_double` (`src/webhooks/send_double.py`), a script that calls `start_activity` twice with the same id, back-to-back:
 
 ```bash,run
 scripts/reset-receiver.sh
