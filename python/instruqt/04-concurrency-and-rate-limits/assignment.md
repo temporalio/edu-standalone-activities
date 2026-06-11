@@ -125,9 +125,9 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The
 
 ```json
 {
-  "received_count": 30,
+  "received_count": "increasing (retries)",
   "processed_count": 5,
-  "throttled_count": 25,
+  "throttled_count": "increasing (retries)",
   "rate_limit": 5,
   ...
 }
