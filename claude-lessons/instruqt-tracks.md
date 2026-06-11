@@ -86,6 +86,7 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 - **Label observable outcomes precisely.** When retries, duplicate attempts, cached responses, skipped work, or partial success are involved, distinguish requests received, attempts made, work processed, deliveries recorded, and responses returned.
 - **Keep inline code visually restrained.** Reserve backticks for names the learner must notice or type; avoid highlighting every host, port, identifier, or common noun.
 - **Inline code is louder in `notes:` than in assignment bodies.** The pre-challenge notes renderer can show backticked text as large high-contrast pills. Avoid backticks in `notes:` unless the term truly needs to dominate the welcome screen.
+- **Do not over-explain infrastructure in welcome notes.** If a service is already exposed as a tab, learners usually do not need hostnames or ports on the welcome screen; name only the services and why they matter.
 
 ### `code` tab `path` field — limitation
 

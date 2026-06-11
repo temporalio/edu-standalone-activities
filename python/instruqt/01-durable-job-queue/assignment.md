@@ -27,9 +27,8 @@ notes:
 
     ## What's already running in this sandbox
 
-    - **Temporal dev server** on localhost:7233 (single-binary dev mode).
-    - **Temporal Web UI** on localhost:8233 — browse Activities and Workflows.
-    - **Webhook receiver** on localhost:9000 — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
+    - **Temporal Service and Web UI** — already running and ready for the exercises.
+    - **Webhook receiver** — records webhook deliveries so you can verify what left your Worker actually landed.
 
     You don't need to start any of these. They boot with the sandbox.
 
