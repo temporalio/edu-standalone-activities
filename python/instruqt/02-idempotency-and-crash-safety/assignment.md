@@ -3,8 +3,8 @@ slug: idempotency-and-crash-safety
 id: mowdyyydsf1e
 type: challenge
 title: Idempotency and crash safety
-teaser: Crash the Worker mid-flight; watch duplicate deliveries; fix them
-  with one line.
+teaser: Crash the Worker mid-flight; watch duplicate deliveries; fix them with one
+  line.
 notes:
 - type: text
   contents: |
