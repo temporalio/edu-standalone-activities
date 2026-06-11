@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Wrap-up module: no code work required. Leave whatever's in /root/workshop alone.
+# Defense in depth: Module 04 enables a rate limit; clear it in case 05 was skipped.
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true
 exit 0
