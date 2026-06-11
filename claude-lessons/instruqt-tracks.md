@@ -85,7 +85,6 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 - **Do not tell learners to save files in Instruqt.** The code editor auto-saves changes, so save instructions add confusion unless a specific non-Instruqt environment genuinely requires manual saving.
 - **Label observable outcomes precisely.** When a tutorial involves retries, duplicate attempts, cached responses, skipped work, or partial success, name exactly what each count or status represents. Do not say something "didn't happen" if it happened but was ignored, deduped, cached, or not persisted.
 - **Keep inline code visually restrained.** Use inline code for literals learners must type or recognize exactly. Avoid styling every identifier, hostname, or incidental value as code when it makes the page visually noisy.
-- **Separate exercise-specific idempotency keys from production guidance.** A sandbox may use a stable logical key from input for clarity; production guidance should also explain the recommended key shape for the real execution model being taught.
 
 ### `code` tab `path` field — limitation
 
