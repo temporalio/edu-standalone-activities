@@ -22,7 +22,7 @@ body:
   - type: textarea
     id: going-well
     attributes:
-      label: What are the top 3 things going well which we should continue in this tutorial?
+      label: What are the top 3 things you like about this tutorial?
       description: List the three most useful parts of the tutorial experience.
       placeholder: |
         1.
