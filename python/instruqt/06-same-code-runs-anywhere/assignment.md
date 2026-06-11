@@ -174,7 +174,7 @@ The full talk: [Standalone Activities for durable job processing — Coinbase at
 What you can now do with Standalone Activities in Python:
 
 - **`client.execute_activity` / `client.start_activity`** — submit an Activity as a top-level durable job, no Workflow required.
-- **`Idempotency-Key` from `activity.info().activity_id`** — make retries safe by giving the receiver a stable dedup key.
+- **Idempotency keys for external writes** — make retries safe by giving the receiver a stable dedup key, such as the logical webhook event key from Module 02.
 - **`ActivityIDConflictPolicy.USE_EXISTING`** — let the server absorb duplicate `start_activity` calls instead of erroring.
 - **`max_activities_per_second`** on the Worker — cap dispatch rate to protect the downstream service.
 - **`Priority(priority_key, fairness_key, fairness_weight)`** on `start_activity` — push urgent work ahead of bulk when the queue is contended.

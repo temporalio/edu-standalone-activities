@@ -13,10 +13,10 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     )
 
     headers: dict[str, str] = {}
-    # TODO: add an Idempotency-Key header from activity.info().activity_id.
+    # TODO: add an Idempotency-Key header from req.event_id.
     # The webhook receiver caches by this header and dedupes duplicate deliveries.
-    # The key MUST be deterministic across retries - use activity.info()
-    # .activity_id (stable), not uuid4() (regenerated each attempt).
+    # The key MUST be deterministic across retries - use the logical webhook
+    # event id (stable), not uuid4() (regenerated each attempt).
 
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()

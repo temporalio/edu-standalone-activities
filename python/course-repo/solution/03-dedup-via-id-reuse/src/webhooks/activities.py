@@ -11,7 +11,7 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     activity.logger.info(
         "Delivering webhook for event %s to %s", req.event_id, req.url
     )
-    headers = {"Idempotency-Key": activity.info().activity_id}
+    headers = {"Idempotency-Key": f"webhook:{req.event_id}"}
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()
     # Tiny pause so the second duplicate-call lands while this activity is
