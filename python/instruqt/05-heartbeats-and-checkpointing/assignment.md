@@ -12,12 +12,12 @@ notes:
 
     A single Standalone Activity that processes a batch of webhook deliveries can take minutes. When the Worker crashes mid-batch, traditional job queues either lose all in-flight progress or expect *you* to invent a checkpointing scheme per job type — and most of those schemes leak state into a sidecar database nobody wants to maintain.
 
-    Standalone Activities have heartbeats built in. The Activity calls `activity.heartbeat(progress)` after each unit of work; the Temporal server stores that value. If the attempt dies (Worker crash, machine reboot, deploy), the next attempt reads `activity.info().heartbeat_details` and resumes from the last reported checkpoint instead of redoing work.
+    Standalone Activities have heartbeats built in. The Activity calls activity.heartbeat(progress) after each unit of work; the Temporal server stores that value. If the attempt dies (Worker crash, machine reboot, deploy), the next attempt reads activity.info().heartbeat_details and resumes from the last reported checkpoint instead of redoing work.
 
     ## What you'll do
 
     1. Run a long-running Activity that delivers 10 webhooks. Kill the Worker mid-batch. Watch the retry start from item 0 — the receiver records duplicates of items already delivered.
-    2. Add one line to read `heartbeat_details` on retry. Re-run. Kill again. Watch the retry pick up where it left off — no duplicates.
+    2. Add one line to read heartbeat_details on retry. Re-run. Kill again. Watch the retry pick up where it left off — no duplicates.
 tabs:
 - id: pxzal47h0ue3
   title: Exercise

@@ -14,13 +14,13 @@ notes:
 
     The downstream service (Stripe's API, the customer's webhook endpoint, your own internal queue) has a rate limit. POST faster than that limit and you get 429s back, the receiver throttles you, and your delivery latency goes up.
 
-    The fix is one keyword argument on the Worker: `max_activities_per_second`. The Worker dispatches Activities at the configured pace; everything else waits durably in the task queue on the server. Nothing is dropped — it's just paced.
+    The fix is one keyword argument on the Worker: max_activities_per_second. The Worker dispatches Activities at the configured pace; everything else waits durably in the task queue on the server. Nothing is dropped — it's just paced.
 
     ## What you'll do
 
     1. Run 30 deliveries with no rate cap. They all land in about a second.
-    2. Add `max_activities_per_second=5.0` to the Worker. Re-run. The same 30 deliveries now spread out over several seconds.
-    3. Use the `Priority` parameter to push urgent deliveries ahead of bulk ones when the queue is contended.
+    2. Add max_activities_per_second=5.0 to the Worker. Re-run. The same 30 deliveries now spread out over several seconds.
+    3. Use the Priority parameter to push urgent deliveries ahead of bulk ones when the queue is contended.
 
     The same six tabs from Module 1 are available (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). The **Solution** tab has the finished code if you'd rather copy than type.
 tabs:

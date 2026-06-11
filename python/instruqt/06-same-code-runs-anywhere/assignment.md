@@ -14,7 +14,7 @@ notes:
 
     Standalone Activities are a different shape. The Activity code you wrote in Modules 01–05 is a Lego block — a self-contained unit of durable work. Today you submit it as a top-level job. Tomorrow, when the job grows into a multi-step process, you snap the same block into a Workflow with no rewrite of the Activity.
 
-    This module proves it. The exact same `deliver_webhook` function is submitted two ways: directly via `client.execute_activity` (the Standalone Activity path you've used all tutorial) and via `client.execute_workflow` (a Workflow that calls the Activity as a step). Same Activity, two job types.
+    This module proves it. The exact same deliver_webhook function is submitted two ways: directly via client.execute_activity (the Standalone Activity path you've used all tutorial) and via client.execute_workflow (a Workflow that calls the Activity as a step). Same Activity, two job types.
 tabs:
 - id: ripqsfaeunnx
   title: Exercise

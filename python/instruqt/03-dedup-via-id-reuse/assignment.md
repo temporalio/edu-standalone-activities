@@ -13,11 +13,11 @@ notes:
     Module 02 made each Activity safe under **Temporal's own retries**.
     This module handles a different duplicate problem: the upstream
     system (Stripe, GitHub, your own customer's service) sends the
-    same logical event twice and calls `start_activity` twice.
+    same logical event twice and calls start_activity twice.
 
-    Without a policy, the second call to `start_activity` with the same
-    `id` errors by default (`ActivityIDConflictPolicy.FAIL`). The fix
-    is to set the policy to `USE_EXISTING` — the second call quietly
+    Without a policy, the second call to start_activity with the same
+    id errors by default (ActivityIDConflictPolicy.FAIL). The fix
+    is to set the policy to USE_EXISTING — the second call quietly
     returns the existing handle, no new Activity is scheduled, no
     error to handle in your application code.
 
@@ -26,7 +26,7 @@ notes:
     - Module 02 (idempotency in the Activity body): protects against
       Temporal's *own* retries after the Worker crashes.
     - This module (scheduling-layer id policy): protects against
-      duplicate `start_activity` calls from your application.
+      duplicate start_activity calls from your application.
 tabs:
 - id: bb5mshhnqrcy
   title: Exercise

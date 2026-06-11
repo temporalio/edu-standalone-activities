@@ -12,7 +12,7 @@ notes:
 
     Temporal automatically retries Activities that fail. That's almost always what you want — until the Activity has *already done something visible to the outside world* before it failed.
 
-    A concrete example: your `deliver_webhook` Activity POSTs to the receiver's URL. The receiver gets the request and processes it. Then something errors out — the receiver returns a 500, the network drops, or the Worker crashes after the POST. Temporal sees no successful completion, so it retries the whole Activity, POST included. The receiver gets the same delivery twice.
+    A concrete example: your deliver_webhook Activity POSTs to the receiver's URL. The receiver gets the request and processes it. Then something errors out — the receiver returns a 500, the network drops, or the Worker crashes after the POST. Temporal sees no successful completion, so it retries the whole Activity, POST included. The receiver gets the same delivery twice.
 
     This is at-least-once delivery: Temporal guarantees your Activity runs to completion at least once, but doesn't guarantee exactly once. To get effectively-once *side effects*, your Activity needs to be **idempotent** — safe to run more than once with the same input. The standard way to do that is to send an idempotency key with each request and let the receiver dedupe.
 
