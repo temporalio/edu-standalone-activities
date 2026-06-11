@@ -109,7 +109,7 @@ The first call succeeded. The second call raised an error because the default `i
 The Temporal UI doesn't show much here, because **the server rejected the second call before any second Activity got created**. There's no failed Activity record to look at — the only sign of the rejection is the `ActivityAlreadyStartedError` your Python code caught. To confirm what happened, look at the surrounding state. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
 
 ```bash,run
-# Exactly 1 webhook was actually delivered (the duplicate never reached a Worker).
+# Exactly 1 webhook was processed (the duplicate never reached a Worker).
 curl -s http://localhost:9000/_received | jq '.count, [.deliveries[].body.event_id]'
 
 # Exactly 1 Activity exists on the server for this id.
@@ -121,7 +121,7 @@ temporal activity describe --address localhost:7233 \
   --activity-id deliver-evt_dup_001 -o json | jq '{attempt, status}'
 ```
 
-All three checks agree: one Activity scheduled, one webhook delivered, one attempt. The rejected call cost zero Worker cycles and left no record on the server — but your application code still had to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing every single call.
+All three checks agree: one Activity scheduled, one webhook processed, one attempt. The rejected call cost zero Worker cycles and left no record on the server — but your application code still had to handle the exception. If your upstream sends every event 1.1× on average due to retries, you'd be try/except'ing every single call.
 
 ---
 
@@ -165,7 +165,7 @@ Now you should see:
 
 Both calls returned successfully with the **same `run_id`**. The second call got a handle to the Activity the first call scheduled, so `await handle.result()` on either handle resolves to the same outcome.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1** delivery for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1 processed delivery** for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
 > **The takeaway:** the server absorbed the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 2, your delivery is protected from both Temporal's own retries *and* your upstream system's duplicate calls — two different sources of duplication, two different layers of defense.
 

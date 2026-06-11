@@ -90,7 +90,7 @@ time uv run python -m webhooks.send_bulk 30
 
 The `time` prefix prints how long the batch took. With no rate cap, the 30 deliveries should complete in **under a couple of seconds** — the Worker dispatches them as fast as the `ThreadPoolExecutor(10)` running the Activities can keep up.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. Count should be 30, and the `received_at` timestamps will all be clustered tight together (within a second or so). The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the count climb live.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The processed count should be 30, and the `received_at` timestamps will all be clustered tight together (within a second or so). The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the count climb live.
 
 > **What's happening:** there's no rate limit anywhere. If the Webhook receiver were a real downstream API with a 5 req/sec limit, this run would have triggered 25 rate-limit errors.
 

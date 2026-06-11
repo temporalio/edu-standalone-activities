@@ -14,19 +14,19 @@ notes:
 
     When something happens in your application — a payment clears, an order ships, a user signs up — you often need to tell another system about it by POSTing to a URL the other team gave you. That POST is called a **webhook**. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry doesn't double-deliver.
 
-    The same `deliver_webhook` Activity runs through every module:
+    The same deliver_webhook Activity runs through every module:
 
-    - **Module 1**: Run the Activity directly from a client, with no Workflow. Compare the server-side cost vs. running the same Activity inside a Workflow.
-    - **Module 2**: Make retries safe with an idempotency key.
-    - **Module 3**: Cap throughput so a burst of deliveries doesn't overload the receiver.
-    - **Module 4**: Reject duplicate requests at Temporal's scheduling layer.
-    - **Module 5**: Three real-world scenarios — pick Standalone Activity or Workflow for each.
+    - **Module 1**: Run the Activity directly from a client, with no Workflow. Compare the server-side cost vs. running the same Activity inside a Workflow
+    - **Module 2**: Make retries safe with an idempotency key
+    - **Module 3**: Cap throughput so a burst of deliveries doesn't overload the receiver
+    - **Module 4**: Reject duplicate requests at Temporal's scheduling layer
+    - **Module 5**: Three real-world scenarios — pick Standalone Activity or Workflow for each
 
-    ## What's already running in this sandbox
+    ## What's already running in this sandbox:
 
-    - **Temporal dev server** on `localhost:7233` (single-binary dev mode).
-    - **Temporal Web UI** on `localhost:8233` — browse activities and workflows.
-    - **Webhook receiver** on `localhost:9000` — a tiny HTTP server that records every webhook it receives. You'll use it to verify the deliveries that left your Worker actually landed.
+    - **Temporal dev server** (single-binary dev mode)
+    - **Temporal Web UI** — browse activities and workflows
+    - **Webhook receiver** — a tiny HTTP server that records webhook deliveries. You'll use it to verify the deliveries that left your Worker actually landed
 
     You don't need to start any of these. They boot with the sandbox.
 
@@ -113,10 +113,10 @@ It's still durable. It still retries on failure. It still shows up in the Tempor
 
 You'll do four things in this module:
 
-1. Write a small `deliver_webhook` Activity in Python.
-2. Run it directly from a client (Standalone Activity).
-3. Run the same Activity wrapped in a tiny Workflow.
-4. Compare how many events Temporal recorded for each, using the CLI.
+1. Write a small `deliver_webhook` Activity in Python
+2. Run it directly from a client (Standalone Activity)
+3. Run the same Activity wrapped in a tiny Workflow
+4. Compare how many events Temporal recorded for each, using the CLI
 
 Estimated time: 10 minutes.
 
@@ -124,7 +124,7 @@ Estimated time: 10 minutes.
 
 ## 1. Write the Activity (~2 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll see a stub with three `TODO` comments and a `raise NotImplementedError`.
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll see a stub with three `TODO` comments and a `raise NotImplementedError` statement.
 
 Replace the body of `deliver_webhook` with this code:
 
@@ -140,7 +140,7 @@ Three lines:
 2. `raise_for_status()` raises an exception if the response was a 4xx or 5xx — Temporal will see that and retry.
 3. Return the HTTP status code as the Activity's result.
 
-Save the file. The full version is in the **Solution** tab if you'd rather copy it.
+Instruqt auto-saves your edits. The full version is in the **Solution** tab if you'd rather copy it.
 
 > This is a regular `@activity.defn`. There's no "standalone" decorator. Standalone vs. workflow-bound is decided by *how the Activity is called*, not how it's defined.
 
@@ -174,7 +174,7 @@ You should see:
 Standalone activity completed with status 200
 ```
 
-Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The interesting line is:
+Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The important call is shown below:
 
 ```python
 await client.execute_activity(
@@ -313,7 +313,7 @@ Multiply by millions of executions per day and you have a real line item in rete
 
 The next modules tackle what happens when reality intrudes:
 
-- **Module 02** — Idempotency and crash safety. Crash the worker mid-delivery; watch the webhook receiver show 2 deliveries; fix it.
-- **Module 03** — Concurrency, rate limits, priority & fairness. Stop one loud tenant from starving the rest.
-- **Module 04** — Dedup via ID reuse. Same upstream event arrives twice; let Temporal reject the duplicate.
-- **Module 05** — When SAA vs. when Workflow. Three scenarios, your call.
+- **Module 02** — Idempotency and crash safety. Crash the worker mid-delivery; watch the webhook receiver show duplicate deliveries; fix it
+- **Module 03** — Concurrency, rate limits, priority & fairness. Stop one loud tenant from starving the rest
+- **Module 04** — Dedup via ID reuse. Same upstream event arrives twice; let Temporal reject the duplicate
+- **Module 05** — When SAA vs. when Workflow. Three scenarios, your call

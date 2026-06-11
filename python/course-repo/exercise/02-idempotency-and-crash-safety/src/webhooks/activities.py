@@ -13,10 +13,10 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     )
 
     headers: dict[str, str] = {}
-    # TODO: add an Idempotency-Key header from activity.info().activity_id.
-    # The webhook receiver caches by this header and dedupes duplicate deliveries.
-    # The key MUST be deterministic across retries - use activity.info()
-    # .activity_id (stable), not uuid4() (regenerated each attempt).
+    # TODO: add an Idempotency-Key header from req.event_id.
+    # The receiver caches by this header and dedupes duplicate deliveries.
+    # The key MUST be deterministic across retries. For this standalone
+    # webhook, the event id is the logical delivery id.
 
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()
@@ -26,7 +26,7 @@ def deliver_webhook(req: WebhookDelivery) -> int:
     # before Temporal heard "done." Real-world equivalents: 500 from the
     # endpoint, network drop after the receiver processed it, worker crash
     # right after the side effect. Temporal retries; each retry replays the
-    # POST; without an idempotency key the receiver records every attempt.
+    # POST; without an idempotency key the receiver processes every attempt.
     if info.attempt < 3:
         # ApplicationError defaults to retryable; Temporal will retry under
         # the default RetryPolicy. Set non_retryable=True for permanent failures.
