@@ -133,7 +133,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The
 }
 ```
 
-About 5 deliveries landed; about 25 got rejected with `429 Too Many Requests`. The receiver did exactly what a real rate-limited API does.
+Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does.
 
 Now open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. You should see most of the `bulk-*` Activities in **Retrying** state with an **Attempt** count of 2 or 3, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
 
