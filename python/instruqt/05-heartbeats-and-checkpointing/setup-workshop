@@ -2,5 +2,7 @@
 set -euo pipefail
 DIR=/root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
 [ -d "$DIR/.venv" ] || (cd "$DIR" && uv sync)
-pkill -f "python -m webhooks.worker" || true
+pkill -f "webhooks.worker" || true
 curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+# Defense in depth: Module 04 enables a rate limit; clear it on entry here.
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true

@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 # Instant pass: lessons advance freely; we don't gate progression on validation.
+# Also clear the receiver rate limit so it doesn't leak into Module 05.
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true
 exit 0

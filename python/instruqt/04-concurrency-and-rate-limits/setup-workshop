@@ -2,5 +2,7 @@
 set -euo pipefail
 DIR=/root/workshop/exercises/04-concurrency-and-rate-limits/exercise
 [ -d "$DIR/.venv" ] || (cd "$DIR" && uv sync)
-pkill -f "python -m webhooks.worker" || true
+pkill -f "webhooks.worker" || true
 curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+# Section 1 expects a clean baseline; clear any rate-limit state from a prior pass.
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true

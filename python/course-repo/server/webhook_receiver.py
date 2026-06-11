@@ -1,23 +1,58 @@
 """Stdlib HTTP webhook receiver used as the webhook receiver in this tutorial.
 
 Endpoints:
-  POST /hooks      - Receives a webhook delivery. Records it. Returns 200.
-                     Honors an optional Idempotency-Key header (used by Module 02).
-  GET  /_received  - Returns request and processed-delivery counts for inspection.
-  POST /_reset     - Clears recorded state. Used between checks.
+  POST /hooks       - Receives a webhook delivery. Records it. Returns 200.
+                      Honors an optional Idempotency-Key header (used by Module 02).
+                      Returns 429 when the rate-limit mode is enabled and the
+                      caller exceeds the configured cap (used by Module 04).
+  GET  /_received   - Returns request and processed-delivery counts plus the
+                      current rate-limit setting and throttled-request count.
+  POST /_reset      - Clears recorded state and throttled count. Preserves the
+                      rate-limit setting so a lesson can reset between checks
+                      without losing the configured cap.
+  POST /_rate_limit - Sets the rate-limit cap from `?limit=N` (requests/sec).
+                      `limit=0` disables rate limiting. Token bucket model:
+                      capacity = N tokens, refill = N tokens/sec.
 
 No external dependencies - intentionally stdlib-only so it works in any sandbox.
 """
 
 import json
 import threading
+import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import parse_qs, urlparse
 
 _received: list[dict] = []
 _request_count = 0
 _deduped_count = 0
+_throttled_count = 0
+# Rate-limit state. 0 means disabled; >0 means N requests/sec via token bucket.
+_rate_limit = 0
+_tokens = 0.0
+_last_refill = time.monotonic()
 _lock = threading.Lock()
+
+
+def _try_consume_token_locked() -> bool:
+    """Return True if a token was consumed (request allowed), False if rate-limited.
+
+    Caller must hold _lock. Token bucket: capacity = _rate_limit, refill rate =
+    _rate_limit tokens/sec. A burst of size _rate_limit can pass at once; after
+    that, callers wait for refill.
+    """
+    global _tokens, _last_refill
+    if _rate_limit == 0:
+        return True
+    now = time.monotonic()
+    elapsed = now - _last_refill
+    _tokens = min(float(_rate_limit), _tokens + elapsed * _rate_limit)
+    _last_refill = now
+    if _tokens >= 1.0:
+        _tokens -= 1.0
+        return True
+    return False
 
 
 class EchoHandler(BaseHTTPRequestHandler):
@@ -25,10 +60,13 @@ class EchoHandler(BaseHTTPRequestHandler):
         return  # silence default access logs
 
     def do_POST(self) -> None:
-        if self.path == "/hooks":
+        parsed = urlparse(self.path)
+        if parsed.path == "/hooks":
             self._handle_hook()
-        elif self.path == "/_reset":
+        elif parsed.path == "/_reset":
             self._handle_reset()
+        elif parsed.path == "/_rate_limit":
+            self._handle_rate_limit(parsed.query)
         else:
             self._respond(404, {"error": "not found"})
 
@@ -82,7 +120,7 @@ setInterval(refresh, 2000);
         self.wfile.write(body)
 
     def _handle_hook(self) -> None:
-        global _request_count, _deduped_count
+        global _request_count, _deduped_count, _throttled_count
 
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length) if length > 0 else b"{}"
@@ -96,6 +134,14 @@ setInterval(refresh, 2000);
 
         with _lock:
             _request_count += 1
+
+            # Rate-limit mode (exercised in Module 04). Counts the inbound
+            # attempt, then 429s if the bucket is empty. The Activity sees
+            # a retryable HTTP error and Temporal retries on its policy.
+            if not _try_consume_token_locked():
+                _throttled_count += 1
+                self._respond(429, {"status": "rate_limited"})
+                return
 
             # Idempotency dedup (exercised in Module 02; harmless in Module 01).
             if idem_key:
@@ -119,19 +165,47 @@ setInterval(refresh, 2000);
                 "received_count": _request_count,
                 "processed_count": len(_received),
                 "deduped_count": _deduped_count,
+                "throttled_count": _throttled_count,
+                "rate_limit": _rate_limit,
                 # Backward-compatible alias used by the lessons.
                 "count": len(_received),
                 "deliveries": list(_received),
             })
 
     def _handle_reset(self) -> None:
-        global _request_count, _deduped_count
+        global _request_count, _deduped_count, _throttled_count
 
         with _lock:
             _received.clear()
             _request_count = 0
             _deduped_count = 0
+            _throttled_count = 0
+            # NB: rate-limit setting persists across resets so a lesson can
+            # zero counters between observations without losing the cap.
         self._respond(200, {"status": "reset"})
+
+    def _handle_rate_limit(self, query: str) -> None:
+        global _rate_limit, _tokens, _last_refill
+
+        params = parse_qs(query or "")
+        raw_limit = params.get("limit", ["0"])[0]
+        try:
+            limit = int(raw_limit)
+        except ValueError:
+            self._respond(400, {"error": "limit must be an integer"})
+            return
+        if limit < 0:
+            self._respond(400, {"error": "limit must be >= 0"})
+            return
+
+        with _lock:
+            _rate_limit = limit
+            # Refill the bucket on enable so the first burst can pass cleanly;
+            # otherwise an empty bucket from prior state would 429 the first N.
+            _tokens = float(limit)
+            _last_refill = time.monotonic()
+
+        self._respond(200, {"status": "ok", "rate_limit": limit})
 
     def _respond(self, code: int, payload: dict) -> None:
         # indent=2 so the echo tab is readable without toggling Pretty-print.
