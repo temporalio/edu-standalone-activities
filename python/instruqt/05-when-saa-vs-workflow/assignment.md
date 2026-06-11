@@ -63,7 +63,7 @@ Each delivery is a single durable side effect. No multi-step state, no signals, 
 
 Everything Stripe needs in this scenario you've already learned:
 
-- **Module 2**: an Idempotency-Key on the POST dedupes the retry window.
+- **Module 2**: a deterministic Idempotency-Key on the POST dedupes the retry window.
 - **Module 3**: `max_activities_per_second` protects the customer's endpoint from being overloaded.
 - **Module 4**: `id_conflict_policy=USE_EXISTING` absorbs duplicate events from the upstream payment system.
 
@@ -165,7 +165,7 @@ The Cloud-billing math: a Workflow + Activity is at least 2 billed actions. A St
 What you can now do with Standalone Activities in Python:
 
 - **`client.execute_activity` / `client.start_activity`** — run an Activity directly from a client, with no Workflow class.
-- **`Idempotency-Key` from `activity.info().activity_id`** — make retries safe by giving the receiver a stable dedup key.
+- **`Idempotency-Key` from a stable logical job id** — make retries safe by giving the receiver a deterministic dedup key.
 - **`max_activities_per_second`** on the Worker — cap dispatch rate to protect the downstream service.
 - **`ActivityIDConflictPolicy.USE_EXISTING`** — let the server absorb duplicate `start_activity` calls instead of erroring.
 - **`Priority(priority_key, fairness_key, fairness_weight)`** on `start_activity` — push urgent work ahead of bulk when the queue is contended.

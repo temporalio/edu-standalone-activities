@@ -39,13 +39,13 @@ lab_config:
   - Pause a running activity with temporal activity pause. Resume it later.
   - Same worker hosts Standalone and workflow-bound activities alike.
   - 'Module 02: crash the worker. Without idempotency, you double-deliver.'
-  - 'Module 03: cap your worker''s rate so you don''t DDoS your own customers.'
+  - 'Module 03: cap your worker''s rate so you do not overload customers.'
   - 'Module 04: same event scheduled twice? Temporal rejects the duplicate.'
-  - Activity IDs are the dedup key Temporal already gives you for free.
-  - Booting your sandbox. Reading the manual is overrated.
-  - Spinning up an webhook receiver. It will receive whatever you POST at it.
-  - Provisioning a Python that doesn't time out. Or get lost. Or duplicate.
-  - Standalone Activities have been waiting their whole life for this tutorial.
+  - Use a stable logical key so retries do not duplicate side effects.
+  - Booting your sandbox and starting the local services.
+  - Starting a webhook receiver that records processed deliveries.
+  - Preparing the Python environment and Temporal dev server.
+  - Standalone Activities are ready when the sandbox opens.
   theme:
     name: modern-dark
   override_challenge_layout: true

@@ -5,7 +5,7 @@ Endpoints:
                      Honors an optional Idempotency-Key header (used by Module 02).
                      Randomly returns 500 based on the failure rate set in the
                      Control Panel (read from /tmp/failure_rate).
-  GET  /_received  - Returns {"count": N, "deliveries": [...]} for inspection.
+  GET  /_received  - Returns request and processed-delivery counts for inspection.
   POST /_reset     - Clears recorded state. Used between checks.
 
 No external dependencies - intentionally stdlib-only so it works in any sandbox.
@@ -29,6 +29,8 @@ def _read_failure_rate() -> int:
         return 0
 
 _received: list[dict] = []
+_request_count = 0
+_deduped_count = 0
 _lock = threading.Lock()
 
 
@@ -94,6 +96,8 @@ setInterval(refresh, 2000);
         self.wfile.write(body)
 
     def _handle_hook(self) -> None:
+        global _request_count, _deduped_count
+
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length) if length > 0 else b"{}"
         try:
@@ -111,10 +115,13 @@ setInterval(refresh, 2000);
         idem_key = self.headers.get("Idempotency-Key")
 
         with _lock:
+            _request_count += 1
+
             # Idempotency dedup (exercised in Module 02; harmless in Module 01).
             if idem_key:
                 for prior in _received:
                     if prior.get("idempotency_key") == idem_key:
+                        _deduped_count += 1
                         self._respond(200, {"status": "ok", "deduped": True})
                         return
 
@@ -129,13 +136,21 @@ setInterval(refresh, 2000);
     def _handle_received(self) -> None:
         with _lock:
             self._respond(200, {
+                "received_count": _request_count,
+                "processed_count": len(_received),
+                "deduped_count": _deduped_count,
+                # Backward-compatible alias used by the lessons.
                 "count": len(_received),
                 "deliveries": list(_received),
             })
 
     def _handle_reset(self) -> None:
+        global _request_count, _deduped_count
+
         with _lock:
             _received.clear()
+            _request_count = 0
+            _deduped_count = 0
         self._respond(200, {"status": "reset"})
 
     def _respond(self, code: int, payload: dict) -> None:

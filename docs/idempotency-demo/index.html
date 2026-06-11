@@ -179,7 +179,7 @@
 </head>
 <body>
 <h1>Idempotency-Key: with vs without</h1>
-<div class="subtitle">Activity errors after the POST lands. Temporal retries. Watch what the receiver does.</div>
+<div class="subtitle">Activity errors after the POST lands. Temporal retries. Watch what the receiver processes.</div>
 <div class="step" id="step-desc"></div>
 
 <div class="lanes">
@@ -194,7 +194,7 @@
       <div class="dot" id="dot-without"></div>
     </div>
     <div class="box echo">
-      <div class="echo-label">Webhook receiver — deliveries</div>
+      <div class="echo-label">Webhook receiver — processed deliveries</div>
       <div class="counter" id="count-without">0</div>
       <div class="duplicated-badge" id="dup-without">duplicated</div>
     </div>
@@ -210,7 +210,7 @@
       <div class="dot" id="dot-with"></div>
     </div>
     <div class="box echo">
-      <div class="echo-label">Webhook receiver — deliveries</div>
+      <div class="echo-label">Webhook receiver — processed deliveries</div>
       <div class="counter" id="count-with">0</div>
       <div class="deduped-badge" id="dedup-with">deduped</div>
     </div>
@@ -225,7 +225,7 @@
   <div class="progress" id="progress"></div>
 </div>
 
-<div class="footer">Same error. Same retry. The header is the only difference.</div>
+<div class="footer">Same retry request. Different processed-delivery count. The header is the difference.</div>
 
 <script>
   const steps = [
@@ -238,7 +238,7 @@
       apply: () => { moveDots('mid'); }
     },
     {
-      desc: 'Step 2: the POST arrives. Echo records delivery #1 — on both sides.',
+      desc: 'Step 2: the POST arrives. The receiver processes delivery #1 — on both sides.',
       apply: () => { moveDots('echo'); setCounts(1, 1); }
     },
     {
@@ -250,11 +250,11 @@
       apply: () => { crash(false); moveDots('mid'); }
     },
     {
-      desc: 'Step 5: the retry arrives. Without a key, echo records #2. With the key, echo sees the duplicate and dedupes.',
+      desc: 'Step 5: the retry request arrives. Without a key, the receiver processes delivery #2. With the key, it sees the duplicate and returns the cached response.',
       apply: () => { moveDots('echo'); setCounts(2, 1); flashDedup(); flashDuplicated(); }
     },
     {
-      desc: 'Final: <span style="color:#fc8181">2 deliveries</span> vs <span style="color:#9ae6b4">1 delivery</span>. Same code, same error, same retry. The header is the only difference.',
+      desc: 'Final: both sides received the retry request, but only the side with an idempotency key avoided a second processed delivery.',
       apply: () => {}
     }
   ];
