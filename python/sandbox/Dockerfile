@@ -24,6 +24,6 @@ RUN curl -L -o /tmp/temporal.tgz \
 COPY course-repo/ /opt/workshop/
 RUN cd /opt/workshop && /root/.local/bin/uv sync
 
-EXPOSE 7233 8233 9000
+EXPOSE 7233 8233 9000 9002
 
 CMD ["sleep", "infinity"]

@@ -3,6 +3,8 @@
 Endpoints:
   POST /hooks      - Receives a webhook delivery. Records it. Returns 200.
                      Honors an optional Idempotency-Key header (used by Module 02).
+                     Randomly returns 500 based on the failure rate set in the
+                     Control Panel (read from /tmp/failure_rate).
   GET  /_received  - Returns {"count": N, "deliveries": [...]} for inspection.
   POST /_reset     - Clears recorded state. Used between checks.
 
@@ -10,9 +12,21 @@ No external dependencies - intentionally stdlib-only so it works in any sandbox.
 """
 
 import json
+import random
 import threading
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+FAILURE_RATE_FILE = "/tmp/failure_rate"
+
+
+def _read_failure_rate() -> int:
+    """Read the current failure rate (0-100) from the shared file."""
+    try:
+        with open(FAILURE_RATE_FILE, "r") as f:
+            return int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
 
 _received: list[dict] = []
 _lock = threading.Lock()
@@ -86,6 +100,12 @@ setInterval(refresh, 2000);
             body = json.loads(raw)
         except json.JSONDecodeError:
             self._respond(400, {"error": "invalid JSON"})
+            return
+
+        # Check failure rate from Control Panel — randomly return 500.
+        failure_rate = _read_failure_rate()
+        if failure_rate > 0 and random.randint(1, 100) <= failure_rate:
+            self._respond(500, {"error": "simulated failure", "failure_rate": failure_rate})
             return
 
         idem_key = self.headers.get("Idempotency-Key")
