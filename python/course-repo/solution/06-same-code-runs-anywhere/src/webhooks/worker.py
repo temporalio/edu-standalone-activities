@@ -6,6 +6,7 @@ from temporalio.worker import Worker
 
 from .activities import deliver_webhook
 from .shared import TASK_QUEUE
+from .workflow import WebhookWorkflow
 
 
 async def main() -> None:
@@ -15,6 +16,7 @@ async def main() -> None:
             client,
             task_queue=TASK_QUEUE,
             activities=[deliver_webhook],
+            workflows=[WebhookWorkflow],
             activity_executor=executor,
         )
         print(f"Worker running on task queue '{TASK_QUEUE}'")

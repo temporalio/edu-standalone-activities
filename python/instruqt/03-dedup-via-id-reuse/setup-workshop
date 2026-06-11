@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=/root/workshop/exercises/03-dedup-via-id-reuse/exercise
+[ -d "$DIR/.venv" ] || (cd "$DIR" && uv sync)
+pkill -f "python -m webhooks.worker" || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true

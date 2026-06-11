@@ -5,6 +5,7 @@ import sys
 from datetime import timedelta
 
 from temporalio.client import Client
+from temporalio.common import RetryPolicy
 
 from .activities import deliver_webhook
 from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
@@ -22,6 +23,9 @@ async def main(event_id: str) -> None:
         id=f"deliver-{event_id}",
         task_queue=TASK_QUEUE,
         start_to_close_timeout=timedelta(seconds=10),
+        # Default RetryPolicy is unbounded — fine for the demo, dangerous in prod.
+        # Cap attempts so a permanently-broken receiver doesn't retry forever.
+        retry_policy=RetryPolicy(maximum_attempts=5),
     )
     print(f"Activity completed with status {result}")
 

@@ -12,20 +12,16 @@ def deliver_webhook(req: WebhookDelivery) -> int:
         "Delivering webhook for event %s (attempt %d)", req.event_id, info.attempt
     )
 
-    # activity_id is stable across retries; perfect as an idempotency key.
-    # Every retry POSTs with the same key, so the receiver can recognise
-    # duplicates and return the cached response instead of recording a
-    # new delivery.
+    # activity_id is stable across retries — every retry POSTs the same key,
+    # so the receiver can dedupe and return the cached response.
     headers = {"Idempotency-Key": info.activity_id}
 
     response = httpx.post(req.url, json=req.payload, headers=headers, timeout=10.0)
     response.raise_for_status()
 
-    # Simulate a transient downstream failure on the first two attempts -
-    # see the exercise version of this file for the full reasoning.
+    # Simulate transient failure on attempts 1-2. ApplicationError defaults to
+    # retryable; set non_retryable=True for permanent failures.
     if info.attempt < 3:
-        # ApplicationError defaults to retryable; Temporal will retry under
-        # the default RetryPolicy. Set non_retryable=True for permanent failures.
         raise ApplicationError(
             f"Simulated transient failure on attempt {info.attempt}",
         )

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Instant pass: lessons advance freely; we don't gate progression on validation.
+exit 0

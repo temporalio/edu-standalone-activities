@@ -3,7 +3,7 @@ slug: idempotency-and-crash-safety
 id: mowdyyydsf1e
 type: challenge
 title: Idempotency and crash safety
-teaser: Crash the worker mid-flight; watch the receiver get two deliveries; fix it
+teaser: Crash the Worker mid-flight; watch the receiver get two deliveries; fix it
   with one line.
 notes:
 - type: text
@@ -69,17 +69,19 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Making retries safe with idempotency
+# Make retries safe with idempotency
 
-When an Activity errors, Temporal retries it. That's the durability you want. But if your Activity has already done something visible to the outside world — POSTed a webhook, charged a card, sent an email — and then errors out before Temporal hears that it finished, the retry runs that side effect again.
+Traditional job queues reimplement retry logic in every service, all behaving differently — and most punt on what to do when a job *already did something* before it failed. The card was charged. The email went out. The webhook POST landed at the receiver. Now the job errors before it can report success. The retry runs the side effect again.
 
-You'll see this happen, then fix it:
+Standalone Activities retry for you automatically as part of the platform — but at-least-once delivery is still at-least-once. You'll see this happen, then fix it with idempotency on the receiver side.
 
-1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. Webhook receiver records 3 deliveries for one logical request.
-2. Add one line — an HTTP `Idempotency-Key` header — and re-run. Webhook receiver now records 1 delivery; the receiver dedupes the retries.
-3. Understand why the key has to come from `activity.info().activity_id` (stable across retries) and not `uuid.uuid4()` (regenerated every attempt).
+You'll do three things in this module:
 
-The **Solution** tab has the finished code for this module. Peek at it whenever you want, especially if you get stuck.
+1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. The Webhook receiver records 3 deliveries for one logical request.
+2. Add a one-line `Idempotency-Key` header derived from `activity.info().activity_id`. Re-run. The Webhook receiver now records 1 delivery.
+3. Understand why the key has to be stable across retries (and not `uuid.uuid4()`).
+
+The **Solution** tab has the finished code for this module. Peek at it whenever you want.
 
 [button label="Try the interactive demo" background="#444CE7"](tab-6)
 
@@ -181,9 +183,29 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 
 ---
 
+## Bound the retries in production
+
+Temporal's **default RetryPolicy is unbounded** — initial interval 1s, exponential backoff to 100s, no maximum attempts. Great for transient failures, dangerous for permanently-broken receivers: a customer who turned off their webhook endpoint will hammer your queue with retries forever.
+
+Pass an explicit `retry_policy=` to bound it. The solution starter does this:
+
+```python
+from temporalio.common import RetryPolicy
+
+await client.execute_activity(
+    deliver_webhook,
+    ...,
+    retry_policy=RetryPolicy(maximum_attempts=5),
+)
+```
+
+For permanent failures the Activity itself can flag — bad input, auth rejection — raise `ApplicationError(..., non_retryable=True)` instead of the retryable form. Temporal stops retrying immediately rather than burning through your `maximum_attempts`.
+
+---
+
 ## Check your understanding
 
-> Your activity body generates a random discount code (`code = random.choice(codes)`) for each delivery, and you build the `Idempotency-Key` from `code`. The activity body works on the happy path. What goes wrong on a retry, and how do you fix it?
+> Your Activity body generates a random discount code (`code = random.choice(codes)`) for each delivery, and you build the `Idempotency-Key` from `code`. The Activity body works on the happy path. What goes wrong on a retry, and how do you fix it?
 
 <details>
 <summary>Answer</summary>
@@ -195,10 +217,10 @@ The fix is to make the key deterministic across retries:
 - Derive it from input fields the caller already chose (e.g. `req.event_id`), or
 - Use `activity.info().activity_id`, which is stable across retries.
 
-If you need a random code as part of the side effect, generate it **outside** the activity (in the caller / starter) and pass it in as activity input.
+If you need a random code as part of the side effect, generate it **outside** the Activity (in the caller / starter) and pass it in as Activity input.
 
 </details>
 
 ## Coming up
 
-**Module 03** — Concurrency, rate limits, and priority. Each delivery is now safe to retry. Next: limit how many run at the same time so a burst of deliveries doesn't overload your customer's endpoint.
+**Module 03** — Deduplication via ID reuse. You've made retries safe on the *receiver* side. Next: have Temporal reject duplicate submissions at the *platform* — same job ID submitted twice returns the existing handle, no second run.

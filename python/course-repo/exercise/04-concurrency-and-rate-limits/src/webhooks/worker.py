@@ -10,12 +10,15 @@ from .shared import TASK_QUEUE
 
 async def main() -> None:
     client = await Client.connect("localhost:7233")
-    with ThreadPoolExecutor(5) as executor:
+    with ThreadPoolExecutor(10) as executor:
         worker = Worker(
             client,
             task_queue=TASK_QUEUE,
             activities=[deliver_webhook],
             activity_executor=executor,
+            # TODO: cap how many activities this worker dispatches per second so
+            # we don't overwhelm the downstream service. The Worker constructor
+            # accepts `max_activities_per_second=<float>`. Try 5.0 first.
         )
         print(f"Worker running on task queue '{TASK_QUEUE}'")
         await worker.run()

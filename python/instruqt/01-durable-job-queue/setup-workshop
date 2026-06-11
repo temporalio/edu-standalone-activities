@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=/root/workshop/exercises/01-durable-job-queue/exercise
+# Track-level setup already populated $DIR; just make sure deps are synced
+# (idempotent — fast no-op after the first sync).
+[ -d "$DIR/.venv" ] || (cd "$DIR" && uv sync)
+# Reset echo + worker so this module starts from a clean slate.
+pkill -f "python -m webhooks.worker" || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true

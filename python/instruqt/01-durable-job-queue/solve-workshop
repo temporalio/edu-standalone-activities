@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=/root/workshop/exercises/01-durable-job-queue/exercise
+# Overlay the solution code onto the learner's exercise dir so the next run
+# uses the working solution. The /opt/workshop/solution source is canonical.
+cp -rf /opt/workshop/solution/01-durable-job-queue/. "$DIR/"
