@@ -219,6 +219,30 @@ Temporal docs: [Activity idempotency](https://docs.temporal.io/activity-definiti
 </details>
 
 <details>
+<summary>Standalone Activity idempotency keys</summary>
+
+Standalone Activities do not run inside a parent Workflow, so they do not have a Workflow Run ID to combine with the Activity ID. Prefer a natural business key when one exists:
+
+```python
+headers = {"Idempotency-Key": f"webhook:{req.event_id}"}
+```
+
+That key is meaningful to the receiver and does not depend on Temporal internals.
+
+If there is no natural business key, a Standalone Activity can use its Activity ID directly because Standalone Activities have their own ID space and the ID is stable across retries:
+
+```python
+info = activity.info()
+headers = {"Idempotency-Key": info.activity_id}
+```
+
+Treat that as a fallback rather than the first choice. Temporal documents the separate Standalone Activity ID space, but does not currently publish a Python-specific recommended idempotency-key pattern for Standalone Activities. When a stable business identifier exists, use that.
+
+Temporal docs: [Standalone Activities](https://docs.temporal.io/standalone-activity) and [Activity ID](https://docs.temporal.io/activity-execution#activity-id).
+
+</details>
+
+<details>
 <summary>Keep Activities atomic</summary>
 
 An Activity retry re-runs the whole Activity body. If one Activity does three writes and fails after write two, the retry starts again at write one. Keep write Activities focused on one side effect when you can, or make each side effect idempotent with its own key.
