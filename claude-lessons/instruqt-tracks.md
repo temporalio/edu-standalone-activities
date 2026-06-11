@@ -85,7 +85,6 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 - **Do not tell learners to save files in Instruqt.** The editor auto-saves. Say "Instruqt auto-saves your edits" if the learner needs reassurance.
 - **Label observable outcomes precisely.** When retries, duplicate attempts, cached responses, skipped work, or partial success are involved, distinguish requests received, attempts made, work processed, deliveries recorded, and responses returned.
 - **Keep inline code visually restrained.** Reserve backticks for names the learner must notice or type; avoid highlighting every host, port, identifier, or common noun.
-- **Separate exercise-specific idempotency keys from production guidance.** Teach the key that fits the exercise's logical operation, then explicitly call out production patterns such as Workflow Run ID plus Activity ID for workflow-bound Activities.
 
 ### `code` tab `path` field — limitation
 
