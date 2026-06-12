@@ -239,3 +239,7 @@ The next modules tackle what happens when reality intrudes:
 - **Module 04**: Concurrency, rate limits, priority and fairness. Stop one busy tenant from slowing everyone else down.
 - **Module 05**: Heartbeats and checkpointing. Resume long-running jobs from the last reported progress after a crash.
 - **Module 06**: Same code runs anywhere. Call the same `deliver_webhook` Activity from a Workflow.
+
+---
+
+[**Share your feedback**](https://forms.gle/Tvx6YenX7zTHgrqU8)

@@ -210,3 +210,7 @@ Note: `REJECT_DUPLICATE` does not silently return the existing result the way `U
 ## Coming up
 
 **Module 04**: Concurrency, rate limits, and priority. Your jobs dedupe correctly now. Next, cap how many run at the same time so a burst of submissions does not overwhelm the receiver, and prioritize urgent ones over bulk.
+
+---
+
+[**Share your feedback**](https://forms.gle/Tvx6YenX7zTHgrqU8)

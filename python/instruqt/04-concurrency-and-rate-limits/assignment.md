@@ -236,3 +236,7 @@ Two knobs to remember:
 ## Coming up
 
 **Module 05**: Heartbeats and checkpointing. Your jobs are fast, fair, and rate-capped. Next, long-running jobs report progress every few seconds and resume from the last checkpoint after a Worker crash.
+
+---
+
+[**Share your feedback**](https://forms.gle/Tvx6YenX7zTHgrqU8)
