@@ -93,7 +93,7 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 ### `code` tab `path` field - limitation
 
 `path: <dir>` opens the editor with the file tree rooted at that directory; **no file is pre-opened**. `path: <file>` opens with the file shown but the tree only contains that single file. Instruqt has NO field for "tree at directory + file pre-opened" - only the three fields `title`, `hostname`, `path` are supported on `type: code` tabs (per docs + CLI source). Pick which trade-off you want and call out the file in the assignment text.
-- **Tab-jump buttons** (clickable in-body link that focuses a tab): use the markdown-link-with-attributes form `[button label="Worker" background="#444CE7"](tab-N)` where `N` is the zero-indexed position in the `tabs:` list, NOT the tab id. Nexus reference uses `#444CE7` as the standard accent color.
+- **Always direct learners to a tab with a tab-jump button, never plain prose.** Any time the body tells the learner to open, click, or look at a tab, it MUST be a clickable button, not text like "click the **X** tab" or "the X tab at the top." Plain-text tab references are a defect: the learner cannot click them and has to hunt the tab bar. Use the markdown-link-with-attributes form `[button label="Worker" background="#444CE7"](tab-N)` where `N` is the zero-indexed position in the `tabs:` list, NOT the tab id. Nexus reference uses `#444CE7` as the standard accent color. `tab-N` is positional, so when you add or reorder a tab, recount and fix every later reference.
 
 ### Advanced content types - known and unknown
 
