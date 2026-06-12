@@ -58,12 +58,12 @@ tabs:
   type: service
   hostname: workshop
   port: 8233
-- id: cf9wzkrtqd2m
+- id: nrfgjgjiw7a5
   title: Conflict policy demo
   type: service
   hostname: workshop
-  port: 9001
   path: /conflict-policy/
+  port: 9001
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
