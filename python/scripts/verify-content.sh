@@ -8,6 +8,9 @@
 #   - Slug / directory name mismatches in Instruqt assignment frontmatter
 #   - Module 06's "same Activity, two callers" invariant (both callers must
 #     import deliver_webhook from the same .activities module)
+#   - Standalone Activities UI over-claims (the tab shows one record + an
+#     attempt counter, NOT a per-attempt "retry history", per-attempt
+#     drill-in, or a specific "attempt = N" value)
 #
 # Run locally before `instruqt track push` or git push.
 # Exit 0 = clean, non-zero = problems found.
@@ -111,6 +114,35 @@ if [ $INVARIANT_FAIL -eq 0 ]; then
   echo "OK module 06 callers share the same Activity import"
 else
   FAIL=1
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "=== 5. Standalone Activities UI over-claims ==="
+# The Standalone Activities tab shows a single record with status, an attempt
+# counter, and the last failure - NOT a per-attempt history, NOT app logs.
+# This over-claim has regressed before (Module 02), so it is grep-gated.
+# Patterns are deliberately narrow to avoid the legitimate negated framing
+# ("not a per-attempt breakdown"), clicking the record itself ("click into
+# `deliver-...`"), and the CLI `jq` example (`attempt=1`, no spaces):
+#   - "retry history"            : pure over-claim, never legitimate here
+#   - "click(ing) into ...attempt": implies a per-attempt drill-in view
+#   - "attempt = N" (with spaces): a specific value the UI may not show
+#     (matches the codified rule's own phrasing; the CLI `attempt=1` has no
+#     spaces and is intentionally not matched)
+UI_OVERCLAIM='retry history|[Cc]lick(ing)? into[^.]*attempt|[Aa]ttempt = [0-9]'
+HITS=$(grep -rnE \
+  --include='*.md' \
+  "$UI_OVERCLAIM" "$INSTRUQT_DIR" 2>/dev/null || true)
+if [ -n "$HITS" ]; then
+  echo "FAIL Standalone Activities UI over-claim found:"
+  echo "$HITS"
+  echo "  -> The tab shows one record + an attempt counter. Describe status,"
+  echo "     attempt count, and last failure; do not claim a per-attempt"
+  echo "     history/drill-in or a specific 'attempt = N' value."
+  FAIL=1
+else
+  echo "OK no Standalone Activities UI over-claims"
 fi
 
 # ---------------------------------------------------------------------------

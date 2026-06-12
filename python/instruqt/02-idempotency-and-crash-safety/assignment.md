@@ -183,7 +183,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 
 Three POSTs still landed at the receiver because the Activity still retried three times. The receiver saw the same idempotency key on each one, so it returned a cached response to attempts 2 and 3 without processing new deliveries.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. The retry history is the same as the buggy run. The Activity still retried, but the receiver deduped the repeated requests.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. Its record looks the same as the buggy run: a single Activity whose **Attempt** count shows it retried. The difference is on the receiver side, where the repeated requests were deduped.
 
 > **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 
