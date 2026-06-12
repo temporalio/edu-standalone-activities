@@ -77,7 +77,7 @@ Standalone Activities dedupe at the Temporal server, before any Worker sees the 
 
 ## The visual version
 
-Click the **Conflict policy demo** tab at the top of this pane to open an interactive diagram. Press **Play** to watch both lanes side-by-side, or step through each phase. Left lane: default policy, the duplicate errors. Right lane: `USE_EXISTING`, the duplicate gets the same handle. Same Worker in both lanes.
+Open the [button label="Conflict policy demo" background="#444CE7"](tab-6) tab for an interactive diagram. Press **Play** to watch both lanes side-by-side, or step through each phase. Left lane: default policy, the duplicate errors. Right lane: `USE_EXISTING`, the duplicate gets the same handle. Same Worker in both lanes.
 
 You'll do three things in this module:
 
