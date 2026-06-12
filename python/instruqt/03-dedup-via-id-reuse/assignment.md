@@ -58,6 +58,12 @@ tabs:
   type: service
   hostname: workshop
   port: 8233
+- id: cf9wzkrtqd2m
+  title: Conflict policy demo
+  type: service
+  hostname: workshop
+  port: 9001
+  path: /conflict-policy/
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
@@ -71,9 +77,7 @@ Standalone Activities dedupe at the Temporal server, before any Worker sees the 
 
 ## The visual version
 
-Press **Play** to watch both lanes side-by-side, or step through each phase. Left lane: default policy, the duplicate errors. Right lane: `USE_EXISTING`, the duplicate gets the same handle. Same Worker in both lanes.
-
-<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/conflict-policy-demo/docs/conflict-policy-demo/index.html" width="100%" height="640" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+Click the **Conflict policy demo** tab at the top of this pane to open an interactive diagram. Press **Play** to watch both lanes side-by-side, or step through each phase. Left lane: default policy, the duplicate errors. Right lane: `USE_EXISTING`, the duplicate gets the same handle. Same Worker in both lanes.
 
 You'll do three things in this module:
 

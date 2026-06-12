@@ -26,7 +26,9 @@ nohup python /opt/workshop/server/webhook_receiver.py \
   > /var/log/workshop/receiver.log 2>&1 &
 
 # Serve the interactive demo HTML on port 9001 (a static file server).
-# Lets Module 02 surface the idempotency comparison as an in-sandbox tab.
+# Lets Module 02 (idempotency comparison, served at /) and Module 03
+# (conflict-policy comparison, served at /conflict-policy/) surface their
+# demos as in-sandbox tabs.
 nohup python -m http.server 9001 --directory /opt/workshop/demo \
   > /var/log/workshop/demo.log 2>&1 &
 
