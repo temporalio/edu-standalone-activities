@@ -8,11 +8,17 @@ mkdir -p /var/log/workshop
 # interfaces, so Instruqt's external service-tab proxy can reach the UI.
 # Default would be 127.0.0.1, which is only reachable from inside the
 # container - the workers see it, but the Instruqt UI tab can't.
+# Pin the Task Queue to a single partition. Priority ordering is only exact
+# within one partition; with the default 4 partitions and a backlog, the
+# server dispatches approximately, so Module 04's priority demo (urgent jobs
+# landing ahead of bulk) would not reliably show what it claims.
 nohup temporal server start-dev \
   --ip 0.0.0.0 \
   --ui-port 8233 \
   --db-filename /tmp/temporal.db \
   --log-level warn \
+  --dynamic-config-value matching.numTaskqueueReadPartitions=1 \
+  --dynamic-config-value matching.numTaskqueueWritePartitions=1 \
   > /var/log/workshop/temporal.log 2>&1 &
 
 # Start webhook receiver in the background
