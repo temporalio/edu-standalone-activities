@@ -119,7 +119,9 @@ scripts/reset-receiver.sh
 uv run python -m webhooks.send_bulk_demo 30
 ```
 
-`send_bulk_demo` will hang because the Activities keep retrying on every 429. After about **5 seconds**, press **Ctrl+C** in the [button label="Terminal" background="#444CE7"](tab-2) tab. You don't need to wait for it to drain; the pain is already visible.
+`send_bulk_demo` will hang because the Activities keep retrying on every 429. While it is running, quickly open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. Pending or retrying `demo-*` Activities only stay easy to catch for a few seconds, so re-run the command if you miss them.
+
+After about **5 seconds**, go back to the [button label="Terminal" background="#444CE7"](tab-2) tab and press **Ctrl+C**. You don't need to wait for it to drain; the pain is already visible.
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The state will look something like:
 
@@ -133,9 +135,9 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The
 }
 ```
 
-Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does.
+Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does. To see the actual failures, switch to the [button label="Worker" background="#444CE7"](tab-3) tab and look for HTTP request log lines ending in `HTTP/1.0 429 Too Many Requests`.
 
-Now open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. You should see most of the `demo-*` Activities in **Retrying** state with an **Attempt** count of 2 or 3, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
+In that same Temporal UI view, you should see most of the `demo-*` Activities in **Retrying** state with an **Attempt** count of 2 or 3, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
 
 > **What's happening:** Temporal's per-Activity retry policy is great for one Activity that fails. It can't solve a *whole-fleet* throughput problem because the next attempt of attempt 1 fights for the same downstream slot as attempt 1 of every other Activity. The fix has to pace the dispatch itself, not retry harder.
 
@@ -151,7 +153,7 @@ max_activities_per_second=5.0,
 
 The Worker now dispatches at most 5 Activities per second. The full version is in the **Solution** tab.
 
-> **Where does the excess go?** It waits in the task queue on the Temporal server. The Worker polls, and the server hands it work at the configured rate. Unscheduled work stays in the queue. Nothing is lost or dropped.
+> **Where does the excess go?** It waits in the Task Queue on the Temporal server. The Worker polls, and the server hands it work at the configured rate. Unscheduled work stays in the queue. Nothing is lost or dropped.
 
 ---
 
@@ -172,6 +174,8 @@ scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 30
 ```
 
+Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. For a few seconds you can see some `bulk-*` Activities waiting while the Worker drains the Task Queue at 5/sec. If you wait until the command finishes, those rows will already be **Completed**.
+
 This time the wall-clock time is noticeably longer, typically **4 to 6 seconds** for 30 deliveries at 5/sec. The rate limiter on the Worker side allows a small initial burst, then enforces the cap. In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab the `received_at` timestamps will visibly spread out instead of clustering.
 
 Check the receiver state at the end:
@@ -186,7 +190,7 @@ Check the receiver state at the end:
 }
 ```
 
-**Zero throttled.** The receiver is still capped at 5/sec, but the Worker never asked it for more than that. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** and you'll see Activities completing cleanly with `Attempt: 1`. No retries, no failures.
+**Zero throttled.** The receiver is still capped at 5/sec, but the Worker never asked it for more than that. The clearest proof is in the [button label="Worker" background="#444CE7"](tab-3) tab: during this capped run, the HTTP request logs should end in `HTTP/1.0 200 OK` with no `429 Too Many Requests` lines. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** and you'll see `bulk-*` Activities completing instead of retrying.
 
 > **What's happening:** same 30 units of work, same delivery outcome. The Worker just dispatched them at a steady pace instead of all at once. Pair `max_activities_per_second` with `max_concurrent_activities` (which caps how many run in parallel) when you need both dispatch-rate and in-flight-count controls.
 
