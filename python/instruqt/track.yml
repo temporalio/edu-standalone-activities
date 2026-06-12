@@ -1,6 +1,6 @@
 slug: standalone-activities-python
 id: d4xnvujmv3rf
-title: Standalone Activities as a Durable Job Queue (Python)
+title: Build a Job Queue with Standalone Activities (Tutorial)
 teaser: Build a durable webhook-delivery service with Standalone Activities, Temporal's
   durable job queue. No broker, no scheduler, no retry library to operate.
 description: |
@@ -55,5 +55,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "2228542360814933646"
+checksum: "2644447762151370857"
 enhanced_loading: false
