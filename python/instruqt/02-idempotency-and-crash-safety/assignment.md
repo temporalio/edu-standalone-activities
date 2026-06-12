@@ -130,7 +130,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 
 The receiver had no way to know these were duplicates of the same logical event, so it accepted all three.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It shows the retry history: same Activity, three attempts, the last one Completed.
+Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The view shows status, attempt count, and last failure, not a per-attempt breakdown. Read the count off the UI.
 
 > **What's happening:** each attempt of the Activity body POSTed to the Webhook receiver *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again because Temporal retries the Activity body, not the external side effect.
 

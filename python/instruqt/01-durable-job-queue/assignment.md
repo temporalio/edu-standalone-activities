@@ -209,9 +209,9 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch
 
 Click into it. Temporal is now handling three things you would otherwise have to build or operate:
 
-- **Addressable.** Every job has a stable ID (`deliver-evt_001` here). You can query its status, fetch its result, terminate it, or delete it from the UI, the CLI, the SDK, or the API.
-- **Durable.** The job was persisted before your Worker even saw it. If the Worker had crashed mid-delivery, the same job would have been redispatched to another Worker on retry.
-- **Observable.** Failed attempts, retry timing, payload, and result are visible without a separate logging pipeline.
+- **Addressable.** Every job has a stable ID (`deliver-evt_001` here). You can query its status, fetch its result, cancel it, or terminate it from the UI, the CLI, the SDK, or the API.
+- **Durable.** The job was persisted before your Worker even saw it. If the Worker had crashed mid-delivery, the same job would have been redispatched to a Worker polling the Task Queue on retry.
+- **Observable.** Status, attempt count, the last error, and the result are visible without a separate logging pipeline.
 
 That is the shape we want from a job queue: durable execution, retries, status, and results without extra infrastructure to operate.
 

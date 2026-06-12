@@ -203,6 +203,8 @@ id_conflict_policy=ActivityIDConflictPolicy.USE_EXISTING,   # in-flight duplicat
 id_reuse_policy=ActivityIDReusePolicy.REJECT_DUPLICATE,     # completed duplicate
 ```
 
+Note: `REJECT_DUPLICATE` does not silently return the existing result the way `USE_EXISTING` does. A post-completion duplicate raises `ActivityAlreadyStartedError`, so you still catch that exception in the after-completion window.
+
 </details>
 
 ## Coming up
