@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity ID conflict policy: default vs USE_EXISTING</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0.8em 1em;
+    min-height: 100vh;
+  }
+  h1 { text-align: center; margin: 0 0 0.15em 0; font-size: 1.25em; font-weight: 600; }
+  .subtitle { text-align: center; color: #a0aec0; margin-bottom: 0.7em; font-size: 0.85em; }
+  .step {
+    text-align: center;
+    color: #b794f6;
+    font-size: 0.9em;
+    margin: 0 auto 0.8em;
+    max-width: 900px;
+    min-height: 2.4em;
+    line-height: 1.35;
+  }
+  .lanes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  @media (max-width: 700px) {
+    .lanes { grid-template-columns: 1fr; }
+  }
+  .lane {
+    border: 1.5px dashed;
+    border-radius: 6px;
+    padding: 0.7em 0.7em 0.8em;
+    position: relative;
+  }
+  .lane.reject { border-color: #e53e3e; }
+  .lane.use-existing { border-color: #38a169; }
+  .lane-title {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95em;
+    margin-bottom: 0.5em;
+  }
+  .lane.reject .lane-title { color: #fc8181; }
+  .lane.use-existing .lane-title { color: #9ae6b4; }
+  .policy-code {
+    text-align: center;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.72em;
+    color: #a0aec0;
+    margin-top: -0.3em;
+    margin-bottom: 0.55em;
+  }
+  .callers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6em;
+    margin-bottom: 0.1em;
+  }
+  .box {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    padding: 0.4em 0.6em;
+    text-align: center;
+    position: relative;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .box.active {
+    border-color: #b794f6;
+    box-shadow: 0 0 8px rgba(183, 148, 246, 0.35);
+  }
+  .box-label { font-weight: 600; font-size: 0.86em; }
+  .box-sub {
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.7em;
+    color: #a0aec0;
+    margin-top: 0.15em;
+  }
+  .box-state {
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.68em;
+    margin-top: 0.2em;
+    min-height: 1em;
+    color: #a0aec0;
+    transition: color 0.2s;
+  }
+  .lane.reject .box-state.error { color: #fc8181; font-weight: 600; }
+  .lane.use-existing .box-state.success { color: #9ae6b4; font-weight: 600; }
+  .lane.use-existing .box-state.success-soft { color: #9ae6b4; }
+  .conduit {
+    position: relative;
+    height: 3em;
+    margin: 0 auto;
+  }
+  .conduit.split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6em;
+  }
+  .conduit.split::before { content: none; }
+  .conduit-side {
+    position: relative;
+    border-left: 1.5px dashed #4a5568;
+    margin-left: 50%;
+  }
+  .conduit-single::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px dashed #4a5568;
+  }
+  .dot {
+    position: absolute;
+    left: -7px;
+    width: 14px;
+    height: 14px;
+    background: #f6e05e;
+    border: 2px solid #1a1a2e;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(246, 224, 94, 0.5);
+    transition: top 0.9s cubic-bezier(0.4, 0, 0.6, 1), opacity 0.25s, background 0.2s, box-shadow 0.2s;
+    opacity: 0;
+    top: 0;
+    z-index: 2;
+  }
+  .conduit-single .dot {
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .dot.return-err {
+    background: #fc8181;
+    box-shadow: 0 0 10px rgba(229, 62, 62, 0.6);
+  }
+  .dot.return-ok {
+    background: #9ae6b4;
+    box-shadow: 0 0 10px rgba(56, 161, 105, 0.6);
+  }
+  .ledger {
+    background: rgba(45, 55, 72, 0.6);
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    padding: 0.45em 0.6em;
+    margin-top: 0.4em;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.7em;
+    color: #a0aec0;
+    min-height: 4.6em;
+  }
+  .ledger-line { opacity: 0; transition: opacity 0.25s; line-height: 1.5; }
+  .ledger-line.visible { opacity: 1; }
+  .ledger-line .id { color: #f6e05e; }
+  .ledger-line .ok { color: #9ae6b4; }
+  .ledger-line .err { color: #fc8181; }
+  .summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45em;
+    margin-top: 0.55em;
+  }
+  .stat-label {
+    color: #a0aec0;
+    font-size: 0.66em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .stat-value {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-top: 0.05em;
+    font-family: ui-monospace, monospace;
+    line-height: 1.1;
+    color: #e2e8f0;
+    transition: color 0.3s;
+  }
+  .lane.reject .stat-value.bad { color: #fc8181; }
+  .lane.use-existing .stat-value.good { color: #9ae6b4; }
+  .controls {
+    text-align: center;
+    margin-top: 0.9em;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  button {
+    background: #444ce7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.4em 0.9em;
+    margin: 0 0.2em;
+    font-size: 0.85em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: #5a61f0; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 0.55em;
+  }
+  .progress-pip {
+    width: 7px;
+    height: 7px;
+    background: #4a5568;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+  .progress-pip.active { background: #b794f6; }
+  .footer {
+    text-align: center;
+    color: #a0aec0;
+    margin-top: 0.6em;
+    font-size: 0.78em;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .footer strong { color: #e2e8f0; }
+</style>
+</head>
+<body>
+<h1>Activity ID conflict policy: default vs USE_EXISTING</h1>
+<div class="subtitle">Two upstream calls fire <code>start_activity(id="evt_001")</code>. Server decides what happens to the second one.</div>
+<div class="step" id="step-desc"></div>
+
+<div class="lanes">
+
+  <!-- LEFT: default (FAIL) -->
+  <div class="lane reject">
+    <div class="lane-title">Default policy</div>
+    <div class="policy-code">id_conflict_policy=FAIL  (the default)</div>
+
+    <div class="callers">
+      <div class="box" id="caller-a-r">
+        <div class="box-label">Caller A</div>
+        <div class="box-sub">start_activity(id=<span style="color:#f6e05e">"evt_001"</span>)</div>
+        <div class="box-state" id="caller-a-state-r">&nbsp;</div>
+      </div>
+      <div class="box" id="caller-b-r">
+        <div class="box-label">Caller B</div>
+        <div class="box-sub">start_activity(id=<span style="color:#f6e05e">"evt_001"</span>)</div>
+        <div class="box-state" id="caller-b-state-r">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="conduit split" aria-hidden="true">
+      <div class="conduit-side">
+        <div class="dot" id="dot-a-down-r"></div>
+        <div class="dot" id="dot-a-up-r"></div>
+      </div>
+      <div class="conduit-side">
+        <div class="dot" id="dot-b-down-r"></div>
+        <div class="dot" id="dot-b-up-r"></div>
+      </div>
+    </div>
+
+    <div class="box" id="server-r">
+      <div class="box-label">Temporal server</div>
+      <div class="box-sub">Standalone Activities registry</div>
+      <div class="ledger" id="ledger-r">
+        <div class="ledger-line" id="ledger-r-1"><span class="id">evt_001</span>: Caller A scheduled <span class="ok">✓</span></div>
+        <div class="ledger-line" id="ledger-r-2"><span class="id">evt_001</span>: Caller B rejected <span class="err">✗ already started</span></div>
+      </div>
+    </div>
+
+    <div class="conduit conduit-single" aria-hidden="true">
+      <div class="dot" id="dot-down-r"></div>
+    </div>
+
+    <div class="box" id="worker-r">
+      <div class="box-label">Worker</div>
+      <div class="box-sub" id="worker-sub-r">idle</div>
+      <div class="summary">
+        <div>
+          <div class="stat-label">Activities started</div>
+          <div class="stat-value" id="stat-started-r">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Calls that errored</div>
+          <div class="stat-value bad" id="stat-errored-r">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: USE_EXISTING -->
+  <div class="lane use-existing">
+    <div class="lane-title">With USE_EXISTING</div>
+    <div class="policy-code">id_conflict_policy=USE_EXISTING</div>
+
+    <div class="callers">
+      <div class="box" id="caller-a-u">
+        <div class="box-label">Caller A</div>
+        <div class="box-sub">start_activity(id=<span style="color:#f6e05e">"evt_001"</span>)</div>
+        <div class="box-state" id="caller-a-state-u">&nbsp;</div>
+      </div>
+      <div class="box" id="caller-b-u">
+        <div class="box-label">Caller B</div>
+        <div class="box-sub">start_activity(id=<span style="color:#f6e05e">"evt_001"</span>)</div>
+        <div class="box-state" id="caller-b-state-u">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="conduit split" aria-hidden="true">
+      <div class="conduit-side">
+        <div class="dot" id="dot-a-down-u"></div>
+        <div class="dot" id="dot-a-up-u"></div>
+      </div>
+      <div class="conduit-side">
+        <div class="dot" id="dot-b-down-u"></div>
+        <div class="dot" id="dot-b-up-u"></div>
+      </div>
+    </div>
+
+    <div class="box" id="server-u">
+      <div class="box-label">Temporal server</div>
+      <div class="box-sub">Standalone Activities registry</div>
+      <div class="ledger" id="ledger-u">
+        <div class="ledger-line" id="ledger-u-1"><span class="id">evt_001</span>: Caller A scheduled <span class="ok">✓</span></div>
+        <div class="ledger-line" id="ledger-u-2"><span class="id">evt_001</span>: Caller B returned existing handle <span class="ok">✓</span></div>
+      </div>
+    </div>
+
+    <div class="conduit conduit-single" aria-hidden="true">
+      <div class="dot" id="dot-down-u"></div>
+    </div>
+
+    <div class="box" id="worker-u">
+      <div class="box-label">Worker</div>
+      <div class="box-sub" id="worker-sub-u">idle</div>
+      <div class="summary">
+        <div>
+          <div class="stat-label">Activities started</div>
+          <div class="stat-value" id="stat-started-u">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Calls that errored</div>
+          <div class="stat-value good" id="stat-errored-u">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="controls">
+  <button id="btn-play">Play</button>
+  <button id="btn-step">Step</button>
+  <button id="btn-restart">Restart</button>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+</div>
+
+<div class="footer">
+  <strong>Same Worker in both lanes.</strong> The server dedupes by Activity ID before the duplicate ever reaches the Task Queue, so the Worker only runs <strong>one</strong> Activity either way. The policy decides what Caller B hears back.
+</div>
+
+<script>
+(function () {
+  const steps = [
+    {
+      desc: 'Caller A sends start_activity(id="evt_001"). Same call goes out in both lanes.',
+      apply: () => {
+        activate('caller-a-r'); activate('caller-a-u');
+        moveDot('dot-a-down-r', 0, 100);
+        moveDot('dot-a-down-u', 0, 100);
+      },
+    },
+    {
+      desc: 'Server records evt_001 and routes it to the Worker. Worker starts running the Activity.',
+      apply: () => {
+        deactivate('caller-a-r'); deactivate('caller-a-u');
+        activate('server-r'); activate('server-u');
+        showLedger('ledger-r-1'); showLedger('ledger-u-1');
+        setState('caller-a-state-r', 'started ✓', 'success-soft');
+        setState('caller-a-state-u', 'started ✓', 'success-soft');
+        bumpStat('stat-started-r', 1);
+        bumpStat('stat-started-u', 1);
+        setText('worker-sub-r', 'running evt_001');
+        setText('worker-sub-u', 'running evt_001');
+        activate('worker-r'); activate('worker-u');
+        moveDot('dot-down-r', 0, 100);
+        moveDot('dot-down-u', 0, 100);
+      },
+    },
+    {
+      desc: 'Caller B sends start_activity with the SAME id. The first Activity is still running.',
+      apply: () => {
+        deactivate('server-r'); deactivate('server-u');
+        activate('caller-b-r'); activate('caller-b-u');
+        moveDot('dot-b-down-r', 0, 100);
+        moveDot('dot-b-down-u', 0, 100);
+      },
+    },
+    {
+      desc: 'Default policy rejects the duplicate. USE_EXISTING returns a handle to the running Activity. The Worker never sees a second job in either lane.',
+      apply: () => {
+        deactivate('caller-b-r'); deactivate('caller-b-u');
+
+        // Server reacts in both lanes.
+        showLedger('ledger-r-2');
+        showLedger('ledger-u-2');
+
+        // Left: error dot travels back up to Caller B.
+        const errDot = document.getElementById('dot-b-up-r');
+        errDot.classList.add('return-err');
+        moveDot('dot-b-up-r', 100, 0);
+        setState('caller-b-state-r', '✗ WorkflowAlreadyStartedError', 'error');
+        bumpStat('stat-errored-r', 1);
+
+        // Right: success dot travels back up to Caller B carrying the same handle.
+        const okDot = document.getElementById('dot-b-up-u');
+        okDot.classList.add('return-ok');
+        moveDot('dot-b-up-u', 100, 0);
+        setState('caller-b-state-u', 'existing handle (same run_id)', 'success');
+        // 'Calls that errored' stays at 0 — no bumpStat call.
+      },
+    },
+    {
+      desc: 'Same outcome on the Worker: one Activity execution. Dedup happened on the server, before the Task Queue.',
+      apply: () => {
+        // Re-emphasize the Worker boxes.
+        activate('worker-r'); activate('worker-u');
+      },
+    },
+  ];
+
+  const stepDesc = document.getElementById('step-desc');
+  const progress = document.getElementById('progress');
+  steps.forEach((_, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'progress-pip';
+    pip.dataset.idx = i;
+    progress.appendChild(pip);
+  });
+
+  let i = -1;
+  let playing = false;
+  let timer = null;
+
+  function reset() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    playing = false;
+    btnPlay.textContent = 'Play';
+    i = -1;
+    stepDesc.textContent = 'Ready. Press Play to watch both lanes side-by-side, or Step through each phase.';
+    document.querySelectorAll('.progress-pip').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.ledger-line').forEach(l => l.classList.remove('visible'));
+    document.querySelectorAll('.dot').forEach(d => {
+      d.style.opacity = 0;
+      d.style.top = '0';
+      d.classList.remove('return-err', 'return-ok');
+    });
+    document.querySelectorAll('.box').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.box-state').forEach(s => {
+      s.textContent = ' ';
+      s.classList.remove('error', 'success', 'success-soft');
+    });
+    setText('worker-sub-r', 'idle');
+    setText('worker-sub-u', 'idle');
+    setText('stat-started-r', '0');
+    setText('stat-started-u', '0');
+    setText('stat-errored-r', '0');
+    setText('stat-errored-u', '0');
+  }
+
+  function activate(id) { document.getElementById(id)?.classList.add('active'); }
+  function deactivate(id) { document.getElementById(id)?.classList.remove('active'); }
+  function setText(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
+  function setState(id, t, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('error', 'success', 'success-soft');
+    el.textContent = t;
+    if (cls) el.classList.add(cls);
+  }
+  function showLedger(id) { document.getElementById(id)?.classList.add('visible'); }
+  function bumpStat(id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = String(parseInt(el.textContent || '0', 10) + n);
+  }
+  function moveDot(id, fromPct, toPct) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.top = fromPct + '%';
+    el.style.opacity = 0;
+    // Force layout flush before re-enabling transition.
+    void el.offsetHeight;
+    el.style.transition = 'top 0.9s cubic-bezier(0.4, 0, 0.6, 1), opacity 0.25s, background 0.2s, box-shadow 0.2s';
+    el.style.opacity = 1;
+    el.style.top = toPct + '%';
+    // Fade out shortly after arrival so the next phase starts clean.
+    setTimeout(() => { el.style.opacity = 0; }, 1200);
+  }
+
+  function step() {
+    if (i < steps.length - 1) {
+      i += 1;
+      const s = steps[i];
+      stepDesc.textContent = s.desc;
+      document.querySelectorAll('.progress-pip').forEach((p, idx) => {
+        p.classList.toggle('active', idx <= i);
+      });
+      s.apply();
+    } else {
+      if (playing) {
+        playing = false;
+        btnPlay.textContent = 'Play';
+      }
+      stepDesc.textContent = steps[steps.length - 1].desc + ' Press Restart to replay.';
+    }
+  }
+
+  const btnPlay = document.getElementById('btn-play');
+  const btnStep = document.getElementById('btn-step');
+  const btnRestart = document.getElementById('btn-restart');
+
+  btnPlay.addEventListener('click', () => {
+    if (i >= steps.length - 1) reset();
+    if (playing) {
+      playing = false;
+      btnPlay.textContent = 'Play';
+      if (timer) { clearTimeout(timer); timer = null; }
+      return;
+    }
+    playing = true;
+    btnPlay.textContent = 'Pause';
+    const tick = () => {
+      step();
+      if (playing && i < steps.length - 1) {
+        timer = setTimeout(tick, 2200);
+      } else if (playing) {
+        playing = false;
+        btnPlay.textContent = 'Play';
+      }
+    };
+    tick();
+  });
+
+  btnStep.addEventListener('click', () => {
+    if (playing) {
+      playing = false;
+      btnPlay.textContent = 'Play';
+      if (timer) { clearTimeout(timer); timer = null; }
+    }
+    if (i >= steps.length - 1) reset();
+    step();
+  });
+
+  btnRestart.addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+</body>
+</html>
