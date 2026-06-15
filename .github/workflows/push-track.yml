@@ -1,0 +1,78 @@
+name: Push Instruqt track
+
+# Keeps the deployed Instruqt track in sync with main so it is never out of date.
+#
+# Any merge to main that touches track content triggers `instruqt track push`.
+# (Merging a PR is a push to main, so every merged PR that touches these paths
+# pushes the track.) This intentionally replaces the old "manual push keeps
+# releases deliberate" convention — the team chose always-up-to-date instead.
+#
+# Setup required (one time): add a repo secret INSTRUQT_TOKEN containing an
+# Instruqt service-account token for the `temporal` team. Create it in the
+# Instruqt web UI under team settings -> service accounts / API tokens.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Everything that can change what a learner sees. course-repo is COPY'd
+      # into the sandbox image; sandbox/ is the image itself; instruqt/ is the
+      # track config + assignment copy.
+      - 'python/instruqt/**'
+      - 'python/course-repo/**'
+      - 'python/sandbox/**'
+  workflow_dispatch:
+
+# Never run two pushes at once; let an in-flight push finish before the next.
+concurrency:
+  group: push-instruqt-track
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read   # needed to watch the sandbox image build run
+
+jobs:
+  push-track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for sandbox image build (if this commit triggered one)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The track references ghcr.io/...-sandbox:latest. If this commit also
+          # changed the image (sandbox/ or course-repo/), build-sandbox.yml is
+          # rebuilding :latest right now — wait for it so we don't point the
+          # track at a stale image. A failed image build blocks the track push.
+          run_id=""
+          for _ in $(seq 1 18); do
+            run_id=$(gh run list --workflow build-sandbox.yml --commit "$GITHUB_SHA" \
+              --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)
+            [ -n "$run_id" ] && break
+            sleep 5
+          done
+          if [ -n "$run_id" ]; then
+            echo "Waiting for sandbox image build run $run_id ..."
+            gh run watch "$run_id" --exit-status
+          else
+            echo "No sandbox image build for this commit (track-only change); continuing."
+          fi
+
+      - name: Install Instruqt CLI
+        run: brew install instruqt/tap/instruqt
+
+      - name: Validate and push track
+        working-directory: python/instruqt
+        env:
+          INSTRUQT_TOKEN: ${{ secrets.INSTRUQT_TOKEN }}
+        run: |
+          set -euo pipefail
+          instruqt config set team temporal
+          instruqt track validate
+          # --force overwrites the remote, so CI owns deployment and never has to
+          # commit the checksum back through branch protection. The checksum field
+          # in track.yml is no longer maintained in-repo (see instruqt-tracks.md).
+          instruqt track push --force

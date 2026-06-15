@@ -193,8 +193,30 @@ Run from the exercise dir AND the solution dir for every module - different bugs
 - Pre-warm `uv sync` at image-build time so the first challenge boots fast.
 - Container memory: `4096` MB (matches Nexus reference; less may be tight).
 - `lab_config`: `extend_ttl: 900`, `sidebar_enabled: true`, `default_layout: AssignmentRight`, `default_layout_sidebar_size: 40`, `theme: { name: modern-dark }`.
-- CI: auto-build the sandbox image; do NOT auto-push the track (Temporal convention - manual `instruqt track push` keeps releases deliberate).
+- CI: auto-build the sandbox image **and auto-push the track**. The track must never be out of date with `main` (team decision, 2026-06-15 — replaces the earlier "manual push keeps releases deliberate" convention). See "Auto-pushing the track" below.
 - Use the CLI's own template as the source of truth for unfamiliar formats: `instruqt track create` + `instruqt challenge create` generate canonical files.
+
+## Auto-pushing the track
+
+The deployed track must never lag `main`. `.github/workflows/push-track.yml` pushes
+it automatically on every merge to `main` that touches `python/instruqt/**`,
+`python/course-repo/**`, or `python/sandbox/**` (a merged PR is a push to `main`,
+so merges are covered). When you (or CI) make a content change, **do not** push
+manually — let CI do it.
+
+How it works:
+- One-time setup: a repo secret `INSTRUQT_TOKEN` holds an Instruqt service-account
+  token for the `temporal` team. The CLI reads it from the environment; no
+  `instruqt auth login` needed in CI.
+- For changes that rebuild the sandbox image (`course-repo`/`sandbox`), the
+  workflow first waits for `build-sandbox.yml` to finish pushing `:latest`, then
+  pushes the track — so the track never points at a stale image. A failed image
+  build blocks the track push.
+- It runs `instruqt track push --force`. Because of `--force`, **the `checksum:`
+  in `track.yml` is no longer maintained in-repo** — CI overwrites the remote with
+  current `main` regardless of the stored checksum. Don't bother committing
+  checksum updates anymore (this retires the old "Update Instruqt checksum after
+  track push" PR step). If you must push by hand, use `instruqt track push --force`.
 
 ## Reference repos
 
