@@ -147,6 +147,20 @@ fi
 
 # ---------------------------------------------------------------------------
 echo ""
+echo "=== 6. Em dashes ==="
+# Team style: no em dashes in learner-facing assignment copy. Use a comma,
+# colon, semicolon, or period instead. (Codified after review feedback.)
+EMDASH_HITS=$(grep -rn $'—' --include='*.md' "$INSTRUQT_DIR" 2>/dev/null || true)
+if [ -n "$EMDASH_HITS" ]; then
+  echo "FAIL em dash found (replace it with , : ; or .):"
+  echo "$EMDASH_HITS"
+  FAIL=1
+else
+  echo "OK no em dashes"
+fi
+
+# ---------------------------------------------------------------------------
+echo ""
 if [ $FAIL -eq 0 ]; then
   echo "All content checks passed."
 else

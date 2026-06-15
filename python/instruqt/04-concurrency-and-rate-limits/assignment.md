@@ -66,16 +66,16 @@ Many job queues make rate control the consumer's problem. One busy tenant can fa
 
 Standalone Activities give you both controls in one place: `max_activities_per_second` paces dispatch so a fan-out does not overwhelm the receiver, and `Priority` puts urgent jobs ahead of bulk ones when the queue is contended.
 
-Step through how both controls behave before you try the rate cap yourself. Click **Play**, or **Step** through it:
+See how the Worker's rate cap changes what the receiver does, before you try it yourself. Click **Play**, or **Step** through it:
 
-<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/main/docs/rate-limit-priority-demo/index.html" width="100%" height="520" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/main/docs/rate-limit-priority-demo/index.html" width="100%" height="430" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 
 You'll do four things in this module:
 
 1. Run 60 deliveries with no rate cap. They land in about a second.
 2. Switch the Webhook receiver into a "2 req/sec downstream" mode. Re-run. Watch the 429s land and the Activities retry.
 3. Cap the Worker at 2 dispatches per second. Re-run with the rate-limited receiver. The flood of 429s stops.
-4. See where `Priority` fits — and where to explore it next.
+4. See where `Priority` fits, and where to explore it next.
 
 The **Solution** tab has the finished code if you want to copy or peek. Estimated time: 12 minutes.
 
@@ -180,7 +180,7 @@ scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 60
 ```
 
-Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see the `bulk-*` Activities as **Running**, with about two per second flipping to **Completed** while the rest stay **Running**, waiting for the Worker to dispatch them. No racing the clock or reading timestamps after the fact — the pacing is visible as it unfolds.
+Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see the `bulk-*` Activities as **Running**, with about two per second flipping to **Completed** while the rest stay **Running**, waiting for the Worker to dispatch them. No racing the clock or reading timestamps after the fact. The pacing is visible as it unfolds.
 
 This time the wall-clock time is noticeably longer, around **30 seconds** for 60 deliveries at 2/sec. The rate limiter on the Worker side allows a small initial burst, then enforces the cap. In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab the `received_at` timestamps will visibly spread out instead of clustering, with `received_count` climbing by about two per second.
 
@@ -198,11 +198,11 @@ Check the receiver state at the end:
 
 **Compare that to Section 2:**
 
-|  | Section 2 — no Worker cap | Section 4 — `max_activities_per_second=2` |
+|  | Section 2: no Worker cap | Section 4: `max_activities_per_second=2` |
 | --- | --- | --- |
 | Dispatch | All 60 fired at once | Paced at ~2/sec |
 | `throttled_count` | Climbs continuously, never settles | A small handful from the Worker's initial burst (often zero), then flat |
-| `processed_count` | Stalls while the receiver is overwhelmed | Reaches 60 — every delivery lands |
+| `processed_count` | Stalls while the receiver is overwhelmed | Reaches 60, every delivery lands |
 | Worker logs | A constant stream of `429 Too Many Requests` | A few early `429`, then a steady stream of `200 OK` |
 | Standalone Activities | Piling up, **Attempt** count climbing | Completing instead of retrying |
 
@@ -218,7 +218,7 @@ Confirm it yourself: the [button label="Worker" background="#444CE7"](tab-3) tab
 
 We don't walk through Priority hands-on in this module, but it's worth exploring next: see [Task Queue Priority and Fairness](https://docs.temporal.io/develop/task-queue-priority-fairness) in the Temporal docs.
 
-Want a hands-on tutorial for Priority and fairness? Let us know in the [feedback form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us decide what to build next.
+Want a hands-on tutorial for Priority and fairness? Let us know in the [feedback form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us decide what to build next.
 
 ---
 
@@ -248,4 +248,4 @@ Two knobs to remember:
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us improve.
+📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
