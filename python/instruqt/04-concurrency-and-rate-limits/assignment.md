@@ -119,7 +119,7 @@ scripts/reset-receiver.sh
 uv run python -m webhooks.send_bulk_demo 60
 ```
 
-`send_bulk_demo` will hang because the Activities keep retrying on every 429. While it is running, quickly open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. Pending or retrying `demo-*` Activities only stay easy to catch for a few seconds, so re-run the command if you miss them.
+`send_bulk_demo` will hang because the Activities keep retrying on every 429. While it is running, quickly open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. Running `demo-*` Activities only stay easy to catch for a few seconds, so re-run the command if you miss them.
 
 After about **5 seconds**, go back to the [button label="Terminal" background="#444CE7"](tab-2) tab and press **Ctrl+C**. You don't need to wait for it to drain; the pain is already visible.
 
@@ -137,7 +137,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The
 
 Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does. To see the actual failures, switch to the [button label="Worker" background="#444CE7"](tab-3) tab and look for HTTP request log lines ending in `HTTP/1.0 429 Too Many Requests`.
 
-In that same Temporal UI view, you should see most of the `demo-*` Activities in **Retrying** state with an **Attempt** count of 2 or 3, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
+In that same Temporal UI view, you should see most of the `demo-*` Activities in **Running** state with an **Attempt** count of 2 or 3, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
 
 > **What's happening:** Temporal's per-Activity retry policy is great for one Activity that fails. It can't solve a *whole-fleet* throughput problem because the next attempt of attempt 1 fights for the same downstream slot as attempt 1 of every other Activity. The fix has to pace the dispatch itself, not retry harder.
 
