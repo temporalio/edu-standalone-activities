@@ -66,6 +66,10 @@ Many job queues make rate control the consumer's problem. One busy tenant can fa
 
 Standalone Activities give you both controls in one place: `max_activities_per_second` paces dispatch so a fan-out does not overwhelm the receiver, and `Priority` puts urgent jobs ahead of bulk ones when the queue is contended.
 
+Step through how both controls behave before you try the rate cap yourself. Click **Play**, or **Step** through it:
+
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/main/docs/rate-limit-priority-demo/index.html" width="100%" height="520" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
+
 You'll do four things in this module:
 
 1. Run 60 deliveries with no rate cap. They land in about a second.
