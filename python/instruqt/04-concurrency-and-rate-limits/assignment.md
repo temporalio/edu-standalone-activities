@@ -137,7 +137,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The
 
 Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does. To see the actual failures, switch to the [button label="Worker" background="#444CE7"](tab-3) tab and look for HTTP request log lines ending in `HTTP/1.0 429 Too Many Requests`.
 
-In that same Temporal UI view, you should see most of the `demo-*` Activities in **Running** state with an **Attempt** count of 2 or 3, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
+In that same Temporal UI view, you should see most of the `demo-*` Activities in **Running** state with the **Attempt** count climbing as each one keeps retrying on the 429s, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
 
 > **What's happening:** Temporal's per-Activity retry policy is great for one Activity that fails. It can't solve a *whole-fleet* throughput problem because the next attempt of attempt 1 fights for the same downstream slot as attempt 1 of every other Activity. The fix has to pace the dispatch itself, not retry harder.
 
