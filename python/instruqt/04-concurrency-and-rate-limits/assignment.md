@@ -96,7 +96,7 @@ The `time` prefix prints how long the batch took. With no rate cap, the 60 deliv
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `received_count` and `processed_count` should both reach 60, and the `received_at` timestamps will all be clustered tight together (within a second or so). The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see `received_count` climb live.
 
-Now open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** view. You should see all 60 `bulk-*` Activities listed as **Completed**, with start and end timestamps clustered in the same one- or two-second window. Nothing in `Scheduled` state, nothing retrying. Just 60 happy deliveries at full speed.
+Now open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** view. You should see all 60 `bulk-*` Activities listed as **Completed**, with start and end timestamps clustered in the same one- or two-second window. They flash through **Running** to **Completed** almost instantly, with no retries. Just 60 happy deliveries at full speed.
 
 > **What's happening:** there's no rate limit anywhere. The receiver accepted everything. In the next section you'll see what changes when the downstream actually pushes back.
 
@@ -174,7 +174,7 @@ scripts/reset-receiver.sh
 time uv run python -m webhooks.send_bulk 60
 ```
 
-Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see `bulk-*` Activities sitting in **Scheduled**, a couple flipping to **Running**, then **Completed**, roughly two per second, while the rest wait their turn. No racing the clock or reading timestamps after the fact — the pacing is visible as it unfolds.
+Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see the `bulk-*` Activities as **Running**, with about two per second flipping to **Completed** while the rest stay **Running**, waiting for the Worker to dispatch them. No racing the clock or reading timestamps after the fact — the pacing is visible as it unfolds.
 
 This time the wall-clock time is noticeably longer, around **30 seconds** for 60 deliveries at 2/sec. The rate limiter on the Worker side allows a small initial burst, then enforces the cap. In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab the `received_at` timestamps will visibly spread out instead of clustering, with `received_count` climbing by about two per second.
 
