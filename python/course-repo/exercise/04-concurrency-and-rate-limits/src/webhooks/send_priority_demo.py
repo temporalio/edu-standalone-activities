@@ -1,10 +1,10 @@
-"""Fan-out 10 background + 3 urgent deliveries, with Priority on each call.
+"""Fan-out 20 background + 5 urgent deliveries, with Priority on each call.
 
 Demonstrates the Priority kwarg on start_activity. With a rate-capped worker
 and a contended queue, lower-numbered priority_keys are dispatched ahead of
 higher-numbered ones.
 
-Run with the rate-capped worker from Module 03 (max_activities_per_second=5).
+Run with the rate-capped worker from this module (max_activities_per_second=2).
 """
 
 import asyncio
@@ -20,10 +20,10 @@ from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 async def main() -> None:
     client = await Client.connect("localhost:7233")
 
-    # Submit 10 background deliveries first - they'll fill the queue.
+    # Submit 20 background deliveries first - they'll fill the queue.
     bg_handles = []
-    print("Submitting 10 background deliveries (priority_key=5)...")
-    for i in range(10):
+    print("Submitting 20 background deliveries (priority_key=5)...")
+    for i in range(20):
         h = await client.start_activity(
             deliver_webhook,
             args=[WebhookDelivery(
@@ -41,10 +41,10 @@ async def main() -> None:
     # Small pause so the background work is solidly queued.
     await asyncio.sleep(0.3)
 
-    # Submit 3 urgent deliveries - lower priority_key = higher priority.
+    # Submit 5 urgent deliveries - lower priority_key = higher priority.
     urgent_handles = []
-    print("Submitting 3 urgent deliveries (priority_key=1)...")
-    for i in range(3):
+    print("Submitting 5 urgent deliveries (priority_key=1)...")
+    for i in range(5):
         h = await client.start_activity(
             deliver_webhook,
             args=[WebhookDelivery(
@@ -61,7 +61,7 @@ async def main() -> None:
 
     await asyncio.gather(*(h.result() for h in bg_handles))
     await asyncio.gather(*(h.result() for h in urgent_handles))
-    print("All 13 deliveries completed.")
+    print("All 25 deliveries completed.")
 
 
 if __name__ == "__main__":
