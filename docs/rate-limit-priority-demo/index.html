@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pacing and priority: how the Worker dispatches a fan-out</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0.8em 1em;
+    min-height: 100vh;
+  }
+  h1 { text-align: center; margin: 0 0 0.15em 0; font-size: 1.2em; font-weight: 600; }
+  .subtitle { text-align: center; color: #a0aec0; margin-bottom: 0.7em; font-size: 0.85em; }
+  .step {
+    text-align: center;
+    color: #b794f6;
+    font-size: 0.9em;
+    margin: 0 auto 0.7em;
+    max-width: 940px;
+    min-height: 2.6em;
+    line-height: 1.4;
+  }
+  .step code { color: #d6bcfa; font-family: ui-monospace, 'SF Mono', monospace; font-size: 0.92em; }
+  .stage {
+    position: relative;
+    max-width: 940px;
+    height: 250px;
+    margin: 0 auto;
+    background: #16213044;
+    border-radius: 8px;
+  }
+  /* Column headers */
+  .col-label {
+    position: absolute;
+    top: 6px;
+    font-size: 0.72em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #a0aec0;
+    transform: translateX(-50%);
+  }
+  .zone {
+    position: absolute;
+    top: 30px;
+    bottom: 12px;
+    border: 1.5px dashed #4a5568;
+    border-radius: 6px;
+  }
+  .zone.queue { left: 2%; width: 30%; }
+  .zone.worker { left: 38%; width: 22%; border-color: #444ce7; }
+  .zone.receiver { left: 66%; width: 32%; border-color: #38a169; }
+
+  /* Worker rate badge */
+  .cap-badge {
+    position: absolute;
+    left: 49%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size: 0.78em;
+    color: #cbd5e0;
+    width: 18%;
+  }
+  .cap-badge .pill {
+    display: inline-block;
+    margin-top: 0.3em;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 0.95em;
+    background: #4a5568;
+    color: #e2e8f0;
+    transition: background 0.3s, color 0.3s;
+  }
+  .cap-badge.on .pill { background: #444ce7; color: #fff; }
+
+  /* Receiver counters */
+  .recv-meta {
+    position: absolute;
+    left: 82%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 26%;
+  }
+  .recv-meta .delivered { font-family: ui-monospace, monospace; font-weight: 700; font-size: 1.15em; color: #9ae6b4; }
+  .recv-meta .lbl { font-size: 0.62em; text-transform: uppercase; color: #a0aec0; letter-spacing: 0.03em; }
+  .lamp {
+    display: inline-block;
+    margin-top: 0.5em;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    background: #2d3748;
+    color: #718096;
+    transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+  }
+  .lamp.hot { background: #e53e3e; color: #fff; box-shadow: 0 0 12px rgba(229,62,62,0.6); }
+
+  /* Job dots */
+  .dot {
+    position: absolute;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 2px solid #1a1a2e;
+    background: #4299e1;
+    transition: left 0.55s cubic-bezier(0.45,0,0.35,1), top 0.55s cubic-bezier(0.45,0,0.35,1), background 0.3s, opacity 0.3s;
+    z-index: 2;
+  }
+  .dot.urgent { background: #f6ad55; }
+  .dot.delivered { background: #48bb78; }
+  .dot.rejected { background: #fc8181; }
+
+  .legend { text-align: center; font-size: 0.72em; color: #a0aec0; margin-top: 0.5em; }
+  .legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin: 0 0.25em 0 0.9em; border: 1.5px solid #1a1a2e; }
+  .sw.bg { background: #4299e1; }
+  .sw.urgent { background: #f6ad55; }
+  .sw.delivered { background: #48bb78; }
+  .sw.rejected { background: #fc8181; }
+
+  .controls { text-align: center; margin-top: 0.7em; }
+  button {
+    background: #444ce7; color: white; border: none; border-radius: 4px;
+    padding: 0.4em 0.9em; margin: 0 0.2em; font-size: 0.85em; font-family: inherit;
+    cursor: pointer; transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: #5a61f0; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .progress { display: flex; justify-content: center; gap: 5px; margin-top: 0.55em; }
+  .progress-pip { width: 7px; height: 7px; background: #4a5568; border-radius: 50%; transition: background 0.2s; }
+  .progress-pip.active { background: #b794f6; }
+</style>
+</head>
+<body>
+<h1>Pacing and priority: how the Worker dispatches a fan-out</h1>
+<div class="subtitle">A batch of deliveries hits the queue. Watch the rate cap pace dispatch — and Priority reorder it.</div>
+<div class="step" id="step-desc"></div>
+
+<div class="stage" id="stage">
+  <div class="col-label" style="left:17%">Task Queue</div>
+  <div class="col-label" style="left:49%">Worker</div>
+  <div class="col-label" style="left:82%">Receiver</div>
+  <div class="zone queue"></div>
+  <div class="zone worker"></div>
+  <div class="zone receiver"></div>
+  <div class="cap-badge" id="cap-badge">max_activities<br>_per_second<div class="pill" id="cap-pill">off</div></div>
+  <div class="recv-meta">
+    <div class="delivered"><span id="delivered">0</span> / 12</div>
+    <div class="lbl">delivered (200 OK)</div>
+    <div class="lamp" id="lamp">429</div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="sw bg"></span>background job
+  <span class="sw urgent"></span>urgent job
+  <span class="sw delivered"></span>delivered
+  <span class="sw rejected"></span>429 / retrying
+</div>
+
+<div class="controls">
+  <button id="btn-prev">⏮ Back</button>
+  <button id="btn-step">⏭ Step</button>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-reset">⟲ Reset</button>
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+  const N = 12;
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage');
+
+  // Build the dots once.
+  const dots = [];
+  for (let i = 0; i < N; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    stage.appendChild(d);
+    dots.push(d);
+  }
+
+  // Slot geometry (percent for left, px for top). 3 columns each side.
+  const ROWS_TOP = [44, 96, 148, 200];
+  const Q_COLS = [8, 16, 24];     // queue zone
+  const R_COLS = [72, 80, 88];    // receiver zone
+  const GATE_LEFT = 48;           // worker gate (rejected dots stop here)
+
+  function qPos(i) { return { left: Q_COLS[i % 3], top: ROWS_TOP[Math.floor(i / 3)] }; }
+  function rPos(p) { return { left: R_COLS[p % 3], top: ROWS_TOP[Math.floor(p / 3)] }; }
+
+  function place(d, leftPct, topPx, delay = 0) {
+    d.style.transitionDelay = delay + 's';
+    d.style.left = leftPct + '%';
+    d.style.top = topPx + 'px';
+  }
+
+  function setCap(on, text) {
+    $('cap-pill').textContent = text;
+    $('cap-badge').classList.toggle('on', on);
+  }
+  function setDelivered(n) { $('delivered').textContent = n; }
+  function setLamp(hot) { $('lamp').classList.toggle('hot', hot); }
+
+  // Reset all dots into the queue. `urgentCount` colors the LAST n dots amber
+  // (they "arrived later"); the rest are background blue.
+  function fillQueue(urgentCount = 0) {
+    dots.forEach((d, i) => {
+      d.className = 'dot' + (i >= N - urgentCount ? ' urgent' : '');
+      d.style.opacity = 1;
+      const p = qPos(i);
+      place(d, p.left, p.top, 0);
+    });
+  }
+
+  // Dispatch dots to the receiver in the given order, packed into receiver slots.
+  // paced => staggered arrival (transition-delay per position).
+  function dispatch(order, paced) {
+    order.forEach((idx, p) => {
+      const d = dots[idx];
+      const pos = rPos(p);
+      d.classList.add('delivered');
+      d.classList.remove('urgent', 'rejected');
+      place(d, pos.left, pos.top, paced ? p * 0.4 : 0);
+    });
+  }
+
+  // Flood: a couple land (green), the rest bounce at the gate (red / 429).
+  function flood(landCount) {
+    dots.forEach((d, i) => {
+      if (i < landCount) {
+        const pos = rPos(i);
+        d.classList.add('delivered'); d.classList.remove('rejected');
+        place(d, pos.left, pos.top, 0);
+      } else {
+        d.classList.add('rejected'); d.classList.remove('delivered');
+        // cluster the rejected dots around the gate
+        place(d, GATE_LEFT + ((i % 3) - 1) * 4, ROWS_TOP[Math.floor((i - landCount) / 3) % 4], 0);
+      }
+    });
+  }
+
+  const bgFirst = Array.from({ length: N }, (_, i) => i);               // 0..11 in order
+  const urgentFirst = [9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8];           // 3 urgent (last) go first
+
+  const steps = [
+    {
+      desc: 'A batch of webhook deliveries is queued. The downstream receiver accepts about <b>2 requests/sec</b>. Press <b>Step</b> or <b>Play</b>.',
+      apply: () => { fillQueue(0); setCap(false, 'off'); setDelivered(0); setLamp(false); }
+    },
+    {
+      desc: '<b>No rate cap.</b> The Worker fires the whole batch at once. The receiver accepts ~2/sec — the rest bounce back as <code>429 Too Many Requests</code> and retry, hammering the downstream.',
+      apply: () => { setCap(false, 'off'); flood(2); setDelivered(2); setLamp(true); }
+    },
+    {
+      desc: 'The fix: cap the Worker at <code>max_activities_per_second=2</code> — matched to what the downstream can take. Excess work waits durably in the Task Queue.',
+      apply: () => { fillQueue(0); setCap(true, '2 / sec'); setDelivered(0); setLamp(false); }
+    },
+    {
+      desc: '<b>Paced dispatch.</b> The Worker releases ~2/sec. Every delivery lands cleanly (<code>200 OK</code>) and the receiver is never flooded — no <code>429</code> storm.',
+      apply: () => { setCap(true, '2 / sec'); dispatch(bgFirst, true); setDelivered(12); setLamp(false); }
+    },
+    {
+      desc: 'Now the queue is <b>contended</b> and some jobs are urgent (amber). They arrived <em>after</em> the backlog. Which should the Worker dispatch first?',
+      apply: () => { fillQueue(3); setCap(true, '2 / sec'); setDelivered(0); setLamp(false); }
+    },
+    {
+      desc: '<b>Priority.</b> A lower <code>priority_key</code> wins, so the urgent jobs jump ahead of the backlog — even though they arrived later. Pacing decides <em>how fast</em>; Priority decides <em>what goes first</em>.',
+      apply: () => { setCap(true, '2 / sec'); dispatch(urgentFirst, true); setDelivered(12); setLamp(false); }
+    },
+    {
+      desc: 'Two controls, one place: <code>max_activities_per_second</code> paces dispatch so the receiver is never flooded; <code>Priority</code> orders it when the queue is contended.',
+      apply: () => {}
+    }
+  ];
+
+  let current = 0, playing = false, playTimer = null;
+  const STEP_INTERVAL_MS = 3200;
+
+  function renderProgress() {
+    const wrap = $('progress');
+    wrap.innerHTML = '';
+    steps.forEach((_, i) => {
+      const p = document.createElement('div');
+      p.className = 'progress-pip' + (i === current ? ' active' : '');
+      wrap.appendChild(p);
+    });
+  }
+
+  function setStep(i) {
+    current = Math.max(0, Math.min(steps.length - 1, i));
+    $('step-desc').innerHTML = steps[current].desc;
+    steps[current].apply();
+    $('btn-step').disabled = current >= steps.length - 1;
+    $('btn-prev').disabled = current <= 0;
+    renderProgress();
+  }
+
+  function play() {
+    playing = true;
+    $('btn-play').textContent = '⏸ Pause';
+    if (current >= steps.length - 1) setStep(0);
+    playTimer = setInterval(() => {
+      if (current < steps.length - 1) setStep(current + 1);
+      else stopPlay();
+    }, STEP_INTERVAL_MS);
+  }
+  function stopPlay() {
+    playing = false;
+    $('btn-play').textContent = '▶ Play';
+    if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  }
+
+  $('btn-step').onclick = () => { stopPlay(); setStep(current + 1); };
+  $('btn-prev').onclick = () => { stopPlay(); setStep(current - 1); };
+  $('btn-reset').onclick = () => { stopPlay(); setStep(0); };
+  $('btn-play').onclick = () => { playing ? stopPlay() : play(); };
+
+  setStep(0);
+</script>
+</body>
+</html>
