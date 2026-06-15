@@ -139,6 +139,8 @@ Only a handful of deliveries land at first; the rest get rejected with `429 Too 
 
 In that same Temporal UI view, you should see most of the `demo-*` Activities in **Running** state with the **Attempt** count climbing as each one keeps retrying on the 429s, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
 
+![A rate-limited demo Standalone Activity in the Temporal UI: status Running, Attempt count climbing (12 of Unlimited), and a Last Failure of HTTP 429 Too Many Requests](https://raw.githubusercontent.com/temporalio/edu-standalone-activities/main/python/diagrams/rate-limited-activity-running.png)
+
 > **What's happening:** Temporal's per-Activity retry policy is great for one Activity that fails. It can't solve a *whole-fleet* throughput problem because the next attempt of attempt 1 fights for the same downstream slot as attempt 1 of every other Activity. The fix has to pace the dispatch itself, not retry harder.
 
 ---
