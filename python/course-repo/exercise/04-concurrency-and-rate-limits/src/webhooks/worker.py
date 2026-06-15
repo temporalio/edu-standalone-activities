@@ -23,7 +23,7 @@ async def main() -> None:
             activity_executor=executor,
             # TODO: cap how many activities this worker dispatches per second so
             # we don't overwhelm the downstream service. The Worker constructor
-            # accepts `max_activities_per_second=<float>`. Try 5.0 first.
+            # accepts `max_activities_per_second=<float>`. Try 2.0 first.
         )
         print(f"Worker running on task queue '{TASK_QUEUE}'")
         await worker.run()

@@ -23,9 +23,9 @@ async def main() -> None:
             activity_executor=executor,
             # Cap dispatch rate so we don't 429 the downstream service.
             # The server holds excess work durably in the task queue.
-            max_activities_per_second=5.0,
+            max_activities_per_second=2.0,
         )
-        print(f"Worker running on task queue '{TASK_QUEUE}' (rate cap: 5/sec)")
+        print(f"Worker running on task queue '{TASK_QUEUE}' (rate cap: 2/sec)")
         await worker.run()
 
 

@@ -10,7 +10,7 @@ from .activities import deliver_webhook
 from .shared import WEBHOOK_RECEIVER_URL, TASK_QUEUE, WebhookDelivery
 
 
-async def main(count: int = 30) -> None:
+async def main(count: int = 60) -> None:
     client = await Client.connect("localhost:7233")
     handles = []
     for i in range(count):
@@ -31,4 +31,4 @@ async def main(count: int = 30) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main(int(sys.argv[1]) if len(sys.argv) > 1 else 30))
+    asyncio.run(main(int(sys.argv[1]) if len(sys.argv) > 1 else 60))
