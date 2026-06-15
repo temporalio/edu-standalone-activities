@@ -62,7 +62,12 @@ jobs:
           fi
 
       - name: Install Instruqt CLI
-        run: brew install instruqt/tap/instruqt
+        run: |
+          set -euo pipefail
+          # Homebrew is preinstalled on GitHub ubuntu runners but not on PATH.
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install instruqt/tap/instruqt
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
 
       - name: Validate and push track
         working-directory: python/instruqt
