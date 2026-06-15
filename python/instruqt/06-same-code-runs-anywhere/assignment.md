@@ -184,3 +184,7 @@ What you can now do with Standalone Activities in Python:
 Temporal lets you start with a job and move to a Workflow when the work grows. The Activity code you wrote still comes with you.
 
 Click **Check** to finish the track.
+
+---
+
+📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us improve.

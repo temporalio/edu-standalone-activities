@@ -21,7 +21,7 @@ notes:
     1. Run 60 deliveries with no rate cap. They all land in about a second.
     2. Switch the Webhook receiver into a "2 req/sec downstream" mode. Re-run. Watch real 429s land and Activities retry.
     3. Add max_activities_per_second=2.0 to the Worker. Re-run with the rate-limited receiver. The flood of 429s stops.
-    4. Use the Priority parameter to push urgent deliveries ahead of bulk ones when the queue is contended.
+    4. See where Priority fits for ordering urgent work, with a pointer to the docs to explore it.
 
     The same six tabs from Module 1 are available (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). The **Solution** tab has the finished code if you'd rather copy than type.
 tabs:
@@ -71,7 +71,7 @@ You'll do four things in this module:
 1. Run 60 deliveries with no rate cap. They land in about a second.
 2. Switch the Webhook receiver into a "2 req/sec downstream" mode. Re-run. Watch the 429s land and the Activities retry.
 3. Cap the Worker at 2 dispatches per second. Re-run with the rate-limited receiver. The flood of 429s stops.
-4. Use Priority to dispatch urgent deliveries ahead of background ones.
+4. See where `Priority` fits — and where to explore it next.
 
 The **Solution** tab has the finished code if you want to copy or peek. Estimated time: 12 minutes.
 
@@ -192,30 +192,29 @@ Check the receiver state at the end:
 }
 ```
 
-**Compare that to Section 2.** There `throttled_count` climbed continuously and never settled, because dispatch never slowed down. Here `throttled_count` shows only a small handful — these come from the Worker's initial burst, which briefly outpaces the receiver before the cap kicks in (the exact number varies run to run, and can be zero). After that it stops climbing: all 60 are delivered (`processed_count: 60`) and the receiver is no longer being hammered. You can confirm the pattern in the [button label="Worker" background="#444CE7"](tab-3) tab: a few early `HTTP/1.0 429 Too Many Requests` lines, then a steady stream of `HTTP/1.0 200 OK`. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** and you'll see `bulk-*` Activities completing instead of piling up in retries.
+**Compare that to Section 2:**
+
+|  | Section 2 — no Worker cap | Section 4 — `max_activities_per_second=2` |
+| --- | --- | --- |
+| Dispatch | All 60 fired at once | Paced at ~2/sec |
+| `throttled_count` | Climbs continuously, never settles | A small handful from the Worker's initial burst (often zero), then flat |
+| `processed_count` | Stalls while the receiver is overwhelmed | Reaches 60 — every delivery lands |
+| Worker logs | A constant stream of `429 Too Many Requests` | A few early `429`, then a steady stream of `200 OK` |
+| Standalone Activities | Piling up, **Attempt** count climbing | Completing instead of retrying |
+
+Confirm it yourself: the [button label="Worker" background="#444CE7"](tab-3) tab shows the shift from `429` to `200 OK`, and the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows `bulk-*` Activities completing instead of retrying.
 
 > **What's happening:** same 60 units of work, same delivery outcome. The Worker just dispatched them at a steady pace instead of all at once. To eliminate even the startup burst, cap the Worker a little below the downstream limit. Pair `max_activities_per_second` with `max_concurrent_activities` (which caps how many run in parallel) when you need both dispatch-rate and in-flight-count controls.
 
 ---
 
-## 5. Priority: send urgent work ahead of bulk (~3 min)
+## 5. The other control: Priority (~2 min)
 
-`max_activities_per_second` controls *how fast* dispatch happens. `Priority` controls *in what order* when the queue is contended. Lower `priority_key` means higher priority, so `priority_key=1` runs before `priority_key=5`.
+`max_activities_per_second` controls *how fast* dispatch happens. The companion control is **`Priority`**, which decides *what order* work runs in when the queue is contended: a lower `priority_key` means higher priority, so urgent jobs can jump ahead of a backlog even when they arrive later. The same `Priority` object also carries `fairness_key` and `fairness_weight` for multi-tenant fairness, so one busy tenant can't starve the quieter ones.
 
-There's a demo script in the exercise that does this for you. In the [button label="Terminal" background="#444CE7"](tab-2) tab:
+We don't walk through Priority hands-on in this module, but it's worth exploring next: see [Task Queue Priority and Fairness](https://docs.temporal.io/develop/task-queue-priority-fairness) in the Temporal docs.
 
-```bash,run
-scripts/reset-receiver.sh
-uv run python -m webhooks.send_priority_demo
-```
-
-The script submits 20 background deliveries (`priority_key=5`) and then 5 urgent ones (`priority_key=1`). The Worker is rate-capped at 2/sec, so the queue is contended. That is the situation where priority matters.
-
-Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab and look at the `received_at` order. The `urgent_*` deliveries land ahead of most of the `bg_*` ones, even though they were submitted later.
-
-For **multi-tenant fairness**, where you want busy tenants to avoid starving quieter ones, pass `fairness_key=<tenant_id>` and `fairness_weight=<float>` on the same `Priority(...)` object. A deeper multi-tenant example belongs in a future module.
-
-> **What's happening:** `Priority` is metadata Temporal's server uses when deciding which task to dispatch next. Combined with the rate cap from Section 3, you control both how fast work runs and which work runs first.
+Want a hands-on tutorial for Priority and fairness? Let us know in the [feedback form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us decide what to build next.
 
 ---
 
@@ -241,4 +240,8 @@ Two knobs to remember:
 
 ## Coming up
 
-**Module 05**: Heartbeats and checkpointing. Your jobs are fast, fair, and rate-capped. Next, long-running jobs report progress every few seconds and resume from the last checkpoint after a Worker crash.
+**Module 05**: Heartbeats and checkpointing. Your jobs are fast and rate-capped. Next, long-running jobs report progress every few seconds and resume from the last checkpoint after a Worker crash.
+
+---
+
+📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us improve.
