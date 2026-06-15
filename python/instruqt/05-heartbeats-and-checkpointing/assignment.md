@@ -230,3 +230,7 @@ Pair `activity.heartbeat()` with `heartbeat_timeout` whenever an Activity does w
 ## Coming up
 
 **Module 06**: Same code runs anywhere. You've now used Standalone Activities for retries, idempotency, dedup, rate limits, and heartbeats. Final stop: take the same Activity code you've been writing and call it from a Workflow.
+
+---
+
+📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us improve.

@@ -319,3 +319,7 @@ If you need a random code as part of the side effect, generate it **outside** th
 ## Coming up
 
 **Module 03**: Deduplication via ID reuse. You've made retries safe on the *receiver* side. Next, have Temporal reject duplicate submissions before a Worker sees them. Submit the same job ID twice and get back the existing handle instead of starting a second run.
+
+---
+
+📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27) — it helps us improve.
