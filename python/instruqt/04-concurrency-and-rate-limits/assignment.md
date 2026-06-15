@@ -176,9 +176,11 @@ uv run python -m webhooks.worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another 60:
 
 ```bash,run
-scripts/reset-receiver.sh
+scripts/stop-demo-and-reset.sh
 time uv run python -m webhooks.send_bulk 60
 ```
+
+`stop-demo-and-reset.sh` (`scripts/stop-demo-and-reset.sh`) clears the receiver and stops any `demo-*` Activities still retrying from Section 2, so these counts start from a clean zero.
 
 Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see the `bulk-*` Activities as **Running**, with about two per second flipping to **Completed** while the rest stay **Running**, waiting for the Worker to dispatch them. No racing the clock or reading timestamps after the fact. The pacing is visible as it unfolds.
 
