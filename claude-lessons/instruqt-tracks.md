@@ -195,6 +195,7 @@ Run from the exercise dir AND the solution dir for every module - different bugs
 - `lab_config`: `extend_ttl: 900`, `sidebar_enabled: true`, `default_layout: AssignmentRight`, `default_layout_sidebar_size: 40`, `theme: { name: modern-dark }`.
 - CI: auto-build the sandbox image **and auto-push the track**. The track must never be out of date with `main` (team decision, 2026-06-15 — replaces the earlier "manual push keeps releases deliberate" convention). See "Auto-pushing the track" below.
 - Use the CLI's own template as the source of truth for unfamiliar formats: `instruqt track create` + `instruqt challenge create` generate canonical files.
+- No em dashes in learner-facing copy (assignment prose, demo HTML, diagrams). Use a comma, colon, semicolon, or period instead. Enforced for assignment `.md` by `python/scripts/verify-content.sh` (check 6).
 
 ## Auto-pushing the track
 
