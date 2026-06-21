@@ -1,6 +1,6 @@
 ---
 slug: durable-job-queue
-id: ""
+id: swvtvlqp5oty
 type: challenge
 title: 'Standalone Activities: the durable job queue'
 teaser: Run a webhook delivery as a durable job, with no broker, scheduler, or result
@@ -37,38 +37,39 @@ notes:
     - Comfortable reading and writing TypeScript (functions, interfaces, imports, async/await).
     - Familiar with Temporal Activities and Workers at the level [Temporal 101 in TypeScript](https://learn.temporal.io/courses/temporal_101/typescript/) covers. If those words are new, take that course first and come back.
 tabs:
-- id: ""
+- id: se53gi9xr1js
   title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-durable-job-queue/exercise
-- id: ""
+- id: 3kngloyldrsm
   title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-durable-job-queue/solution
-- id: ""
+- id: wdo2nsxguhwl
   title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/01-durable-job-queue/exercise
-- id: ""
+- id: ykvdiyxo0av2
   title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/01-durable-job-queue/exercise
-- id: ""
+- id: xzf16klqcekk
   title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- id: ""
+- id: bdifqx83wofe
   title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
 difficulty: basic
 timelimit: 1500
+enhanced_loading: null
 ---
 
 # Submit a durable job with one API call

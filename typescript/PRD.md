@@ -78,7 +78,7 @@ ts/
 ## First push checklist
 
 1. Create a GitHub repo for the track definition (this repo).
-2. Build and push the sandbox image: `docker build -t ghcr.io/temporalio/edu-standalone-activities-ts-sandbox:latest ./sandbox && docker push`.
+2. Build and push the sandbox image: `docker build -t ghcr.io/temporalio/edu-standalone-activities-sandbox:typescript-latest ./sandbox && docker push`.
 3. Create the Instruqt track slug: `instruqt track create standalone-activities-typescript --title "Build a Job Queue with Standalone Activities (TypeScript)"`.
 4. Push the track: `cd instruqt && instruqt track push --force`.
 5. Pull the server-assigned ids: `cd .. && instruqt track pull`.

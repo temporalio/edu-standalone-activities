@@ -13,10 +13,10 @@ description: |
 icon: ""
 tags:
 - activities
-- typescript
 - standalone-activities
 - temporal
 - job-queue
+- typescript
 owner: temporal
 developers:
 - nikolay.advolodkin@temporal.io
@@ -65,5 +65,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentRight
   default_layout_sidebar_size: 40
-checksum: "8569715260545720961"
+checksum: "10237196835966909871"
 enhanced_loading: false

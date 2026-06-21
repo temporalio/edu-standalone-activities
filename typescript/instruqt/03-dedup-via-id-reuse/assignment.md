@@ -1,6 +1,6 @@
 ---
 slug: dedup-via-id-reuse
-id: ""
+id: uybwgt2xhoqp
 type: challenge
 title: Dedup via ID reuse
 teaser: Upstream sends the same event twice. Make Temporal reject the duplicate before
@@ -27,38 +27,39 @@ notes:
     - This module (scheduling-layer id policy): protects against
       duplicate start calls from your application.
 tabs:
-- id: ""
+- id: 40cbfaxuicgl
   title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/03-dedup-via-id-reuse/exercise
-- id: ""
+- id: s6xzrtguuqii
   title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/03-dedup-via-id-reuse/solution
-- id: ""
+- id: x0lpxkz5ql9e
   title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/03-dedup-via-id-reuse/exercise
-- id: ""
+- id: kqnsixx3vb6k
   title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/03-dedup-via-id-reuse/exercise
-- id: ""
+- id: lphtm9apymqf
   title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- id: ""
+- id: xgyzc2iiprnw
   title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
 difficulty: basic
 timelimit: 1500
+enhanced_loading: null
 ---
 
 # Reject duplicate jobs at the platform

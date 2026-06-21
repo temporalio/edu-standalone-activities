@@ -1,6 +1,6 @@
 version: "3"
 containers:
 - name: workshop
-  image: ghcr.io/temporalio/edu-standalone-activities-ts-sandbox:latest
+  image: ghcr.io/temporalio/edu-standalone-activities-sandbox:typescript-latest
   shell: /bin/bash
   memory: 4096
