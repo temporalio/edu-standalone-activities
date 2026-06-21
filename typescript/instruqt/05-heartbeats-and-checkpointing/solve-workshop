@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=/root/workshop/exercises/05-heartbeats-and-checkpointing
+cp -r /opt/workshop/solution/05-heartbeats-and-checkpointing/src/. "$DIR/exercise/src/"

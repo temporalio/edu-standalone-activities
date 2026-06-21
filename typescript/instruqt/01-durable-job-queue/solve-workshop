@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=/root/workshop/exercises/01-durable-job-queue
+cp -r /opt/workshop/solution/01-durable-job-queue/src/. "$DIR/exercise/src/"

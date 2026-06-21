@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# At least 2 deliveries: one standalone, one via workflow.
+PROCESSED=$(curl -fsS http://localhost:9000/_received | jq '.processed_count // 0')
+if [ "$PROCESSED" -ge 2 ]; then
+  echo "$PROCESSED deliveries recorded. Both submission paths worked."
+  exit 0
+fi
+
+echo "Expected at least 2 processed deliveries (one standalone, one via workflow)."
+echo "Got $PROCESSED. Run both sendStandalone.ts and sendViaWorkflow.ts."
+exit 1

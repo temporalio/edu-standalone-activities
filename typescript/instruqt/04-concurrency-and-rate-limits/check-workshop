@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# After fix: 60 bulk deliveries with rate limit on, throttled_count should be
+# small (initial burst only), processed_count should reach 60.
+STATS=$(curl -fsS http://localhost:9000/_received)
+PROCESSED=$(echo "$STATS" | jq '.processed_count // 0')
+THROTTLED=$(echo "$STATS" | jq '.throttled_count // 0')
+
+if [ "$PROCESSED" -eq 60 ] && [ "$THROTTLED" -le 10 ]; then
+  echo "$PROCESSED deliveries processed, $THROTTLED throttled. Rate cap is working."
+  exit 0
+fi
+
+echo "Expected: processed == 60, throttled <= 10 (small initial burst allowed)."
+echo "Got: processed=$PROCESSED throttled=$THROTTLED"
+echo "Add maxActivitiesPerSecond: 2 to the Worker and re-run the 60-delivery batch."
+exit 1

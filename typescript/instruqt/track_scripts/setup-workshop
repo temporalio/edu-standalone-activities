@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p /var/log/workshop
+
+# Start Temporal dev server.
+# Single partition keeps Task Queue Priority ordering deterministic (Module 04).
+nohup temporal server start-dev \
+  --ip 0.0.0.0 \
+  --ui-port 8233 \
+  --db-filename /tmp/temporal.db \
+  --log-level warn \
+  --dynamic-config-value matching.numTaskqueueReadPartitions=1 \
+  --dynamic-config-value matching.numTaskqueueWritePartitions=1 \
+  > /var/log/workshop/temporal.log 2>&1 &
+
+# Start webhook receiver.
+nohup ts-node /opt/workshop/server/webhookReceiver.ts \
+  > /var/log/workshop/receiver.log 2>&1 &
+
+# Wait for ports to be ready (timeout 60 seconds).
+for i in $(seq 1 60); do
+  if (echo > /dev/tcp/localhost/7233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/8233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9000) 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
+
+# Seed all 6 modules' exercise + solution directories under /root/workshop/exercises/
+for NN in \
+    01-durable-job-queue \
+    02-idempotency-and-crash-safety \
+    03-dedup-via-id-reuse \
+    04-concurrency-and-rate-limits \
+    05-heartbeats-and-checkpointing \
+    06-same-code-runs-anywhere; do
+  DIR=/root/workshop/exercises/$NN
+  for SIDE in exercise solution; do
+    mkdir -p "$DIR/$SIDE/src"
+    cp -r /opt/workshop/$SIDE/$NN/src/. "$DIR/$SIDE/src/"
+    cp -r /opt/workshop/scripts "$DIR/$SIDE/"
+    chmod +x "$DIR/$SIDE/scripts/"*.sh
+  done
+done
+
+# Symlink node_modules and tsconfig.json so module resolution works
+# from any exercise directory (Node walks up looking for node_modules).
+ln -sfn /opt/workshop/node_modules /root/workshop/node_modules
+ln -sfn /opt/workshop/tsconfig.json /root/workshop/tsconfig.json
+
+echo "Workshop setup complete."
