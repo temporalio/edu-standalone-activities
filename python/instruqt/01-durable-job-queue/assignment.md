@@ -72,6 +72,11 @@ notes:
       </g>
     </svg>
 tabs:
+- id: x7aermetxpnt
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: vryel8ovmbex
   title: Exercise
   type: code
@@ -97,11 +102,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: x7aermetxpnt
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null

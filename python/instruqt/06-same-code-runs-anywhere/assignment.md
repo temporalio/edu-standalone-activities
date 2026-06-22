@@ -16,6 +16,11 @@ notes:
 
     This module proves it. The exact same deliver_webhook function is submitted two ways: directly via client.execute_activity (the Standalone Activity path you've used all tutorial) and via client.execute_workflow (a Workflow that calls the Activity as a step). Same Activity, two job types.
 tabs:
+- id: s5duvkctvcpf
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: ripqsfaeunnx
   title: Exercise
   type: code
@@ -41,11 +46,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: s5duvkctvcpf
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null

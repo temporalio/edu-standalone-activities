@@ -28,6 +28,11 @@ notes:
     - This module (scheduling-layer id policy): protects against
       duplicate start_activity calls from your application.
 tabs:
+- id: d6koeig93gmy
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: bb5mshhnqrcy
   title: Exercise
   type: code
@@ -53,11 +58,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: d6koeig93gmy
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 - id: nrfgjgjiw7a5
   title: Conflict policy demo
   type: service
