@@ -59,7 +59,11 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 - **Service tabs open at `/`** - design in-sandbox HTTP services with a useful root endpoint, not just specific paths.
 - **`lab_config.theme`** is an object: `theme: { name: modern-dark }`. Not a string.
 - **`lab_config.sidebar_enabled`** is flat boolean. No `sidebar: {enabled, width}` nesting.
-- **Layout fields**: `default_layout: AssignmentRight`, `default_layout_sidebar_size: 40`, `override_challenge_layout: true`.
+- **Layout fields** (in `lab_config`, applied to all challenges when `override_challenge_layout: true`):
+  - `default_layout`: which side the instructions (assignment) pane sits on. `AssignmentLeft` = instructions left, all tabs right. `AssignmentRight` = the reverse. This track uses `AssignmentLeft`.
+  - `default_layout_sidebar_size`: percentage width of the instructions pane. `33` = instructions 1/3, tabs 2/3. `40` = 40/60. Sets the *default* split only; learners can drag the divider during a session. This track uses `33`.
+  - `override_challenge_layout: true`: makes the two fields above apply across every module, so set them once in `track.yml`.
+- **Default / starting tab = the FIRST entry in a challenge's `tabs:` list.** There is no per-tab "default" flag; Instruqt opens whichever tab is listed first. To make a tab the landing tab (this track lands on **Temporal UI**), move its block to the top of `tabs:` in every module's `assignment.md`. Reordering shifts the zero-indexed `tab-N` jump-button targets, so recount and fix every button reference after a move.
 
 ## Image + registry
 
@@ -192,7 +196,7 @@ Run from the exercise dir AND the solution dir for every module - different bugs
 - Package manager: `uv` (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
 - Pre-warm `uv sync` at image-build time so the first challenge boots fast.
 - Container memory: `4096` MB (matches Nexus reference; less may be tight).
-- `lab_config`: `extend_ttl: 900`, `sidebar_enabled: true`, `default_layout: AssignmentRight`, `default_layout_sidebar_size: 40`, `theme: { name: modern-dark }`.
+- `lab_config`: `extend_ttl: 900`, `sidebar_enabled: true`, `default_layout: AssignmentLeft` (instructions left, tabs right), `default_layout_sidebar_size: 33` (instructions 1/3, tabs 2/3), `override_challenge_layout: true`, `theme: { name: modern-dark }`. Land each module on the **Temporal UI** tab by listing it first in `tabs:`. See "Layout fields" under Schema gotchas.
 - CI: auto-build the sandbox image **and auto-push the track**. The track must never be out of date with `main` (team decision, 2026-06-15 — replaces the earlier "manual push keeps releases deliberate" convention). See "Auto-pushing the track" below.
 - Use the CLI's own template as the source of truth for unfamiliar formats: `instruqt track create` + `instruqt challenge create` generate canonical files.
 - No em dashes in learner-facing copy (assignment prose, demo HTML, diagrams). Use a comma, colon, semicolon, or period instead. Enforced for assignment `.md` by `python/scripts/verify-content.sh` (check 6).
