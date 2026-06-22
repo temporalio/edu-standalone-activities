@@ -83,13 +83,13 @@ The **Solution** tab has the finished code if you want to copy or peek. Estimate
 
 ## 1. Run 60 deliveries with no rate cap (~3 min)
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send 60 deliveries:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, send 60 deliveries:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -98,9 +98,9 @@ time uv run python -m webhooks.send_bulk 60
 
 The `time` prefix prints how long the batch took. With no rate cap, the 60 deliveries should complete in **a second or two**. The Worker dispatches them as fast as the `ThreadPoolExecutor(10)` running the Activities can keep up.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `received_count` and `processed_count` should both reach 60, and the `received_at` timestamps will all be clustered tight together (within a second or so). The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see `received_count` climb live.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. `received_count` and `processed_count` should both reach 60, and the `received_at` timestamps will all be clustered tight together (within a second or so). The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see `received_count` climb live.
 
-Now open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** view. You should see all 60 `bulk-*` Activities listed as **Completed**, with start and end timestamps clustered in the same one- or two-second window. They flash through **Running** to **Completed** almost instantly, with no retries. Just 60 happy deliveries at full speed.
+Now open the [button label="Temporal UI" background="#444CE7"](tab-0) tab and switch to the **Standalone Activities** view. You should see all 60 `bulk-*` Activities listed as **Completed**, with start and end timestamps clustered in the same one- or two-second window. They flash through **Running** to **Completed** almost instantly, with no retries. Just 60 happy deliveries at full speed.
 
 > **What's happening:** there's no rate limit anywhere. The receiver accepted everything. In the next section you'll see what changes when the downstream actually pushes back.
 
@@ -110,7 +110,7 @@ Now open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and sw
 
 That 2 req/sec downstream cap isn't hypothetical anymore. The Webhook receiver in this sandbox has a rate-limit mode you can switch on at runtime. When it's on, anything over the cap gets a real HTTP 429 back.
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, turn it on at 2 req/sec:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, turn it on at 2 req/sec:
 
 ```bash,run
 curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
@@ -123,11 +123,11 @@ scripts/reset-receiver.sh
 uv run python -m webhooks.send_bulk_demo 60
 ```
 
-`send_bulk_demo` will hang because the Activities keep retrying on every 429. While it is running, quickly open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. Running `demo-*` Activities only stay easy to catch for a few seconds, so re-run the command if you miss them.
+`send_bulk_demo` will hang because the Activities keep retrying on every 429. While it is running, quickly open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities**. Running `demo-*` Activities only stay easy to catch for a few seconds, so re-run the command if you miss them.
 
-After about **5 seconds**, go back to the [button label="Terminal" background="#444CE7"](tab-2) tab and press **Ctrl+C**. You don't need to wait for it to drain; the pain is already visible.
+After about **5 seconds**, go back to the [button label="Terminal" background="#444CE7"](tab-3) tab and press **Ctrl+C**. You don't need to wait for it to drain; the pain is already visible.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The state will look something like:
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. The state will look something like:
 
 ```json
 {
@@ -139,7 +139,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. The
 }
 ```
 
-Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does. To see the actual failures, switch to the [button label="Worker" background="#444CE7"](tab-3) tab and look for HTTP request log lines ending in `HTTP/1.0 429 Too Many Requests`.
+Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. The receiver did exactly what a real rate-limited API does. To see the actual failures, switch to the [button label="Worker" background="#444CE7"](tab-4) tab and look for HTTP request log lines ending in `HTTP/1.0 429 Too Many Requests`.
 
 In that same Temporal UI view, you should see most of the `demo-*` Activities in **Running** state with the **Attempt** count climbing as each one keeps retrying on the 429s, and a `lastFailure` of `HTTPStatusError: 429`. Temporal is doing the right thing for each Activity in isolation: retry on transient failure. But there's nothing slowing the *dispatch* down, so the receiver keeps getting hammered.
 
@@ -151,7 +151,7 @@ In that same Temporal UI view, you should see most of the `demo-*` Activities in
 
 ## 3. Add the rate cap (~2 min)
 
-Open `src/webhooks/worker.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. There's a `TODO` inside the `Worker(...)` constructor. Add this line right after the `activity_executor` argument:
+Open `src/webhooks/worker.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. There's a `TODO` inside the `Worker(...)` constructor. Add this line right after the `activity_executor` argument:
 
 ```python
 max_activities_per_second=2.0,
@@ -167,13 +167,13 @@ The Worker now dispatches at most 2 Activities per second. The full version is i
 
 The receiver is still rate-limited at 2/sec from Section 2. We're going to dispatch at the same pace from the Worker and watch the 429s vanish.
 
-Restart the Worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then **Up Arrow + Enter**:
+Restart the Worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-4) tab, press **Ctrl+C**, then **Up Arrow + Enter**:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another 60:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, send another 60:
 
 ```bash,run
 scripts/stop-demo-and-reset.sh
@@ -182,9 +182,9 @@ time uv run python -m webhooks.send_bulk 60
 
 `stop-demo-and-reset.sh` (`scripts/stop-demo-and-reset.sh`) clears the receiver and stops any `demo-*` Activities still retrying from Section 2, so these counts start from a clean zero.
 
-Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see the `bulk-*` Activities as **Running**, with about two per second flipping to **Completed** while the rest stay **Running**, waiting for the Worker to dispatch them. No racing the clock or reading timestamps after the fact. The pacing is visible as it unfolds.
+Right after you press **Enter**, jump to the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities**. At 2/sec, draining 60 deliveries takes about **half a minute**, so you have a comfortable window to watch it happen live: refresh the view and you'll see the `bulk-*` Activities as **Running**, with about two per second flipping to **Completed** while the rest stay **Running**, waiting for the Worker to dispatch them. No racing the clock or reading timestamps after the fact. The pacing is visible as it unfolds.
 
-This time the wall-clock time is noticeably longer, around **30 seconds** for 60 deliveries at 2/sec. The rate limiter on the Worker side allows a small initial burst, then enforces the cap. In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab the `received_at` timestamps will visibly spread out instead of clustering, with `received_count` climbing by about two per second.
+This time the wall-clock time is noticeably longer, around **30 seconds** for 60 deliveries at 2/sec. The rate limiter on the Worker side allows a small initial burst, then enforces the cap. In the [button label="Webhook receiver" background="#444CE7"](tab-5) tab the `received_at` timestamps will visibly spread out instead of clustering, with `received_count` climbing by about two per second.
 
 Check the receiver state at the end:
 
@@ -208,7 +208,7 @@ Check the receiver state at the end:
 | Worker logs | A constant stream of `429 Too Many Requests` | A few early `429`, then a steady stream of `200 OK` |
 | Standalone Activities | Piling up, **Attempt** count climbing | Completing instead of retrying |
 
-Confirm it yourself: the [button label="Worker" background="#444CE7"](tab-3) tab shows the shift from `429` to `200 OK`, and the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows `bulk-*` Activities completing instead of retrying.
+Confirm it yourself: the [button label="Worker" background="#444CE7"](tab-4) tab shows the shift from `429` to `200 OK`, and the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** shows `bulk-*` Activities completing instead of retrying.
 
 > **What's happening:** same 60 units of work, same delivery outcome. The Worker just dispatched them at a steady pace instead of all at once. To eliminate even the startup burst, cap the Worker a little below the downstream limit. Pair `max_activities_per_second` with `max_concurrent_activities` (which caps how many run in parallel) when you need both dispatch-rate and in-flight-count controls.
 

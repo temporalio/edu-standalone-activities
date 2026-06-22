@@ -91,13 +91,13 @@ The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
 ## 1. See the conflict (~3 min)
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `send_double` (`src/webhooks/send_double.py`), a script that calls `start_activity` twice with the same id, back-to-back:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, run `send_double` (`src/webhooks/send_double.py`), a script that calls `start_activity` twice with the same id, back-to-back:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -118,7 +118,7 @@ The first call succeeded. The second call raised an error because the default `i
 
 ### Confirming this is the right outcome
 
-The Temporal UI doesn't show much here because **the server rejected the second call before any second Activity got created**. There is no failed Activity record to inspect. The only sign of the rejection is the `ActivityAlreadyStartedError` your Python code caught. To confirm what happened, look at the surrounding state in the [button label="Terminal" background="#444CE7"](tab-2) tab:
+The Temporal UI doesn't show much here because **the server rejected the second call before any second Activity got created**. There is no failed Activity record to inspect. The only sign of the rejection is the `ActivityAlreadyStartedError` your Python code caught. To confirm what happened, look at the surrounding state in the [button label="Terminal" background="#444CE7"](tab-3) tab:
 
 ```bash,run
 # Exactly 1 webhook was actually delivered (the duplicate never reached a Worker).
@@ -139,7 +139,7 @@ All three checks agree: one Activity scheduled, one webhook delivered, one attem
 
 ## 2. Set the conflict policy to USE_EXISTING (~2 min)
 
-Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. There are two `TODO` comments. Uncomment the import, and add one keyword argument inside `start_activity(...)`:
+Open `src/webhooks/send_double.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. There are two `TODO` comments. Uncomment the import, and add one keyword argument inside `start_activity(...)`:
 
 ```python
 # At the top of the file, uncomment:
@@ -157,7 +157,7 @@ The finished file is in the **Solution** tab.
 
 ## 3. Verify the fix (~3 min)
 
-Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, re-run with the policy in place:
+Back in the [button label="Terminal" background="#444CE7"](tab-3) tab, re-run with the policy in place:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -177,7 +177,7 @@ Now you should see:
 
 Both calls returned successfully with the **same `run_id`**. The second call got a handle to the Activity the first call scheduled, so `await handle.result()` on either handle resolves to the same outcome.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1 processed delivery** for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
+The [button label="Webhook receiver" background="#444CE7"](tab-5) tab shows **1 processed delivery** for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
 > **The takeaway:** the server handled the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 02, your delivery is protected from Temporal retries and from duplicate calls in your own application.
 

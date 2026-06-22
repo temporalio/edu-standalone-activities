@@ -133,7 +133,7 @@ Estimated time: 7 minutes.
 
 ## 1. Write the Activity (~2 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll see a stub with three `TODO` comments and a `raise NotImplementedError`.
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. You'll see a stub with three `TODO` comments and a `raise NotImplementedError`.
 
 Replace the body of `deliver_webhook` with this code:
 
@@ -157,7 +157,7 @@ Instruqt auto-saves your edits. The full version is in the **Solution** tab if y
 
 ## 2. Submit it as a Standalone Activity (~3 min)
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
@@ -171,7 +171,7 @@ Worker running on task queue 'webhook-queue'
 
 The Worker is now polling Temporal for tasks. Leave it running.
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, run the starter script:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, run the starter script:
 
 ```bash,run
 uv run python -m webhooks.send_standalone evt_001
@@ -183,7 +183,7 @@ You should see:
 Standalone Activity completed with status 200
 ```
 
-Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. This call submits the durable job:
+Open `src/webhooks/send_standalone.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. This call submits the durable job:
 
 ```python
 await client.execute_activity(
@@ -197,13 +197,13 @@ await client.execute_activity(
 
 One API call. The client tells Temporal, "run this Activity once and give me the result." There is no Workflow class in the script, and there is no broker, scheduler, or result store for you to deploy. Temporal persisted the job before acknowledging it, dispatched it to your Worker, and stored the result.
 
-Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see one delivery recorded. The Webhook receiver tab auto-refreshes every 2 seconds, so leave it open and you'll see new deliveries appear without reloading.
+Open the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You should see one delivery recorded. The Webhook receiver tab auto-refreshes every 2 seconds, so leave it open and you'll see new deliveries appear without reloading.
 
 ---
 
 ## 3. Inspect the job in the Temporal UI (~2 min)
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. You should see `deliver-evt_001` listed:
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab and switch to the **Standalone Activities** tab in the left nav. You should see `deliver-evt_001` listed:
 
 ![Temporal UI showing a completed Standalone Activity in the Standalone Activities tab](https://raw.githubusercontent.com/temporalio/edu-standalone-activities/standalone-pre/python/diagrams/standalone-activity-ui.png)
 
