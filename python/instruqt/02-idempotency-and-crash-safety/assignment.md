@@ -29,6 +29,11 @@ notes:
 
     <iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/main/docs/idempotency-demo/index.html" width="100%" height="560" frameborder="0" style="border: 0; border-radius: 8px;"></iframe>
 tabs:
+- id: 9stl3pgh1ly5
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: 1e8ceyilglde
   title: Exercise
   type: code
@@ -54,11 +59,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: 9stl3pgh1ly5
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 - id: s0mmzrec3kli
   title: Idempotency demo
   type: service
