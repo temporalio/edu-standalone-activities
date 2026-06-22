@@ -159,7 +159,23 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
   - `default_layout`: which side the instructions (assignment) pane sits on. `AssignmentLeft` = instructions left, all tabs right. `AssignmentRight` = the reverse. This track uses `AssignmentLeft`.
   - `default_layout_sidebar_size`: percentage width of the instructions pane. `33` = instructions 1/3, tabs 2/3. `40` = 40/60. Sets the *default* split only; learners can drag the divider during a session. This track uses `33`.
   - `override_challenge_layout: true`: makes the two fields above apply across every module, so set them once in `track.yml`.
-- **Default / starting tab = the FIRST entry in a challenge's `tabs:` list.** There is no per-tab "default" flag; Instruqt opens whichever tab is listed first. To make a tab the landing tab (this track lands on **Temporal UI**), move its block to the top of `tabs:` in every module's `assignment.md`. Reordering shifts the zero-indexed `tab-N` jump-button targets, so recount and fix every button reference after a move.
+- **Default / starting tab = the FIRST entry in a challenge's `tabs:` list.** There is no per-tab "default" flag; Instruqt opens whichever tab is listed first. To make a tab the landing tab (this track lands on **Temporal UI**), move its block to the top of `tabs:` in every module's `assignment.md`.
+- **Canonical tab order (this track).** Every module uses the same `tabs:` order, so `tab-N` indices are uniform across modules:
+
+  | Index | Tab |
+  |---|---|
+  | `tab-0` | Temporal UI |
+  | `tab-1` | Exercise |
+  | `tab-2` | Solution |
+  | `tab-3` | Terminal |
+  | `tab-4` | Worker |
+  | `tab-5` | Webhook receiver |
+  | `tab-6` | per-module demo (Idempotency demo in 02, Conflict policy demo in 03; absent elsewhere) |
+
+- **Reordering tabs breaks every `tab-N` jump button — remap them in the same change.** `tab-N` is a zero-indexed *position* in `tabs:`, not a tab id, so moving or inserting a tab silently re-points every button in the assignment body. (This actually shipped: moving Temporal UI to the front made the Terminal button open Solution and the Worker button open Terminal across all six modules.) Whenever you touch tab order:
+  1. Update the `tabs:` list and the canonical table above.
+  2. Remap every `[button label="X" ...](tab-N)` so `N` matches `X`'s new index. Drive the fix by the button **label**, not by blindly shifting numbers — that also repairs any pre-existing wrong links.
+  3. Verify: for each button, `tab-N` must equal the label's position in that module's `tabs:` frontmatter. A quick script that parses the frontmatter and checks every button beats eyeballing 60+ buttons.
 
 ### Image + registry
 

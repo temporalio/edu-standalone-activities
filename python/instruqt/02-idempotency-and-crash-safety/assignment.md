@@ -91,17 +91,17 @@ Estimated time: 10 minutes.
 
 ## 1. Reproduce the bug (~3 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The Activity is set up to POST the webhook, then raise a retryable `ApplicationError` on its first two attempts. This simulates a transient failure after the side effect already happened. For example, the receiver returned 500 after processing, the network dropped after the POST was accepted, or the Worker crashed right after the POST.
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. The Activity is set up to POST the webhook, then raise a retryable `ApplicationError` on its first two attempts. This simulates a transient failure after the side effect already happened. For example, the receiver returned 500 after processing, the network dropped after the POST was accepted, or the Worker crashed right after the POST.
 
 There's a `TODO` above the `headers` dict. Leave it alone for now so you can see what goes wrong before the fix is in place.
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send one delivery:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, send one delivery:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -112,7 +112,7 @@ uv run python -m webhooks.send_standalone evt_buggy
 
 The Activity fails on attempts 1 and 2, succeeds on attempt 3. Temporal's default retry policy waits a short backoff between attempts. The whole thing finishes in about 3 seconds.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **3 requests received** and **3 deliveries processed** for `evt_buggy`, one per attempt. The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the counts climb as the retries land.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You should see **3 requests received** and **3 deliveries processed** for `evt_buggy`, one per attempt. The Webhook receiver tab auto-refreshes every 2 seconds, so you'll see the counts climb as the retries land.
 
 ```json
 {
@@ -130,7 +130,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 
 The receiver had no way to know these were duplicates of the same logical event, so it accepted all three.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The view shows status, attempt count, and last failure, not a per-attempt breakdown. Read the count off the UI.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The view shows status, attempt count, and last failure, not a per-attempt breakdown. Read the count off the UI.
 
 > **What's happening:** each attempt of the Activity body POSTed to the Webhook receiver *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again because Temporal retries the Activity body, not the external side effect.
 
@@ -138,7 +138,7 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab and switch
 
 ## 2. Add the idempotency key (~2 min)
 
-Back in the [button label="Exercise" background="#444CE7"](tab-0) tab, find the `TODO` in `deliver_webhook`. Replace the empty `headers` dict with this line:
+Back in the [button label="Exercise" background="#444CE7"](tab-1) tab, find the `TODO` in `deliver_webhook`. Replace the empty `headers` dict with this line:
 
 ```python
 headers = {"Idempotency-Key": f"webhook:{req.event_id}"}
@@ -154,20 +154,20 @@ That's the entire fix. The full solution is in the **Solution** tab if you want 
 
 ## 3. Verify the fix (~3 min)
 
-The Worker is still running the old code. Restart it so it picks up the change. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then **Up Arrow** + **Enter** to re-run:
+The Worker is still running the old code. Restart it so it picks up the change. In the [button label="Worker" background="#444CE7"](tab-4) tab, press **Ctrl+C**, then **Up Arrow** + **Enter** to re-run:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another delivery with the fix in place:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, send another delivery with the fix in place:
 
 ```bash,run
 scripts/reset-receiver.sh
 uv run python -m webhooks.send_standalone evt_fixed
 ```
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **3 requests received** and **1 delivery processed** for `evt_fixed`:
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You should see **3 requests received** and **1 delivery processed** for `evt_fixed`:
 
 ```json
 {
@@ -183,7 +183,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 
 Three POSTs still landed at the receiver because the Activity still retried three times. The receiver saw the same idempotency key on each one, so it returned a cached response to attempts 2 and 3 without processing new deliveries.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. Its record looks the same as the buggy run: a single Activity whose **Attempt** count shows it retried. The difference is on the receiver side, where the repeated requests were deduped.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. Its record looks the same as the buggy run: a single Activity whose **Attempt** count shows it retried. The difference is on the receiver side, where the repeated requests were deduped.
 
 > **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 
