@@ -179,7 +179,7 @@ Script names' suffix MUST match the container name in `config.yml`. Container `w
 
 ### Content authoring
 
-- **Loading messages** (rotate during the ~20-60s sandbox provisioning): `lab_config.loadingMessages` is a list of plain strings, ~80 chars each. No markdown rendering. Aim for 15-20 entries. Mix concrete teaching with a touch of warmth.
+- **Loading messages** (rotate during the ~20-60s sandbox provisioning): `lab_config.loadingMessages` is a list of plain strings, ~80 chars each. No markdown rendering. Aim for 10 entries. Mix concrete teaching with a touch of warmth.
 - **Welcome / Start screen** (shown before the learner clicks Start, after they've opened the track): `notes:` field in the FIRST challenge's frontmatter. Markdown renders. Use for one-line scenario, what's already running (tab orientation), what this first chapter accomplishes.
 - **In-challenge body** (the live page beside the sandbox): the markdown body of `assignment.md` (everything after the frontmatter). Full markdown.
 - **Do not tell learners to save files in Instruqt.** The editor auto-saves. Say "Instruqt auto-saves your edits" if the learner needs reassurance.
