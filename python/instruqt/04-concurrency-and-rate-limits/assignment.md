@@ -25,6 +25,11 @@ notes:
 
     The same six tabs from Module 1 are available (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). The **Solution** tab has the finished code if you'd rather copy than type.
 tabs:
+- id: iwkxmfxpvx0g
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: itwzelvve2hv
   title: Exercise
   type: code
@@ -50,11 +55,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: iwkxmfxpvx0g
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null

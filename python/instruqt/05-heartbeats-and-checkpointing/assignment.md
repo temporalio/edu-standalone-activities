@@ -19,6 +19,11 @@ notes:
     1. Run a long-running Activity that delivers 10 webhooks. Kill the Worker mid-batch. Watch the retry start from item 0, and the receiver records duplicates of items already delivered.
     2. Add one line to read heartbeat_details on retry. Re-run. Kill again. Watch the retry pick up where it left off, with no duplicates.
 tabs:
+- id: f9litgnhwwoy
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: pxzal47h0ue3
   title: Exercise
   type: code
@@ -44,11 +49,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: f9litgnhwwoy
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
