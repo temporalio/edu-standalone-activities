@@ -119,9 +119,12 @@ fi
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== 5. Standalone Activities UI over-claims ==="
-# The Standalone Activities tab shows a single record with status, an attempt
-# counter, and the last failure - NOT a per-attempt history, NOT app logs.
-# This over-claim has regressed before (Module 02), so it is grep-gated.
+# The Standalone Activities tab shows a single record. While an Activity is
+# still Running it surfaces status, a climbing attempt counter, and the last
+# failure; once it is Completed the record does NOT reveal that it was retried
+# - no attempt history, no app logs. Retries are observable in the Worker
+# console logs and in the receiver, not on a finished Activity. This over-claim
+# has regressed twice in Module 02, so it is grep-gated.
 # Patterns are deliberately narrow to avoid the legitimate negated framing
 # ("not a per-attempt breakdown"), clicking the record itself ("click into
 # `deliver-...`"), and the CLI `jq` example (`attempt=1`, no spaces):
@@ -130,7 +133,9 @@ echo "=== 5. Standalone Activities UI over-claims ==="
 #   - "attempt = N" (with spaces): a specific value the UI may not show
 #     (matches the codified rule's own phrasing; the CLI `attempt=1` has no
 #     spaces and is intentionally not matched)
-UI_OVERCLAIM='retry history|[Cc]lick(ing)? into[^.]*attempt|[Aa]ttempt = [0-9]'
+#   - "count shows it ... retried": claims a finished Activity's counter proves
+#     a retry; it does not - that is the exact phrasing that regressed twice
+UI_OVERCLAIM='retry history|[Cc]lick(ing)? into[^.]*attempt|[Aa]ttempt = [0-9]|count shows it (was )?retried'
 HITS=$(grep -rnE \
   --include='*.md' \
   "$UI_OVERCLAIM" "$INSTRUQT_DIR" 2>/dev/null || true)

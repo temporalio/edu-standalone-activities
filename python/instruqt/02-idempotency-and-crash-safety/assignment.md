@@ -121,7 +121,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You
 
 The receiver had no way to know these were duplicates of the same logical event, so it accepted all three.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The view shows status, attempt count, and last failure, not a per-attempt breakdown. Read the count off the UI.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab and switch to the **Standalone Activities** tab in the left nav. Find `deliver-evt_buggy`. It's a single **Completed** Activity record. A completed Standalone Activity does not show that it was retried: the attempt count and last failure appear only while the Activity is still **Running**, not after it finishes. To see the retries, look at the [button label="Worker" background="#444CE7"](tab-4) console, which logged `temporalio.exceptions.ApplicationError: Simulated transient failure on attempt 1` (and again on attempt 2). The durable side-effect evidence is on the receiver, which recorded **3 requests** for one logical event.
 
 > **What's happening:** each attempt of the Activity body POSTed to the Webhook receiver *before* it raised. Temporal saw the error, treated it as retryable, and re-ran the Activity. The POST happened again because Temporal retries the Activity body, not the external side effect.
 
@@ -174,7 +174,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You
 
 Three POSTs still landed at the receiver because the Activity still retried three times. The receiver saw the same idempotency key on each one, so it returned a cached response to attempts 2 and 3 without processing new deliveries.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. Its record looks the same as the buggy run: a single Activity whose **Attempt** count shows it retried. The difference is on the receiver side, where the repeated requests were deduped.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. Its record looks the same as the buggy run: a single **Completed** Activity that, now that it has finished, shows no sign it was retried. The [button label="Worker" background="#444CE7"](tab-4) console still logs the same transient failures, so the Activity retried just as before. The difference is on the receiver side, where the repeated requests were deduped.
 
 > **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 

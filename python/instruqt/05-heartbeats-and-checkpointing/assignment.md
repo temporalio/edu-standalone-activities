@@ -116,7 +116,7 @@ In about 5 seconds, `heartbeat_timeout` fires on the server. No heartbeat for 5s
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You should see **14+ deliveries** for a 10-item batch: items 0–3 (or however many got through before the kill) are recorded *twice*. The receiver had no way to know these were duplicates because each carries a different `event_id`.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** → find `deliver-batch-10`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The recorded failure on the earlier attempt is a heartbeat timeout from when you killed the Worker. This is one execution that timed out and was retried, not two separate runs.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** → find `deliver-batch-10`. It's a single **Completed** Activity record: one execution that timed out and was retried, not two separate runs. A completed Standalone Activity does not show that it was retried; the attempt count and the heartbeat-timeout failure appear only while it is still **Running**. The lasting evidence of the retry is on the receiver, which recorded **14+ deliveries** because the retry redid items already sent.
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeat_details`. So it starts `start_index = 0` and redoes everything.
 
@@ -184,7 +184,7 @@ wait
 
 In the [button label="Webhook receiver" background="#444CE7"](tab-5) tab, count climbs to exactly **10**. The retry read `heartbeat_details`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** → `deliver-batch-10`. Same shape as the buggy run: one **Completed** Activity whose **Attempt** count shows it was retried after the heartbeat timeout. The proof the checkpoint was read is not in the UI. The Standalone Activities view shows an Activity's status, attempt count, and last failure, but not its application logs or a per-attempt breakdown. The proof is the receiver count landing on exactly **10** with no duplicates: the retry resumed from `heartbeat_details` instead of redoing delivered items.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** → `deliver-batch-10`. Same shape as the buggy run: one **Completed** Activity record. Once it finishes, the view does not show that it was retried after the heartbeat timeout; the attempt count and last failure are visible only while the Activity is still **Running**, and the Standalone Activities view never shows application logs or a per-attempt breakdown. The proof the checkpoint was read is the receiver count landing on exactly **10** with no duplicates: the retry resumed from `heartbeat_details` instead of redoing delivered items.
 
 > **The takeaway:** the Activity, `kill-worker.sh`, and restart are the same, but the receiver sees each item exactly once. Heartbeating is how a long-running Activity saves progress before the next crash.
 
