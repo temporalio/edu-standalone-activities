@@ -14,16 +14,7 @@ notes:
 
     A concrete example: your deliver_webhook Activity POSTs to the receiver's URL. The receiver gets the request and processes it. Then something errors out: the receiver returns a 500, the network drops, or the Worker crashes after the POST. Temporal sees no successful completion, so it retries the whole Activity, POST included. The receiver gets the same delivery twice.
 
-    This is at-least-once delivery: Temporal guarantees your Activity runs to completion at least once, but does not guarantee exactly once. To get effectively-once side effects, your Activity needs to be **idempotent**. In practice, that means it is safe to run more than once with the same input. The usual way to do that is to send an idempotency key with each request and let the receiver dedupe.
-
-    ## What you'll do
-
-    1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Webhook receiver process 3 deliveries for one logical event.
-    2. Add a one-line idempotency key to the POST. Re-run. Watch the Webhook receiver receive 3 requests but process only 1 delivery because it dedupes the retries.
-
-    The same six tabs from Module 1 are available in this module's sandbox (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). There's also an **Idempotency demo** tab showing an interactive version of the diagram below.
-
-    ## The visual version
+    ## Try Me
 
     Step through it with the controls below, or click **Play** to watch it run. Left lane: without an idempotency key. Right lane: with one.
 
