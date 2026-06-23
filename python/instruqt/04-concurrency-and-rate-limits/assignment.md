@@ -22,8 +22,6 @@ notes:
     2. Switch the Webhook receiver into a "2 req/sec downstream" mode. Re-run. Watch real 429s land and Activities retry.
     3. Add max_activities_per_second=2.0 to the Worker. Re-run with the rate-limited receiver. The flood of 429s stops.
     4. See where Priority fits for ordering urgent work, with a pointer to the docs to explore it.
-
-    The same six tabs from Module 1 are available (Exercise, Solution, Terminal, Worker, Webhook receiver, Temporal UI). The **Solution** tab has the finished code if you'd rather copy than type.
 tabs:
 - id: iwkxmfxpvx0g
   title: Temporal UI
