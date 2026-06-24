@@ -491,7 +491,7 @@ const STEPS = [
     },
   },
   {
-    desc: 'The loop starts at <code>i = 0</code>. Item 0 is fetched and delivered to the receiver again.',
+    desc: '<code>i = 0</code>: item_000 is fetched and delivered to the receiver again. The Activity has no idea it already ran this item.',
     phase: 'a2',
     apply: () => {
       setItems({ 0: 'duplicate' });
@@ -500,10 +500,28 @@ const STEPS = [
     },
   },
   {
-    desc: 'Items 1, 2, and 3 are delivered again. The receiver has no way to know these are duplicates.',
+    desc: '<code>i = 1</code>: item_001 delivered again. Duplicate.',
     phase: 'a2',
     apply: () => {
-      setItems({ 1: 'duplicate', 2: 'duplicate', 3: 'duplicate' });
+      setItems({ 1: 'duplicate' });
+      setProcCount(6, true);
+      highlightLines([13, 14, 15], 'active');
+    },
+  },
+  {
+    desc: '<code>i = 2</code>: item_002 delivered again. Duplicate.',
+    phase: 'a2',
+    apply: () => {
+      setItems({ 2: 'duplicate' });
+      setProcCount(7, true);
+      highlightLines([13, 14, 15], 'active');
+    },
+  },
+  {
+    desc: '<code>i = 3</code>: item_003 delivered again. Duplicate. This is the last item the first attempt reached before the service went down.',
+    phase: 'a2',
+    apply: () => {
+      setItems({ 3: 'duplicate' });
       setProcCount(8, true);
       highlightLines([13, 14, 15], 'active');
     },
