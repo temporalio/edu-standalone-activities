@@ -477,23 +477,21 @@ function showBubble(slot, html, arrow) {
   const bubble = $('speech-bubble');
   if (!slot || !html) {
     bubble.className = '';
-    bubble.style.display = 'none';
     return;
   }
-  // Position bubble below the target zone using live DOM coordinates
-  const panel   = document.querySelector('.exec-panel');
-  const zone    = $(`zone-${slot}`);
-  const pRect   = panel.getBoundingClientRect();
-  const zRect   = zone.getBoundingClientRect();
-  const topPx   = zRect.bottom - pRect.top + 8;
+  // Position below the target zone using live DOM coordinates
+  const panel = document.querySelector('.exec-panel');
+  const zone  = $(`zone-${slot}`);
+  const pRect = panel.getBoundingClientRect();
+  const zRect = zone.getBoundingClientRect();
+  const topPx = zRect.bottom - pRect.top + 8;
 
-  bubble.innerHTML  = html;
-  bubble.className  = `visible arrow-${arrow || 'left'}`;
-  bubble.style.top  = topPx + 'px';
-  // force animation restart
-  bubble.style.animation = 'none';
-  bubble.offsetHeight; // reflow
-  bubble.style.animation = '';
+  bubble.innerHTML = html;
+  bubble.style.top = topPx + 'px';
+  // Set class last — removes display:none from CSS and restarts animation
+  bubble.className = '';
+  bubble.offsetHeight; // reflow so animation restarts cleanly
+  bubble.className = `visible arrow-${arrow || 'left'}`;
 }
 
 // ── reset ─────────────────────────────────────────────────────────────────
