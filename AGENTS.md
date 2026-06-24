@@ -126,6 +126,19 @@ and enforced by `python/scripts/verify-content.sh` (content guardrails).
 
 Quick reference:
 
+- **Never say "kill", "killed", or "kills" for Worker or service failures.** Workers
+  don't get killed in a tutorial — services go down. Use "service down", "the Worker
+  goes down", "bring the service down", "the service is unavailable". This frames the
+  scenario as a realistic operational event (crash, deploy, machine reboot) rather
+  than a deliberate act. Applies to all text: assignment.md prose, bash comments,
+  HTML demo step descriptions, badge labels, and subtitle copy.
+
+  ✅ "Bring the service down mid-batch."
+  ✅ "The service goes down mid-run."
+  ✅ "Worker: down"
+  ❌ "Kill the Worker mid-batch."
+  ❌ "Worker: killed"
+
 - **No em dashes anywhere.** This applies to every file in the repo: assignment.md,
   HTML demos, README files, AGENTS.md, code comments, YAML strings, JavaScript
   step descriptions. Use a period, a colon, or a hyphen instead. The em dash is

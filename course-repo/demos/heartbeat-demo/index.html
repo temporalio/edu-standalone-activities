@@ -146,7 +146,7 @@ h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15
   transition: background 0.3s, color 0.3s;
 }
 .worker-badge.running { background: #1c3a1c; color: #9ae6b4; border: 1px solid #276749; }
-.worker-badge.killed  { background: #3a1515; color: #fc8181; border: 1px solid #9b2c2c; }
+.worker-badge.down    { background: #3a1515; color: #fc8181; border: 1px solid #9b2c2c; }
 
 /* items grid */
 .items-label { font-size: 0.68em; color: #4a5568; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -247,7 +247,7 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
 <body>
 
 <h1>Heartbeats and checkpointing: the bug</h1>
-<div class="subtitle">The Activity heartbeats progress. The Worker dies mid-batch. The retry ignores the stored checkpoint.</div>
+<div class="subtitle">The Activity heartbeats progress. The service goes down mid-batch. The retry ignores the stored checkpoint.</div>
 <div class="step-banner" id="step-banner"></div>
 
 <div class="layout">
@@ -456,7 +456,7 @@ const STEPS = [
     },
   },
   {
-    desc: 'Item 3 delivered. <code>heartbeat(4)</code> stored. The Worker is killed mid-run.',
+    desc: 'Item 3 delivered. <code>heartbeat(4)</code> stored. The service goes down mid-run.',
     phase: 'a1',
     apply: () => {
       setItems({ 3: 'done1' });
@@ -466,10 +466,10 @@ const STEPS = [
     },
   },
   {
-    desc: '<b>kill-worker.sh</b> kills the process. Items 4-9 never ran. Heartbeat checkpoint 4 is safely stored in Temporal.',
+    desc: '<b>kill-worker.sh</b> takes the service down. Items 4-9 never ran. Heartbeat checkpoint 4 is safely stored in Temporal.',
     phase: 'kill',
     apply: () => {
-      setWorker('Worker: killed', 'killed');
+      setWorker('Worker: down', 'down');
       highlightLines([], 'active');
     },
   },

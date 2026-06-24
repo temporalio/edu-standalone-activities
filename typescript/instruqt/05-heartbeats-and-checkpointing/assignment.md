@@ -23,7 +23,7 @@ notes:
 
     ## What you'll do
 
-    1. Run a long-running Activity that delivers 10 webhooks. Kill the Worker mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
+    1. Run a long-running Activity that delivers 10 webhooks. Bring the service down mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
     2. Add one block to read `heartbeatDetails` on retry and skip items already delivered.
     3. Re-run, kill again, and watch the retry resume from the checkpoint with no duplicates.
 tabs:
@@ -75,7 +75,7 @@ Standalone Activities include heartbeats and checkpointing. `Context.current().h
 
 You'll do three things in this module:
 
-1. Run a 10-item batch delivery Activity. Kill the Worker mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
+1. Run a 10-item batch delivery Activity. Bring the service down mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
 2. Add one block to read `heartbeatDetails` on retry and skip items already delivered.
 3. Re-run, kill again, and watch the retry resume from the checkpoint without duplicates.
 
@@ -94,10 +94,10 @@ In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker
 ts-node src/worker.ts
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send a 10-item batch and kill the Worker mid-run:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, send a 10-item batch and bring the service down mid-run:
 
 ```bash,run
-# Reset the receiver, submit a 10-item batch, kill the Worker after ~4 items
+# Reset the receiver, submit a 10-item batch, bring the service down after ~4 items
 scripts/reset-receiver.sh
 ts-node src/sendBatch.ts 10 &
 sleep 4 && scripts/kill-worker.sh
@@ -105,7 +105,7 @@ sleep 4 && scripts/kill-worker.sh
 
 That sequence:
 - Submits a batch of 10 items (1s delay between each = ~10s total).
-- Waits 4 seconds (~4 items delivered), then kills the Worker.
+- Waits 4 seconds (~4 items delivered), then brings the service down.
 - Leaves the `sendBatch` client waiting in the background.
 
 ### Observe the state while the Worker is down
