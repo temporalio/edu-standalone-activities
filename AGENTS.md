@@ -126,6 +126,26 @@ and enforced by `python/scripts/verify-content.sh` (content guardrails).
 
 Quick reference:
 
+- **Interactive HTML diagrams use inline speech bubbles, not a top banner.**
+  Step descriptions belong physically next to the element they describe, not
+  in a panel above the diagram. The convention:
+
+  - Divide the execution panel into named zones (e.g. `status`, `items`,
+    `info`). Each zone has a `<div class="bubble-slot" id="bub-<zone>">`.
+  - Each step calls `showBubble(slot, html, arrowPos)`. Only one slot is
+    populated at a time; the others are cleared.
+  - The bubble sits below its zone with an upward-pointing CSS arrow
+    (`::before` triangle) so the eye connects the text to the visual
+    event above it. Arrow position: `left` (default), `center`, or `right`.
+  - Entrance: a short `bubblein` keyframe (`opacity 0→1`, `translateY 4px→0`)
+    so the bubble draws attention without jarring.
+  - No separate `step-banner` div at the top of the page. The subtitle line
+    (`<div class="subtitle">`) gives the overall framing; per-step narration
+    lives in the bubbles.
+
+  See `course-repo/demos/heartbeat-demo/index.html` as the reference
+  implementation.
+
 - **Never say "kill", "killed", or "kills" for Worker or service failures.** Workers
   don't get killed in a tutorial — services go down. Use "service down", "the Worker
   goes down", "bring the service down", "the service is unavailable". This frames the
