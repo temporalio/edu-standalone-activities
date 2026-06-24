@@ -70,6 +70,8 @@ You'll do three things in this module:
 
 The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
+<iframe src="https://raw.githack.com/temporalio/edu-standalone-activities/main/docs/ts-idempotency-demo/index.html" width="100%" height="520" frameborder="0" style="border: 0; border-radius: 8px; margin: 0.5em 0;"></iframe>
+
 ---
 
 ## 1. Reproduce the bug (~3 min)

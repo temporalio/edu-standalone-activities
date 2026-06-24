@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Idempotency: at-least-once delivery</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0f1a;
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding: 1em 1.2em 1.4em;
+  min-height: 100vh;
+}
+
+h1 { text-align: center; font-size: 1.15em; font-weight: 600; margin-bottom: 0.2em; }
+.subtitle { text-align: center; color: #a0aec0; font-size: 0.82em; margin-bottom: 0.9em; }
+
+.step-banner {
+  text-align: center;
+  min-height: 2.6em;
+  font-size: 0.88em;
+  color: #b794f6;
+  line-height: 1.45;
+  margin-bottom: 0.85em;
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── lanes ── */
+.lanes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+  max-width: 860px;
+  margin: 0 auto;
+}
+@media (max-width: 620px) { .lanes { grid-template-columns: 1fr; } }
+
+.lane {
+  border-radius: 7px;
+  border: 1.5px dashed;
+  padding: 0.7em 0.75em 0.85em;
+}
+.lane.without { border-color: #e53e3e; }
+.lane.with    { border-color: #38a169; }
+
+.lane-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9em;
+  margin-bottom: 0.6em;
+  letter-spacing: 0.01em;
+}
+.lane.without .lane-title { color: #fc8181; }
+.lane.with    .lane-title { color: #9ae6b4; }
+
+/* ── attempt row ── */
+.attempts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin-bottom: 0.75em;
+}
+
+.attempt-row {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr 1fr;
+  align-items: center;
+  gap: 0.25em;
+  padding: 0.3em 0.35em;
+  border-radius: 4px;
+  background: #1a1a2e;
+  border: 1px solid #2d3748;
+  transition: border-color 0.3s, background 0.3s;
+  opacity: 0.3;
+}
+.attempt-row.active   { opacity: 1; border-color: #444ce7; background: #1e2040; }
+.attempt-row.done-ok  { opacity: 0.85; border-color: #38a169; background: #142014; }
+.attempt-row.done-err { opacity: 0.85; border-color: #e53e3e; background: #1f1010; }
+
+.cell { text-align: center; font-size: 0.78em; line-height: 1.3; }
+
+.attempt-label {
+  font-size: 0.72em;
+  color: #a0aec0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.attempt-status { font-size: 1.05em; min-height: 1.2em; }
+
+.arrow-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+}
+.arrow {
+  font-size: 1em;
+  color: #4a5568;
+  transition: color 0.3s;
+}
+.arrow.live   { color: #f6e05e; }
+.arrow.ok     { color: #9ae6b4; }
+.arrow.dedup  { color: #f6ad55; }
+
+.recv-label { font-size: 0.65em; font-weight: 600; color: #4a5568; transition: color 0.3s; }
+.recv-label.ok    { color: #9ae6b4; }
+.recv-label.dedup { color: #f6ad55; }
+
+/* ── metrics ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35em;
+  margin-top: 0.1em;
+}
+.metric {
+  background: #1a1a2e;
+  border-radius: 4px;
+  padding: 0.35em 0.3em;
+  text-align: center;
+}
+.metric-name {
+  font-size: 0.62em;
+  color: #718096;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.03em;
+}
+.metric-val {
+  font-size: 1.5em;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  line-height: 1.1;
+  margin-top: 0.1em;
+  transition: color 0.4s;
+  color: #e2e8f0;
+}
+.lane.without .metric-val.processed { color: #fc8181; }
+.lane.with    .metric-val.processed { color: #9ae6b4; }
+.metric-val.deduped-val { color: #f6ad55; }
+
+/* ── controls ── */
+.controls {
+  text-align: center;
+  margin: 0.9em auto 0;
+  max-width: 860px;
+}
+button {
+  background: #444ce7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.38em 0.85em;
+  margin: 0 0.2em;
+  font-size: 0.83em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover:not(:disabled) { background: #5a61f0; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.progress {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 0.55em;
+}
+.pip {
+  width: 7px; height: 7px;
+  background: #2d3748;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.pip.active { background: #b794f6; }
+
+/* ── code diff ── */
+.code-section {
+  max-width: 860px;
+  margin: 1.1em auto 0;
+  background: #141420;
+  border: 1px solid #2d3748;
+  border-radius: 6px;
+  padding: 0.75em 1em;
+}
+.code-section-label {
+  font-size: 0.75em;
+  color: #a0aec0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5em;
+}
+.diff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75em;
+}
+@media (max-width: 620px) { .diff { grid-template-columns: 1fr; } }
+.diff-side { font-family: ui-monospace, 'SF Mono', monospace; font-size: 0.78em; }
+.diff-title {
+  font-size: 0.72em;
+  font-weight: 700;
+  margin-bottom: 0.3em;
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  display: inline-block;
+}
+.diff-title.bug  { background: #742a2a; color: #fc8181; }
+.diff-title.fix  { background: #1c3a1c; color: #9ae6b4; }
+.diff pre {
+  background: #0f0f1a;
+  border-radius: 4px;
+  padding: 0.6em 0.75em;
+  line-height: 1.55;
+  overflow-x: auto;
+  border: 1px solid #2d3748;
+}
+.diff .add { color: #9ae6b4; }
+.diff .dim { color: #4a5568; }
+.diff .neutral { color: #e2e8f0; }
+</style>
+</head>
+<body>
+
+<h1>At-least-once delivery + idempotency</h1>
+<div class="subtitle">The Activity POSTs, then errors. Temporal retries. The receiver sees every POST — unless you send an idempotency key.</div>
+
+<div class="step-banner" id="step-banner"></div>
+
+<div class="lanes">
+  <!-- WITHOUT lane -->
+  <div class="lane without">
+    <div class="lane-title">Without Idempotency-Key</div>
+
+    <div class="attempts">
+      <div class="attempt-row" id="wo-row-0">
+        <div class="cell">
+          <div class="attempt-label">Attempt 1</div>
+          <div class="attempt-status" id="wo-status-0">—</div>
+        </div>
+        <div class="arrow-cell">
+          <div class="arrow" id="wo-arrow-0">→</div>
+          <div class="recv-label" id="wo-recv-0"></div>
+        </div>
+        <div class="cell">
+          <div class="attempt-label">Receiver</div>
+          <div class="attempt-status" id="wo-rval-0">—</div>
+        </div>
+      </div>
+      <div class="attempt-row" id="wo-row-1">
+        <div class="cell">
+          <div class="attempt-label">Attempt 2</div>
+          <div class="attempt-status" id="wo-status-1">—</div>
+        </div>
+        <div class="arrow-cell">
+          <div class="arrow" id="wo-arrow-1">→</div>
+          <div class="recv-label" id="wo-recv-1"></div>
+        </div>
+        <div class="cell">
+          <div class="attempt-label">Receiver</div>
+          <div class="attempt-status" id="wo-rval-1">—</div>
+        </div>
+      </div>
+      <div class="attempt-row" id="wo-row-2">
+        <div class="cell">
+          <div class="attempt-label">Attempt 3</div>
+          <div class="attempt-status" id="wo-status-2">—</div>
+        </div>
+        <div class="arrow-cell">
+          <div class="arrow" id="wo-arrow-2">→</div>
+          <div class="recv-label" id="wo-recv-2"></div>
+        </div>
+        <div class="cell">
+          <div class="attempt-label">Receiver</div>
+          <div class="attempt-status" id="wo-rval-2">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-name">received</div>
+        <div class="metric-val" id="wo-received">0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-name">processed</div>
+        <div class="metric-val processed" id="wo-processed">0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-name">deduped</div>
+        <div class="metric-val" id="wo-deduped">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WITH lane -->
+  <div class="lane with">
+    <div class="lane-title">With Idempotency-Key</div>
+
+    <div class="attempts">
+      <div class="attempt-row" id="wi-row-0">
+        <div class="cell">
+          <div class="attempt-label">Attempt 1</div>
+          <div class="attempt-status" id="wi-status-0">—</div>
+        </div>
+        <div class="arrow-cell">
+          <div class="arrow" id="wi-arrow-0">→</div>
+          <div class="recv-label" id="wi-recv-0"></div>
+        </div>
+        <div class="cell">
+          <div class="attempt-label">Receiver</div>
+          <div class="attempt-status" id="wi-rval-0">—</div>
+        </div>
+      </div>
+      <div class="attempt-row" id="wi-row-1">
+        <div class="cell">
+          <div class="attempt-label">Attempt 2</div>
+          <div class="attempt-status" id="wi-status-1">—</div>
+        </div>
+        <div class="arrow-cell">
+          <div class="arrow" id="wi-arrow-1">→</div>
+          <div class="recv-label" id="wi-recv-1"></div>
+        </div>
+        <div class="cell">
+          <div class="attempt-label">Receiver</div>
+          <div class="attempt-status" id="wi-rval-1">—</div>
+        </div>
+      </div>
+      <div class="attempt-row" id="wi-row-2">
+        <div class="cell">
+          <div class="attempt-label">Attempt 3</div>
+          <div class="attempt-status" id="wi-status-2">—</div>
+        </div>
+        <div class="arrow-cell">
+          <div class="arrow" id="wi-arrow-2">→</div>
+          <div class="recv-label" id="wi-recv-2"></div>
+        </div>
+        <div class="cell">
+          <div class="attempt-label">Receiver</div>
+          <div class="attempt-status" id="wi-rval-2">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-name">received</div>
+        <div class="metric-val" id="wi-received">0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-name">processed</div>
+        <div class="metric-val processed" id="wi-processed">0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-name">deduped</div>
+        <div class="metric-val deduped-val" id="wi-deduped">0</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /lanes -->
+
+<div class="controls">
+  <button id="btn-prev">⏮ Back</button>
+  <button id="btn-step">⏭ Step</button>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-reset">⟲ Reset</button>
+  <div class="progress" id="progress"></div>
+</div>
+
+<div class="code-section">
+  <div class="code-section-label">The fix — one line in activities.ts</div>
+  <div class="diff">
+    <div class="diff-side">
+      <div class="diff-title bug">Without (bug)</div>
+      <pre><span class="neutral">const headers: Record&lt;string, string&gt; = {</span>
+<span class="neutral">  'Content-Type': 'application/json',</span>
+<span class="dim">  // no Idempotency-Key</span>
+<span class="neutral">};</span></pre>
+    </div>
+    <div class="diff-side">
+      <div class="diff-title fix">With (fix)</div>
+      <pre><span class="neutral">const headers: Record&lt;string, string&gt; = {</span>
+<span class="neutral">  'Content-Type': 'application/json',</span>
+<span class="add">  'Idempotency-Key': `webhook:${req.eventId}`,</span>
+<span class="neutral">};</span></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// Each step: { desc, apply() }
+// Attempt indices: 0=attempt1, 1=attempt2, 2=attempt3
+const STEPS = [
+  {
+    desc: 'An Activity is about to deliver a webhook. Click <b>Step</b> or <b>Play</b> to walk through all three attempts.',
+    apply: resetAll,
+  },
+  {
+    desc: 'Attempt 1: the Activity body starts. It calls <code>fetch(req.url, ...)</code> — the POST is in flight.',
+    apply: () => {
+      activateRow(0);
+      setStatus('wo', 0, '📤 POSTing…', null);
+      setStatus('wi', 0, '📤 POSTing…', null);
+      setArrow('wo', 0, 'live');
+      setArrow('wi', 0, 'live');
+    },
+  },
+  {
+    desc: 'The POST arrives at the receiver. It records the delivery. The side effect has <em>already happened</em> — the Activity hasn\'t reported success yet.',
+    apply: () => {
+      setArrow('wo', 0, 'ok');
+      setArrow('wi', 0, 'ok');
+      setRecvLabel('wo', 0, '✓ recorded', 'ok');
+      setRecvLabel('wi', 0, '✓ recorded', 'ok');
+      setRval('wo', 0, '✓');
+      setRval('wi', 0, '✓');
+      setMetrics('wo', 1, 1, 0);
+      setMetrics('wi', 1, 1, 0);
+    },
+  },
+  {
+    desc: '💥 The Activity throws <code>ApplicationFailure</code> on attempt 1 (before returning to Temporal). Temporal retries.',
+    apply: () => {
+      setStatus('wo', 0, '💥 error', 'done-err');
+      setStatus('wi', 0, '💥 error', 'done-err');
+      setRowState('wo', 0, 'done-err');
+      setRowState('wi', 0, 'done-err');
+    },
+  },
+  {
+    desc: 'Attempt 2: Temporal dispatches the retry. The Activity body runs from the top. Another <code>fetch()</code> is in flight.',
+    apply: () => {
+      activateRow(1);
+      setStatus('wo', 1, '📤 POSTing…', null);
+      setStatus('wi', 1, '📤 POSTing…', null);
+      setArrow('wo', 1, 'live');
+      setArrow('wi', 1, 'live');
+    },
+  },
+  {
+    desc: '<b>Without key:</b> the receiver sees a new request with no key — it records a second delivery. <b>With key:</b> the receiver sees the same <code>webhook:evt_buggy</code> key — it dedupes and returns the cached result.',
+    apply: () => {
+      // without: duplicate
+      setArrow('wo', 1, 'ok');
+      setRecvLabel('wo', 1, '✓ recorded', 'ok');
+      setRval('wo', 1, '✓ duplicate');
+      setMetrics('wo', 2, 2, 0);
+      // with: deduped
+      setArrow('wi', 1, 'dedup');
+      setRecvLabel('wi', 1, '⟳ deduped', 'dedup');
+      setRval('wi', 1, '⟳ cached');
+      setMetrics('wi', 2, 1, 1);
+    },
+  },
+  {
+    desc: '💥 ApplicationFailure again on attempt 2. Temporal retries a second time.',
+    apply: () => {
+      setStatus('wo', 1, '💥 error', 'done-err');
+      setStatus('wi', 1, '💥 error', 'done-err');
+      setRowState('wo', 1, 'done-err');
+      setRowState('wi', 1, 'done-err');
+    },
+  },
+  {
+    desc: 'Attempt 3: the Activity runs from the top again. Another POST in flight.',
+    apply: () => {
+      activateRow(2);
+      setStatus('wo', 2, '📤 POSTing…', null);
+      setStatus('wi', 2, '📤 POSTing…', null);
+      setArrow('wo', 2, 'live');
+      setArrow('wi', 2, 'live');
+    },
+  },
+  {
+    desc: '<b>Without key:</b> third delivery recorded. <b>With key:</b> deduped again. The condition <code>attempt &lt; 3</code> is now false — the Activity returns <code>response.status</code> successfully.',
+    apply: () => {
+      // without: third duplicate
+      setArrow('wo', 2, 'ok');
+      setRecvLabel('wo', 2, '✓ recorded', 'ok');
+      setRval('wo', 2, '✓ duplicate');
+      setMetrics('wo', 3, 3, 0);
+      // with: deduped again
+      setArrow('wi', 2, 'dedup');
+      setRecvLabel('wi', 2, '⟳ deduped', 'dedup');
+      setRval('wi', 2, '⟳ cached');
+      setMetrics('wi', 3, 1, 2);
+    },
+  },
+  {
+    desc: '✅ Activity completes on attempt 3. <span style="color:#fc8181"><b>Without key: processed_count = 3.</b></span> <span style="color:#9ae6b4"><b>With key: processed_count = 1.</b></span> Same three POSTs — idempotency key is what makes the difference.',
+    apply: () => {
+      setStatus('wo', 2, '✅ done', 'done-ok');
+      setStatus('wi', 2, '✅ done', 'done-ok');
+      setRowState('wo', 2, 'done-ok');
+      setRowState('wi', 2, 'done-ok');
+    },
+  },
+];
+
+// ── helpers ──────────────────────────────────────────────────────────────
+function resetAll() {
+  for (let i = 0; i < 3; i++) {
+    for (const side of ['wo', 'wi']) {
+      setRowState(side, i, null);      // inactive
+      setStatus(side, i, '—', null);
+      setArrow(side, i, null);
+      setRecvLabel(side, i, '', null);
+      setRval(side, i, '—');
+    }
+  }
+  setMetrics('wo', 0, 0, 0);
+  setMetrics('wi', 0, 0, 0);
+}
+
+function setRowState(side, idx, state) {
+  const el = $(`${side}-row-${idx}`);
+  el.className = 'attempt-row';
+  if (state) el.classList.add(state);
+}
+
+function activateRow(idx) {
+  for (const side of ['wo', 'wi']) {
+    setRowState(side, idx, 'active');
+  }
+}
+
+function setStatus(side, idx, text, rowState) {
+  $(`${side}-status-${idx}`).textContent = text;
+  if (rowState !== null) setRowState(side, idx, rowState);
+}
+
+function setArrow(side, idx, cls) {
+  const el = $(`${side}-arrow-${idx}`);
+  el.className = 'arrow';
+  if (cls) el.classList.add(cls);
+}
+
+function setRecvLabel(side, idx, text, cls) {
+  const el = $(`${side}-recv-${idx}`);
+  el.textContent = text;
+  el.className = 'recv-label';
+  if (cls) el.classList.add(cls);
+}
+
+function setRval(side, idx, text) {
+  $(`${side}-rval-${idx}`).textContent = text;
+}
+
+function setMetrics(side, received, processed, deduped) {
+  $(`${side}-received`).textContent  = received;
+  $(`${side}-processed`).textContent = processed;
+  $(`${side}-deduped`).textContent   = deduped;
+}
+
+// ── stepper ──────────────────────────────────────────────────────────────
+let current = 0;
+let playing = false;
+let timer   = null;
+const INTERVAL = 2200;
+
+function renderPips() {
+  const wrap = $('progress');
+  wrap.innerHTML = '';
+  STEPS.forEach((_, i) => {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i === current ? ' active' : '');
+    wrap.appendChild(p);
+  });
+}
+
+function goTo(i) {
+  current = Math.max(0, Math.min(STEPS.length - 1, i));
+  $('step-banner').innerHTML = STEPS[current].desc;
+  STEPS[current].apply();
+  $('btn-step').disabled = current >= STEPS.length - 1;
+  $('btn-prev').disabled = current <= 0;
+  renderPips();
+}
+
+function startPlay() {
+  playing = true;
+  $('btn-play').textContent = '⏸ Pause';
+  if (current >= STEPS.length - 1) goTo(0);
+  timer = setInterval(() => {
+    if (current < STEPS.length - 1) goTo(current + 1);
+    else stopPlay();
+  }, INTERVAL);
+}
+
+function stopPlay() {
+  playing = false;
+  $('btn-play').textContent = '▶ Play';
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+$('btn-step').onclick  = () => { stopPlay(); goTo(current + 1); };
+$('btn-prev').onclick  = () => { stopPlay(); goTo(current - 1); };
+$('btn-reset').onclick = () => { stopPlay(); goTo(0); };
+$('btn-play').onclick  = () => playing ? stopPlay() : startPlay();
+
+goTo(0);
+</script>
+</body>
+</html>
