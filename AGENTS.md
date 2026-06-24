@@ -37,6 +37,17 @@ Reviewers should be able to read the PR body alone and understand:
 - **How to verify** locally (e.g., `python/scripts/verify-content.sh`,
   `instruqt track validate`, manual walkthrough checklist).
 
+## Instruqt track layout
+
+The default layout for all Instruqt tutorials in this repo:
+
+```yaml
+default_layout: AssignmentLeft
+default_layout_sidebar_size: 33
+```
+
+Use these values in every `track.yml`. Do not use `AssignmentRight` or sidebar sizes other than 33 unless a specific track has a documented reason to differ.
+
 ## Tutorial content rules
 
 Codified in `claude-lessons/instruqt-tracks.md` (Instruqt-specific playbook)
