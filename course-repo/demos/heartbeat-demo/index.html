@@ -197,6 +197,7 @@ h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-family: ui-monospace, monospace;
+  margin-bottom: 0.3em;
 }
 .info-box-val {
   font-size: 1.4em;
@@ -207,9 +208,39 @@ h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15
   transition: color 0.3s;
   color: #e2e8f0;
 }
-#stored-hb-box .info-box-val  { color: #b794f6; }
 #proc-count-box .info-box-val { color: #9ae6b4; }
 #proc-count-box.warn .info-box-val { color: #fc8181; }
+
+/* heartbeat details box */
+.hb-call {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.88em;
+  font-weight: 600;
+  color: #b794f6;
+  transition: color 0.3s;
+}
+.hb-call.none { color: #4a5568; }
+.hb-divider {
+  border: none;
+  border-top: 1px solid #2d3748;
+  margin: 0.35em 0;
+}
+.hb-retry-label {
+  font-size: 0.6em;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, monospace;
+}
+.hb-retry-val {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.8em;
+  color: #f6ad55;
+  margin-top: 0.1em;
+  transition: color 0.3s;
+}
+.hb-retry-val.none { color: #4a5568; }
 
 /* ── controls ── */
 .controls {
@@ -295,8 +326,11 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
 
     <div class="info-row">
       <div class="info-box" id="stored-hb-box">
-        <div class="info-box-label">heartbeatDetails stored</div>
-        <div class="info-box-val" id="stored-hb">none</div>
+        <div class="info-box-label">heartbeat details</div>
+        <div class="hb-call none" id="hb-call">heartbeat(—)</div>
+        <hr class="hb-divider">
+        <div class="hb-retry-label">next attempt reads</div>
+        <div class="hb-retry-val none" id="hb-retry">heartbeatDetails = null</div>
       </div>
       <div class="info-box" id="proc-count-box">
         <div class="info-box-label">processed_count</div>
@@ -357,7 +391,19 @@ function setItems(states) {
 
 function setStoredHb(val) {
   storedHb = val;
-  $('stored-hb').textContent = val;
+  const callEl  = $('hb-call');
+  const retryEl = $('hb-retry');
+  if (val === 'none') {
+    callEl.textContent  = 'heartbeat(—)';
+    callEl.className    = 'hb-call none';
+    retryEl.textContent = 'heartbeatDetails = null';
+    retryEl.className   = 'hb-retry-val none';
+  } else {
+    callEl.textContent  = `heartbeat(${val})`;
+    callEl.className    = 'hb-call';
+    retryEl.textContent = `heartbeatDetails = ${val}`;
+    retryEl.className   = 'hb-retry-val';
+  }
 }
 
 function setProcCount(n, warn) {
