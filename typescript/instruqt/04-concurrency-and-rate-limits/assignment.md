@@ -85,12 +85,14 @@ The **Solution** tab has the finished code. Estimated time: 12 minutes.
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
+# Start the Worker with no rate cap
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send 60 deliveries:
 
 ```bash,run
+# Reset the receiver, fan out 60 deliveries, and time how long they take
 scripts/reset-receiver.sh
 time ts-node src/sendBulk.ts 60
 ```
@@ -108,12 +110,14 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, turn on a 2 req/sec cap at the receiver:
 
 ```bash,run
+# Enable a 2 req/sec cap on the receiver
 curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
 ```
 
 Now send 60 deliveries against the rate-limited receiver using `sendBulkDemo.ts` (separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 3):
 
 ```bash,run
+# Reset and fan out 60 deliveries against the rate-limited receiver — watch 429s
 scripts/reset-receiver.sh
 ts-node src/sendBulkDemo.ts 60
 ```
@@ -149,12 +153,14 @@ The receiver is still rate-limited at 2/sec from section 2. Dispatch at the same
 Restart the Worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then re-run:
 
 ```bash,run
+# Restart the Worker with maxActivitiesPerSecond: 2
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another 60:
 
 ```bash,run
+# Clear leftover demo Activities, reset the receiver, then send 60 at the capped rate
 scripts/stop-demo-and-reset.sh
 time ts-node src/sendBulk.ts 60
 ```

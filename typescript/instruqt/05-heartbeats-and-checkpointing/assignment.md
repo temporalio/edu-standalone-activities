@@ -85,12 +85,14 @@ Open `src/activities.ts` in the [button label="Exercise" background="#444CE7"](t
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
+# Start the Worker
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send a 10-item batch and kill the Worker mid-run:
 
 ```bash,run
+# Reset the receiver, submit a 10-item batch, kill the Worker after ~4 items
 scripts/reset-receiver.sh
 ts-node src/sendBatch.ts 10 &
 sleep 4 && scripts/kill-worker.sh
@@ -111,12 +113,14 @@ Before restarting, look at where things stand:
 Restart the Worker:
 
 ```bash,run
+# Restart the Worker so the retry has somewhere to run
 ts-node src/worker.ts
 ```
 
 Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait for the background client to finish:
 
 ```bash,run
+# Wait for the background sendBatch client to finish
 wait
 ```
 
@@ -157,12 +161,14 @@ That's the fix. The full solution is in the **Solution** tab.
 Restart the Worker so it picks up the new code. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then re-run:
 
 ```bash,run
+# Restart the Worker with the checkpoint fix
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, repeat the kill-mid-batch dance:
 
 ```bash,run
+# Same as section 1: reset, submit batch, kill mid-run to trigger the retry
 scripts/reset-receiver.sh
 ts-node src/sendBatch.ts 10 &
 sleep 4 && scripts/kill-worker.sh
@@ -176,12 +182,14 @@ Peek before restarting:
 Restart the Worker:
 
 ```bash,run
+# Restart the Worker so the checkpoint-aware retry can run
 ts-node src/worker.ts
 ```
 
 Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait:
 
 ```bash,run
+# Wait for the background sendBatch client to finish — should report exactly 10
 wait
 ```
 

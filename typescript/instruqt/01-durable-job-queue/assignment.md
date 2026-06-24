@@ -109,6 +109,7 @@ The full version is in the **Solution** tab.
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
+# Start the Worker — polls Temporal for Activity tasks
 ts-node src/worker.ts
 ```
 
@@ -123,6 +124,7 @@ The Worker is now polling Temporal for tasks. Leave it running.
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, run the starter script:
 
 ```bash,run
+# Submit deliverWebhook as a Standalone Activity and wait for the result
 ts-node src/sendStandalone.ts evt_001
 ```
 

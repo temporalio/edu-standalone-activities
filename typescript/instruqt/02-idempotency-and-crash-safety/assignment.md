@@ -81,12 +81,14 @@ There's a `TODO` above the `headers` object. Leave it alone for now so you can s
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
+# Start the Worker
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send one delivery:
 
 ```bash,run
+# Clear the receiver, then submit one delivery (will fail twice then succeed)
 scripts/reset-receiver.sh
 ts-node src/sendStandalone.ts evt_buggy
 ```
@@ -128,12 +130,14 @@ The full solution is in the **Solution** tab.
 The Worker is still running the old code. Restart it so it picks up the change. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then re-run:
 
 ```bash,run
+# Restart the Worker to pick up the idempotency-key change
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another delivery with the fix in place:
 
 ```bash,run
+# Clear the receiver, then re-run with the idempotency key in place
 scripts/reset-receiver.sh
 ts-node src/sendStandalone.ts evt_fixed
 ```

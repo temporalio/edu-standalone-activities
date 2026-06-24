@@ -83,12 +83,14 @@ The **Solution** tab has the finished code. Estimated time: 10 minutes.
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
+# Start the Worker
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `sendDouble.ts`, a script that calls `client.activity.start` twice with the same activityId:
 
 ```bash,run
+# Reset the receiver, then call start() twice with the same id — second call errors
 scripts/reset-receiver.sh
 ts-node src/sendDouble.ts evt_dup_001
 ```
@@ -128,6 +130,7 @@ The finished file is in the **Solution** tab.
 Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, re-run with the policy in place:
 
 ```bash,run
+# Reset and retry with USE_EXISTING — both calls should return the same handle
 scripts/reset-receiver.sh
 ts-node src/sendDouble.ts evt_dup_002
 ```

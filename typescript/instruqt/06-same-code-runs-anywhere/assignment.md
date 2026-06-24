@@ -116,12 +116,14 @@ The Workflow proxies `deliverWebhook` from the same `activities.ts` module the s
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
+# Start the Worker — registers both the Activity and the Workflow
 ts-node src/worker.ts
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send one standalone delivery:
 
 ```bash,run
+# Submit deliverWebhook directly as a Standalone Activity
 ts-node src/sendStandalone.ts evt_001
 ```
 
@@ -140,6 +142,7 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, run the second starter:
 
 ```bash,run
+# Submit the same Activity as a step inside a Workflow
 ts-node src/sendViaWorkflow.ts evt_002
 ```
 
