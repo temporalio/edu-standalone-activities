@@ -107,7 +107,7 @@ You should see:
 
 The first call succeeded. The second call raised an error because the default `idConflictPolicy` is `FAIL`. The server refuses to schedule a second Activity with an id that's already in flight.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows 1 processed delivery. The duplicate never reached a Worker, but your application code still had to catch the exception. If your upstream sends some events more than once, that exception handling becomes part of your normal code path.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 1` — the duplicate never reached a Worker, but your application code still had to catch the exception. If your upstream sends some events more than once, that exception handling becomes part of your normal code path.
 
 ---
 
@@ -148,7 +148,7 @@ Now you should see:
 
 Both calls returned successfully. The second call got a handle to the Activity the first call scheduled, so `handle.result()` on either handle resolves to the same outcome.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows **1 processed delivery** for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 1` for `evt_dup_002`. The [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** shows exactly one Activity record for `deliver-evt_dup_002`, not two.
 
 > **The takeaway:** the server handled the duplicate call before any Worker saw it. Combined with the receiver-side idempotency from Module 02, your delivery is protected from Temporal retries and from duplicate calls in your own application.
 

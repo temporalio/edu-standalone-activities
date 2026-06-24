@@ -126,7 +126,15 @@ wait
 
 After ~5 seconds, `heartbeatTimeout` fires on the server. No heartbeat for 5s means the attempt is dead, so Temporal triggers a retry and the new Worker picks it up. The retry replays the Activity body **from the top**, including items already delivered.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **14+ deliveries** for a 10-item batch: items 0 through 3 are recorded twice. The receiver had no way to know they were duplicates because each carries a different `eventId`.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"processed_count"` should exceed 10 — items 0 through 3 are recorded twice because the retry started from item 0:
+
+```json,nocopy
+{
+  "processed_count": 14
+}
+```
+
+The receiver had no way to know they were duplicates because each carries a different `eventId`.
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeatDetails`. So it starts at `startIndex = 0` and redoes everything.
 
@@ -193,7 +201,7 @@ Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait
 wait
 ```
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab count climbs to exactly **10**. The retry read `heartbeatDetails`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 10` — no duplicates. The retry read `heartbeatDetails`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
 
 > **The takeaway:** same Activity, same kill, same restart. But the receiver sees each item exactly once. Heartbeating is how a long-running Activity saves progress before the next crash.
 

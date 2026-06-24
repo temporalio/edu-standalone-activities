@@ -147,7 +147,16 @@ await client.activity.execute(deliverWebhook, {
 
 One API call. The client tells Temporal, "run this Activity once and give me the result." There is no Workflow class in the script, and there is no broker, scheduler, or result store for you to deploy. Temporal persisted the job before acknowledging it, dispatched it to your Worker, and stored the result.
 
-Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see one delivery recorded. The tab auto-refreshes every 2 seconds.
+Open the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"processed_count"` should be `1`:
+
+```json,nocopy
+{
+  "received_count": 1,
+  "processed_count": 1
+}
+```
+
+The tab auto-refreshes every 2 seconds.
 
 ---
 

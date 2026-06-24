@@ -126,6 +126,18 @@ and enforced by `python/scripts/verify-content.sh` (content guardrails).
 
 Quick reference:
 
+- **Reference JSON properties by name, never by description.** When directing
+  the learner to check the Webhook receiver (or any JSON API response), cite
+  the exact property and expected value. Never use vague phrases like "you
+  should see one delivery recorded" or "the count should increase." Write
+  `"processed_count": 1` or show a `json,nocopy` block. The learner needs to
+  know exactly which field to look at and what number to expect.
+
+  ✅ `"processed_count"` should be `1`.
+  ✅ `json,nocopy` block showing `{"received_count": 3, "processed_count": 1}`
+  ❌ "You should see one delivery recorded."
+  ❌ "The receiver shows 1 processed delivery."
+
 - **Open each module body** with the traditional-job-queue pain the module
   addresses, then position Standalone Activities as the platform-level fix.
   Never lead with a Workflow-vs-Standalone comparison.
