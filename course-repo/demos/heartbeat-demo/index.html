@@ -18,34 +18,38 @@ body {
 h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15em; }
 .subtitle { text-align: center; color: #718096; font-size: 0.78em; margin-bottom: 0.75em; }
 
-/* ── speech bubble ── */
-.bubble-slot { min-height: 0; }
-
-.speech-bubble {
-  background: #1c1c38;
-  border: 1.5px solid #7c6fcd;
+/* ── speech bubble (floats over elements, amber) ── */
+#speech-bubble {
+  display: none;
+  position: absolute;
+  left: 0.5em;
+  right: 0.5em;
+  z-index: 30;
+  background: #1a1000;
+  border: 2px solid #d97706;
   border-radius: 6px;
-  padding: 0.45em 0.65em;
+  padding: 0.5em 0.7em;
   font-size: 0.79em;
-  color: #d6bcfa;
+  color: #fcd34d;
   line-height: 1.45;
-  position: relative;
-  margin-top: 0.35em;
+  box-shadow: 0 4px 18px rgba(217,119,6,0.35);
   animation: bubblein 0.18s ease-out;
 }
-.speech-bubble::before {
+#speech-bubble.visible { display: block; }
+/* arrow pointing up to the element above */
+#speech-bubble::before {
   content: '';
   position: absolute;
-  top: -7px;
-  left: 1.1em;
-  border: 6px solid transparent;
-  border-bottom-color: #7c6fcd;
+  top: -8px;
+  border: 7px solid transparent;
+  border-bottom-color: #d97706;
   border-top: none;
 }
-.speech-bubble.anchor-right::before { left: auto; right: 1.1em; }
-.speech-bubble.anchor-center::before { left: 50%; transform: translateX(-50%); }
+#speech-bubble.arrow-left::before   { left: 1em; }
+#speech-bubble.arrow-center::before { left: 50%; transform: translateX(-50%); }
+#speech-bubble.arrow-right::before  { left: auto; right: 1em; }
 @keyframes bubblein {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -65,6 +69,7 @@ h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15
   border-radius: 7px;
   overflow: hidden;
 }
+.exec-panel { position: relative; overflow: visible; }
 
 .panel-title {
   font-size: 0.72em;
@@ -331,19 +336,17 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
   <div class="panel exec-panel">
     <div class="panel-title" style="margin: -0.65em -0.75em 0.65em; border-radius: 7px 7px 0 0;">Execution state</div>
 
-    <div class="status-row">
+    <div class="status-row" id="zone-status">
       <div class="attempt-badge" id="attempt-badge">Waiting</div>
       <div class="worker-badge" id="worker-badge">Worker: idle</div>
     </div>
-    <div class="bubble-slot" id="bub-status"></div>
 
-    <div>
+    <div id="zone-items">
       <div class="items-label" style="margin-bottom:0.3em">Items (10 total)</div>
       <div class="items-grid" id="items-grid"></div>
     </div>
-    <div class="bubble-slot" id="bub-items"></div>
 
-    <div class="info-row">
+    <div class="info-row" id="zone-info">
       <div class="info-box" id="stored-hb-box">
         <div class="info-box-label">heartbeat details</div>
         <div class="hb-call none" id="hb-call">heartbeat(—)</div>
@@ -356,7 +359,9 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
         <div class="info-box-val" id="proc-count">0</div>
       </div>
     </div>
-    <div class="bubble-slot" id="bub-info"></div>
+
+    <!-- floating speech bubble — positioned over elements by JS -->
+    <div id="speech-bubble"></div>
   </div>
 </div>
 
@@ -469,14 +474,26 @@ function setWorker(label, cls) {
 // slot: 'status' | 'items' | 'info' | null
 // arrow: 'left' (default) | 'center' | 'right'
 function showBubble(slot, html, arrow) {
-  for (const s of ['status', 'items', 'info']) {
-    $(`bub-${s}`).innerHTML = '';
+  const bubble = $('speech-bubble');
+  if (!slot || !html) {
+    bubble.className = '';
+    bubble.style.display = 'none';
+    return;
   }
-  if (!slot || !html) return;
-  const cls = arrow === 'right' ? 'speech-bubble anchor-right'
-            : arrow === 'center' ? 'speech-bubble anchor-center'
-            : 'speech-bubble';
-  $(`bub-${slot}`).innerHTML = `<div class="${cls}">${html}</div>`;
+  // Position bubble below the target zone using live DOM coordinates
+  const panel   = document.querySelector('.exec-panel');
+  const zone    = $(`zone-${slot}`);
+  const pRect   = panel.getBoundingClientRect();
+  const zRect   = zone.getBoundingClientRect();
+  const topPx   = zRect.bottom - pRect.top + 8;
+
+  bubble.innerHTML  = html;
+  bubble.className  = `visible arrow-${arrow || 'left'}`;
+  bubble.style.top  = topPx + 'px';
+  // force animation restart
+  bubble.style.animation = 'none';
+  bubble.offsetHeight; // reflow
+  bubble.style.animation = '';
 }
 
 // ── reset ─────────────────────────────────────────────────────────────────
@@ -489,7 +506,7 @@ function resetAll() {
   clearCode();
   setAttempt('Waiting', '');
   setWorker('Worker: idle', '');
-  showBubble(null);
+  showBubble(null, null);
 }
 
 // ── steps ─────────────────────────────────────────────────────────────────
