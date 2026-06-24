@@ -121,7 +121,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const raw = await readBody(req);
       body = JSON.parse(raw);
-    } catch { /* malformed body — accept anyway */ }
+    } catch { /* malformed body; accept anyway */ }
 
     const idempotencyKey = req.headers['idempotency-key'] as string | undefined ?? null;
 

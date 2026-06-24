@@ -109,7 +109,7 @@ The full version is in the **Solution** tab.
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
-# Start the Worker — polls Temporal for Activity tasks
+# Start the Worker. Polls Temporal for Activity tasks.
 ts-node src/worker.ts
 ```
 

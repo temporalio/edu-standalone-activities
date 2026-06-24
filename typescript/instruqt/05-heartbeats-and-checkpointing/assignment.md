@@ -126,7 +126,7 @@ wait
 
 After ~5 seconds, `heartbeatTimeout` fires on the server. No heartbeat for 5s means the attempt is dead, so Temporal triggers a retry and the new Worker picks it up. The retry replays the Activity body **from the top**, including items already delivered.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"processed_count"` should exceed 10 — items 0 through 3 are recorded twice because the retry started from item 0:
+Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"processed_count"` should exceed 10. Items 0 through 3 are recorded twice because the retry started from item 0:
 
 ```json,nocopy
 {
@@ -197,11 +197,11 @@ ts-node src/worker.ts
 Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait:
 
 ```bash,run
-# Wait for the background sendBatch client to finish — should report exactly 10
+# Wait for the background sendBatch client to finish. Should report exactly 10.
 wait
 ```
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 10` — no duplicates. The retry read `heartbeatDetails`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 10`. No duplicates. The retry read `heartbeatDetails`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
 
 > **The takeaway:** same Activity, same kill, same restart. But the receiver sees each item exactly once. Heartbeating is how a long-running Activity saves progress before the next crash.
 

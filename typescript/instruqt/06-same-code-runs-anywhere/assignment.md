@@ -116,7 +116,7 @@ The Workflow proxies `deliverWebhook` from the same `activities.ts` module the s
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
 ```bash,run
-# Start the Worker — registers both the Activity and the Workflow
+# Start the Worker. Registers both the Activity and the Workflow.
 ts-node src/worker.ts
 ```
 

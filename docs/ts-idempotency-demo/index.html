@@ -229,7 +229,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 <body>
 
 <h1>At-least-once delivery + idempotency</h1>
-<div class="subtitle">The Activity POSTs, then errors. Temporal retries. The receiver sees every POST — unless you send an idempotency key.</div>
+<div class="subtitle">The Activity POSTs, then errors. Temporal retries. The receiver sees every POST. Without an idempotency key, every retry also lands.</div>
 
 <div class="step-banner" id="step-banner"></div>
 
@@ -242,7 +242,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <div class="attempt-row" id="wo-row-0">
         <div class="cell">
           <div class="attempt-label">Attempt 1</div>
-          <div class="attempt-status" id="wo-status-0">—</div>
+          <div class="attempt-status" id="wo-status-0">·</div>
         </div>
         <div class="arrow-cell">
           <div class="arrow" id="wo-arrow-0">→</div>
@@ -250,13 +250,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         </div>
         <div class="cell">
           <div class="attempt-label">Receiver</div>
-          <div class="attempt-status" id="wo-rval-0">—</div>
+          <div class="attempt-status" id="wo-rval-0">·</div>
         </div>
       </div>
       <div class="attempt-row" id="wo-row-1">
         <div class="cell">
           <div class="attempt-label">Attempt 2</div>
-          <div class="attempt-status" id="wo-status-1">—</div>
+          <div class="attempt-status" id="wo-status-1">·</div>
         </div>
         <div class="arrow-cell">
           <div class="arrow" id="wo-arrow-1">→</div>
@@ -264,13 +264,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         </div>
         <div class="cell">
           <div class="attempt-label">Receiver</div>
-          <div class="attempt-status" id="wo-rval-1">—</div>
+          <div class="attempt-status" id="wo-rval-1">·</div>
         </div>
       </div>
       <div class="attempt-row" id="wo-row-2">
         <div class="cell">
           <div class="attempt-label">Attempt 3</div>
-          <div class="attempt-status" id="wo-status-2">—</div>
+          <div class="attempt-status" id="wo-status-2">·</div>
         </div>
         <div class="arrow-cell">
           <div class="arrow" id="wo-arrow-2">→</div>
@@ -278,7 +278,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         </div>
         <div class="cell">
           <div class="attempt-label">Receiver</div>
-          <div class="attempt-status" id="wo-rval-2">—</div>
+          <div class="attempt-status" id="wo-rval-2">·</div>
         </div>
       </div>
     </div>
@@ -307,7 +307,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <div class="attempt-row" id="wi-row-0">
         <div class="cell">
           <div class="attempt-label">Attempt 1</div>
-          <div class="attempt-status" id="wi-status-0">—</div>
+          <div class="attempt-status" id="wi-status-0">·</div>
         </div>
         <div class="arrow-cell">
           <div class="arrow" id="wi-arrow-0">→</div>
@@ -315,13 +315,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         </div>
         <div class="cell">
           <div class="attempt-label">Receiver</div>
-          <div class="attempt-status" id="wi-rval-0">—</div>
+          <div class="attempt-status" id="wi-rval-0">·</div>
         </div>
       </div>
       <div class="attempt-row" id="wi-row-1">
         <div class="cell">
           <div class="attempt-label">Attempt 2</div>
-          <div class="attempt-status" id="wi-status-1">—</div>
+          <div class="attempt-status" id="wi-status-1">·</div>
         </div>
         <div class="arrow-cell">
           <div class="arrow" id="wi-arrow-1">→</div>
@@ -329,13 +329,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         </div>
         <div class="cell">
           <div class="attempt-label">Receiver</div>
-          <div class="attempt-status" id="wi-rval-1">—</div>
+          <div class="attempt-status" id="wi-rval-1">·</div>
         </div>
       </div>
       <div class="attempt-row" id="wi-row-2">
         <div class="cell">
           <div class="attempt-label">Attempt 3</div>
-          <div class="attempt-status" id="wi-status-2">—</div>
+          <div class="attempt-status" id="wi-status-2">·</div>
         </div>
         <div class="arrow-cell">
           <div class="arrow" id="wi-arrow-2">→</div>
@@ -343,7 +343,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
         </div>
         <div class="cell">
           <div class="attempt-label">Receiver</div>
-          <div class="attempt-status" id="wi-rval-2">—</div>
+          <div class="attempt-status" id="wi-rval-2">·</div>
         </div>
       </div>
     </div>
@@ -374,7 +374,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 </div>
 
 <div class="code-section">
-  <div class="code-section-label">The fix — one line in activities.ts</div>
+  <div class="code-section-label">The fix: one line in activities.ts</div>
   <div class="diff">
     <div class="diff-side">
       <div class="diff-title bug">Without (bug)</div>
@@ -404,7 +404,7 @@ const STEPS = [
     apply: resetAll,
   },
   {
-    desc: 'Attempt 1: the Activity body starts. It calls <code>fetch(req.url, ...)</code> — the POST is in flight.',
+    desc: 'Attempt 1: the Activity body starts. It calls <code>fetch(req.url, ...)</code>. The POST is in flight.',
     apply: () => {
       activateRow(0);
       setStatus('wo', 0, '📤 POSTing…', null);
@@ -414,7 +414,7 @@ const STEPS = [
     },
   },
   {
-    desc: 'The POST arrives at the receiver. It records the delivery. The side effect has <em>already happened</em> — the Activity hasn\'t reported success yet.',
+    desc: 'The POST arrives at the receiver. It records the delivery. The side effect has <em>already happened</em>. The Activity hasn't reported success yet.',
     apply: () => {
       setArrow('wo', 0, 'ok');
       setArrow('wi', 0, 'ok');
@@ -446,7 +446,7 @@ const STEPS = [
     },
   },
   {
-    desc: '<b>Without key:</b> the receiver sees a new request with no key — it records a second delivery. <b>With key:</b> the receiver sees the same <code>webhook:evt_buggy</code> key — it dedupes and returns the cached result.',
+    desc: '<b>Without key:</b> the receiver sees a new request with no key: it records a second delivery. <b>With key:</b> the receiver sees the same <code>webhook:evt_buggy</code> key and dedupes, returning the cached result.',
     apply: () => {
       // without: duplicate
       setArrow('wo', 1, 'ok');
@@ -480,7 +480,7 @@ const STEPS = [
     },
   },
   {
-    desc: '<b>Without key:</b> third delivery recorded. <b>With key:</b> deduped again. The condition <code>attempt &lt; 3</code> is now false — the Activity returns <code>response.status</code> successfully.',
+    desc: '<b>Without key:</b> third delivery recorded. <b>With key:</b> deduped again. The condition <code>attempt &lt; 3</code> is now false. The Activity returns <code>response.status</code> successfully.',
     apply: () => {
       // without: third duplicate
       setArrow('wo', 2, 'ok');
@@ -495,7 +495,7 @@ const STEPS = [
     },
   },
   {
-    desc: '✅ Activity completes on attempt 3. <span style="color:#fc8181"><b>Without key: processed_count = 3.</b></span> <span style="color:#9ae6b4"><b>With key: processed_count = 1.</b></span> Same three POSTs — idempotency key is what makes the difference.',
+    desc: '✅ Activity completes on attempt 3. <span style="color:#fc8181"><b>Without key: processed_count = 3.</b></span> <span style="color:#9ae6b4"><b>With key: processed_count = 1.</b></span> Same three POSTs. The idempotency key is what makes the difference.',
     apply: () => {
       setStatus('wo', 2, '✅ done', 'done-ok');
       setStatus('wi', 2, '✅ done', 'done-ok');
@@ -510,10 +510,10 @@ function resetAll() {
   for (let i = 0; i < 3; i++) {
     for (const side of ['wo', 'wi']) {
       setRowState(side, i, null);      // inactive
-      setStatus(side, i, '—', null);
+      setStatus(side, i, '', null);
       setArrow(side, i, null);
       setRecvLabel(side, i, '', null);
-      setRval(side, i, '—');
+      setRval(side, i, '');
     }
   }
   setMetrics('wo', 0, 0, 0);

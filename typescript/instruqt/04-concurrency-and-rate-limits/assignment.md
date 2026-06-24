@@ -117,7 +117,7 @@ curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
 Now send 60 deliveries against the rate-limited receiver using `sendBulkDemo.ts` (separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 3):
 
 ```bash,run
-# Reset and fan out 60 deliveries against the rate-limited receiver — watch 429s
+# Reset and fan out 60 deliveries against the rate-limited receiver. Watch the 429s.
 scripts/reset-receiver.sh
 ts-node src/sendBulkDemo.ts 60
 ```

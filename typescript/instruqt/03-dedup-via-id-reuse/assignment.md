@@ -90,7 +90,7 @@ ts-node src/worker.ts
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, run `sendDouble.ts`, a script that calls `client.activity.start` twice with the same activityId:
 
 ```bash,run
-# Reset the receiver, then call start() twice with the same id — second call errors
+# Reset the receiver, then call start() twice with the same id. Second call errors.
 scripts/reset-receiver.sh
 ts-node src/sendDouble.ts evt_dup_001
 ```
@@ -107,7 +107,7 @@ You should see:
 
 The first call succeeded. The second call raised an error because the default `idConflictPolicy` is `FAIL`. The server refuses to schedule a second Activity with an id that's already in flight.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 1` — the duplicate never reached a Worker, but your application code still had to catch the exception. If your upstream sends some events more than once, that exception handling becomes part of your normal code path.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 1`. The duplicate never reached a Worker, but your application code still had to catch the exception. If your upstream sends some events more than once, that exception handling becomes part of your normal code path.
 
 ---
 
@@ -130,7 +130,7 @@ The finished file is in the **Solution** tab.
 Back in the [button label="Terminal" background="#444CE7"](tab-2) tab, re-run with the policy in place:
 
 ```bash,run
-# Reset and retry with USE_EXISTING — both calls should return the same handle
+# Reset and retry with USE_EXISTING. Both calls should return the same handle.
 scripts/reset-receiver.sh
 ts-node src/sendDouble.ts evt_dup_002
 ```

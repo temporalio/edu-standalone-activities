@@ -61,7 +61,7 @@ Set this at the **top level** of `track.yml` (not under `lab_config`). Without i
 
 ### Maintenance flag
 
-`maintenance: true` while iterating — only track owners and authors can launch. Flip to `maintenance: false` (or remove the field; absent = false) to ship. Never push `maintenance: false` mid-iteration; it immediately exposes the half-finished track.
+`maintenance: true` while iterating: only track owners and authors can launch. Flip to `maintenance: false` (or remove the field; absent = false) to ship. Never push `maintenance: false` mid-iteration; it immediately exposes the half-finished track.
 
 ### Sandbox image
 
@@ -125,6 +125,16 @@ Codified in `claude-lessons/instruqt-tracks.md` (Instruqt-specific playbook)
 and enforced by `python/scripts/verify-content.sh` (content guardrails).
 
 Quick reference:
+
+- **No em dashes anywhere.** This applies to every file in the repo: assignment.md,
+  HTML demos, README files, AGENTS.md, code comments, YAML strings, JavaScript
+  step descriptions. Use a period, a colon, or a hyphen instead. The em dash is
+  the single most recognizable LLM writing tell and is banned universally, not
+  just in learner-facing prose.
+
+  ✅ "The POST lands. The Activity errors before reporting success."
+  ✅ "The fix: one line in activities.ts"
+  ❌ "The POST lands — the Activity errors before reporting success."
 
 - **Reference JSON properties by name, never by description.** When directing
   the learner to check the Webhook receiver (or any JSON API response), cite
