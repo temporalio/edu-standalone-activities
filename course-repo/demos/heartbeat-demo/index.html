@@ -18,16 +18,35 @@ body {
 h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15em; }
 .subtitle { text-align: center; color: #718096; font-size: 0.78em; margin-bottom: 0.75em; }
 
-.step-banner {
-  text-align: center;
-  min-height: 2.2em;
-  font-size: 0.85em;
-  color: #b794f6;
+/* ── speech bubble ── */
+.bubble-slot { min-height: 0; }
+
+.speech-bubble {
+  background: #1c1c38;
+  border: 1.5px solid #7c6fcd;
+  border-radius: 6px;
+  padding: 0.45em 0.65em;
+  font-size: 0.79em;
+  color: #d6bcfa;
   line-height: 1.45;
-  margin-bottom: 0.7em;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+  position: relative;
+  margin-top: 0.35em;
+  animation: bubblein 0.18s ease-out;
+}
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 1.1em;
+  border: 6px solid transparent;
+  border-bottom-color: #7c6fcd;
+  border-top: none;
+}
+.speech-bubble.anchor-right::before { left: auto; right: 1.1em; }
+.speech-bubble.anchor-center::before { left: 50%; transform: translateX(-50%); }
+@keyframes bubblein {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── main layout ── */
@@ -279,7 +298,6 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
 
 <h1>Heartbeats and checkpointing: the bug</h1>
 <div class="subtitle">The Activity heartbeats progress. The service goes down mid-batch. The retry ignores the stored checkpoint.</div>
-<div class="step-banner" id="step-banner"></div>
 
 <div class="layout">
   <!-- left: code -->
@@ -317,12 +335,13 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
       <div class="attempt-badge" id="attempt-badge">Waiting</div>
       <div class="worker-badge" id="worker-badge">Worker: idle</div>
     </div>
+    <div class="bubble-slot" id="bub-status"></div>
 
     <div>
       <div class="items-label" style="margin-bottom:0.3em">Items (10 total)</div>
-      <div class="items-grid" id="items-grid">
-      </div>
+      <div class="items-grid" id="items-grid"></div>
     </div>
+    <div class="bubble-slot" id="bub-items"></div>
 
     <div class="info-row">
       <div class="info-box" id="stored-hb-box">
@@ -337,6 +356,7 @@ button:disabled { opacity: 0.38; cursor: not-allowed; }
         <div class="info-box-val" id="proc-count">0</div>
       </div>
     </div>
+    <div class="bubble-slot" id="bub-info"></div>
   </div>
 </div>
 
@@ -445,6 +465,20 @@ function setWorker(label, cls) {
   el.className = `worker-badge${cls ? ' ' + cls : ''}`;
 }
 
+// ── speech bubble ─────────────────────────────────────────────────────────
+// slot: 'status' | 'items' | 'info' | null
+// arrow: 'left' (default) | 'center' | 'right'
+function showBubble(slot, html, arrow) {
+  for (const s of ['status', 'items', 'info']) {
+    $(`bub-${s}`).innerHTML = '';
+  }
+  if (!slot || !html) return;
+  const cls = arrow === 'right' ? 'speech-bubble anchor-right'
+            : arrow === 'center' ? 'speech-bubble anchor-center'
+            : 'speech-bubble';
+  $(`bub-${slot}`).innerHTML = `<div class="${cls}">${html}</div>`;
+}
+
 // ── reset ─────────────────────────────────────────────────────────────────
 function resetAll() {
   for (let i = 0; i < 10; i++) itemState[i] = 'pending';
@@ -455,138 +489,138 @@ function resetAll() {
   clearCode();
   setAttempt('Waiting', '');
   setWorker('Worker: idle', '');
+  showBubble(null);
 }
 
 // ── steps ─────────────────────────────────────────────────────────────────
 const STEPS = [
   {
-    desc: 'A 10-item batch is submitted as a Standalone Activity. Click <b>Step</b> or <b>Play</b>.',
     phase: 'none',
-    apply: resetAll,
+    apply: () => { resetAll(); showBubble('status', 'A 10-item batch is submitted as a Standalone Activity. Click <b>Step</b> or <b>Play</b>.', 'center'); },
   },
   {
-    desc: 'Attempt 1 starts. <code>activityInfo().attempt === 1</code>. <code>startIndex = 0</code>. The loop begins.',
     phase: 'a1',
     apply: () => {
       setAttempt('Attempt 1', 'a1');
       setWorker('Worker: running', 'running');
       highlightLines([4, 7, 11], 'active');
+      showBubble('status', 'Attempt 1 starts. <code>activityInfo().attempt === 1</code>. <code>startIndex = 0</code>. The loop begins.');
     },
   },
   {
-    desc: 'Item 0 delivered. <code>heartbeat(1)</code> called. Temporal stores the checkpoint.',
     phase: 'a1',
     apply: () => {
       setItems({ 0: 'done1' });
       setProcCount(1);
       setStoredHb('1');
       highlightLines([13, 15], 'active');
+      showBubble('items', 'Item 0 delivered. <code>heartbeat(1)</code> called. Temporal stores the checkpoint.');
     },
   },
   {
-    desc: 'Item 1 delivered. <code>heartbeat(2)</code> stored.',
     phase: 'a1',
     apply: () => {
       setItems({ 1: 'done1' });
       setProcCount(2);
       setStoredHb('2');
+      showBubble('items', 'Item 1 delivered. <code>heartbeat(2)</code> stored.');
     },
   },
   {
-    desc: 'Item 2 delivered. <code>heartbeat(3)</code> stored.',
     phase: 'a1',
     apply: () => {
       setItems({ 2: 'done1' });
       setProcCount(3);
       setStoredHb('3');
+      showBubble('items', 'Item 2 delivered. <code>heartbeat(3)</code> stored.');
     },
   },
   {
-    desc: 'Item 3 delivered. <code>heartbeat(4)</code> stored. The service goes down mid-run.',
     phase: 'a1',
     apply: () => {
       setItems({ 3: 'done1' });
       setProcCount(4);
       setStoredHb('4');
       highlightLines([15], 'active');
+      showBubble('items', 'Item 3 delivered. <code>heartbeat(4)</code> stored.');
     },
   },
   {
-    desc: '<b>kill-worker.sh</b> takes the service down. Items 4-9 never ran. Heartbeat checkpoint 4 is safely stored in Temporal.',
     phase: 'kill',
     apply: () => {
       setWorker('Worker: down', 'down');
       highlightLines([], 'active');
+      showBubble('status', '<b>kill-worker.sh</b> takes the service down. Items 4-9 never ran. Checkpoint 4 is safely stored in Temporal.');
     },
   },
   {
-    desc: 'No heartbeat for 5 seconds. Temporal marks the attempt as dead and schedules a retry. Checkpoint <b>4</b> is still stored.',
     phase: 'kill',
     apply: () => {
       setAttempt('Retry scheduled', '');
       setWorker('Worker: idle', '');
+      showBubble('info', 'No heartbeat for 5 seconds. Temporal marks the attempt as dead and schedules a retry. Checkpoint <b>4</b> is still stored.', 'right');
     },
   },
   {
-    desc: 'Attempt 2 starts. <code>heartbeatDetails</code> is available but <b>never read</b>. <code>startIndex</code> is set to <b>0</b> again.',
     phase: 'a2',
     apply: () => {
       setAttempt('Attempt 2', 'a2');
       setWorker('Worker: running', 'running');
       highlightLines([4, 6, 7], 'bug');
+      showBubble('status', 'Attempt 2 starts. <code>heartbeatDetails</code> is available but <b>never read</b>. <code>startIndex</code> is set to <b>0</b> again.');
     },
   },
   {
-    desc: '<code>i = 0</code>: item_000 is fetched and delivered to the receiver again. The Activity has no idea it already ran this item.',
     phase: 'a2',
     apply: () => {
       setItems({ 0: 'duplicate' });
       setProcCount(5, true);
       highlightLines([11, 13], 'active');
+      showBubble('items', '<code>i = 0</code>: item_000 fetched and delivered again. The Activity has no idea it already ran this item.');
     },
   },
   {
-    desc: '<code>i = 1</code>: item_001 delivered again. Duplicate.',
     phase: 'a2',
     apply: () => {
       setItems({ 1: 'duplicate' });
       setProcCount(6, true);
       highlightLines([13, 14, 15], 'active');
+      showBubble('items', '<code>i = 1</code>: item_001 delivered again. Duplicate.');
     },
   },
   {
-    desc: '<code>i = 2</code>: item_002 delivered again. Duplicate.',
     phase: 'a2',
     apply: () => {
       setItems({ 2: 'duplicate' });
       setProcCount(7, true);
       highlightLines([13, 14, 15], 'active');
+      showBubble('items', '<code>i = 2</code>: item_002 delivered again. Duplicate.');
     },
   },
   {
-    desc: '<code>i = 3</code>: item_003 delivered again. Duplicate. This is the last item the first attempt reached before the service went down.',
     phase: 'a2',
     apply: () => {
       setItems({ 3: 'duplicate' });
       setProcCount(8, true);
       highlightLines([13, 14, 15], 'active');
+      showBubble('items', '<code>i = 3</code>: item_003 delivered again. Last item the first attempt reached before the service went down.');
     },
   },
   {
-    desc: 'Items 4-9 are delivered for the first time. The Activity completes successfully.',
     phase: 'a2',
     apply: () => {
       setItems({ 4: 'done2', 5: 'done2', 6: 'done2', 7: 'done2', 8: 'done2', 9: 'done2' });
       setProcCount(14, true);
       highlightLines([13, 14, 15, 16], 'active');
+      showBubble('items', 'Items 4-9 delivered for the first time. The Activity completes successfully.');
     },
   },
   {
-    desc: '<b>Result: <code>processed_count: 14</code></b> for a 10-item batch. Items 0-3 were delivered twice because the retry never read <code>heartbeatDetails</code>. The fix is one block: read it and set <code>startIndex</code>.',
     phase: 'a2',
     apply: () => {
       setWorker('Worker: done', 'running');
       highlightLines([6, 7], 'bug');
+      showBubble('info', '<b>Result: <code>processed_count: 14</code></b> for a 10-item batch. Items 0-3 were delivered twice because the retry never read <code>heartbeatDetails</code>. The fix: read it and set <code>startIndex</code>.', 'right');
     },
   },
 ];
@@ -611,7 +645,6 @@ function renderPips() {
 
 function goTo(i) {
   current = Math.max(0, Math.min(STEPS.length - 1, i));
-  $('step-banner').innerHTML = STEPS[current].desc;
   STEPS[current].apply();
   $('btn-step').disabled = current >= STEPS.length - 1;
   $('btn-prev').disabled = current <= 0;
