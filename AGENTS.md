@@ -37,16 +37,87 @@ Reviewers should be able to read the PR body alone and understand:
 - **How to verify** locally (e.g., `python/scripts/verify-content.sh`,
   `instruqt track validate`, manual walkthrough checklist).
 
-## Instruqt track layout
+## Instruqt track configuration
 
-The default layout for all Instruqt tutorials in this repo:
+Lessons from building and shipping the TypeScript standalone-activities track.
+Apply these to every track in this repo.
+
+### Layout
 
 ```yaml
 default_layout: AssignmentLeft
 default_layout_sidebar_size: 33
 ```
 
-Use these values in every `track.yml`. Do not use `AssignmentRight` or sidebar sizes other than 33 unless a specific track has a documented reason to differ.
+Use these values in every `track.yml`. Do not use `AssignmentRight` or sidebar sizes other than 33.
+
+### Enhanced loading
+
+```yaml
+enhanced_loading: true
+```
+
+Set this at the **top level** of `track.yml` (not under `lab_config`). Without it, the Instruqt code editor presents the challenge before the container's file-serving agent has finished registering. The first file click returns "Unauthorized" and requires a browser refresh to recover. `enhanced_loading: true` holds the loading screen until the container is fully ready.
+
+### Maintenance flag
+
+`maintenance: true` while iterating — only track owners and authors can launch. Flip to `maintenance: false` (or remove the field; absent = false) to ship. Never push `maintenance: false` mid-iteration; it immediately exposes the half-finished track.
+
+### Sandbox image
+
+Push sandbox images to the **existing public package** in this org:
+
+```
+ghcr.io/temporalio/edu-standalone-activities-sandbox:<language>-latest
+```
+
+For example, the TypeScript track uses `:typescript-latest`. Creating a new package lands it as `internal` by default; changing visibility requires `delete:packages` scope or an org admin. Using a tag on the existing public package avoids this entirely.
+
+### Docker build for Instruqt
+
+Instruqt runs `linux/amd64` containers. Always build with:
+
+```bash
+docker build --platform linux/amd64 -f sandbox/Dockerfile .
+```
+
+Building on Apple Silicon without `--platform` produces an `arm64` image that Instruqt cannot run.
+
+Include `ca-certificates` in the apt install step and use `curl -fsSL` (not `wget`) for downloads inside the image. Without `ca-certificates`, HTTPS downloads fail with exit code 77 under QEMU emulation.
+
+### Temporal CLI in the Dockerfile
+
+Use the latest **stable** release (e.g. `v1.7.2`), not a pre-release tag. Pre-release tag names (e.g. `v1.6.2-standalone-activity`) are removed from GitHub after the feature ships to stable. The `temporal activity` subcommand is in stable CLI `v1.7.x` and later.
+
+Asset name pattern: `temporal_cli_<version-without-v>_linux_<arch>.tar.gz`
+
+```dockerfile
+ARG TEMPORAL_VERSION=v1.7.2
+RUN ARCH=$(dpkg --print-architecture) && \
+    VER="${TEMPORAL_VERSION#v}" && \
+    curl -fsSL "https://github.com/temporalio/cli/releases/download/${TEMPORAL_VERSION}/temporal_cli_${VER}_linux_${ARCH}.tar.gz" \
+        -o /tmp/temporal.tar.gz && \
+    tar -xzf /tmp/temporal.tar.gz -C /usr/local/bin temporal && \
+    rm /tmp/temporal.tar.gz
+```
+
+### First push sequence
+
+```bash
+# 1. Register the slug server-side (once).
+instruqt track create <slug> --title "<title>"
+
+# 2. First push reconciles the scaffold.
+instruqt track push --force
+
+# 3. Pull the server-assigned track id and tab ids.
+instruqt track pull
+
+# 4. Commit the populated track.yml and assignment.md files.
+git add instruqt/ && git commit -m "Pin Instruqt track and tab ids"
+```
+
+Never skip the pull-and-commit step. Without it, the next push creates a new track instead of updating the existing one.
 
 ## Tutorial content rules
 
