@@ -57,7 +57,7 @@ tabs:
   type: service
   hostname: workshop
   port: 8233
-- id: ""
+- id: yywrk8cjd1y3
   title: Checkpoint demo
   type: service
   hostname: workshop
