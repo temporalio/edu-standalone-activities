@@ -8,7 +8,7 @@ teaser: Run a webhook delivery as a durable job, with no broker, scheduler, or r
 notes:
 - type: text
   contents: |
-    # Build a Job Queue with Standalone Activities (Tutorial)
+    # Build a Job Queue with Standalone Activities (TypeScript)
 
     *By [Nikolay Advolodkin](https://www.linkedin.com/in/nikolayadvolodkin/), Staff Developer Advocate at Temporal*
 
