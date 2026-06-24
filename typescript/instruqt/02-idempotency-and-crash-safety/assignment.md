@@ -62,6 +62,27 @@ Many job queues leave retry behavior to each service, and they often don't help 
 
 Standalone Activities retry for you automatically, but at-least-once delivery is still at-least-once. You'll see this happen, then fix it with idempotency on the receiver side.
 
+<details>
+<summary><strong>What is idempotency, and when do you need it?</strong></summary>
+
+An operation is **idempotent** if running it multiple times with the same input produces the same outcome as running it once. A GET request is naturally idempotent. A POST that creates a record or sends a notification is not, unless you build that property in.
+
+**When you need it with Temporal:**
+
+Temporal guarantees an Activity runs to completion *at least once*. If the Activity throws before it returns, Temporal retries the entire Activity body. Any side effect inside the body (a network call, a database write, a charge) runs again on every attempt.
+
+You need an idempotency key when the Activity calls an external system and that call is not safe to repeat. The pattern:
+
+1. Derive a key from stable input, not from a random value generated inside the Activity. `req.eventId` is stable across retries. `crypto.randomUUID()` is not.
+2. Send the key with every request (`Idempotency-Key` header, a request field, etc.).
+3. The receiver caches the result by key and returns the cached response on duplicate requests without re-executing the side effect.
+
+**When you don't need it:**
+
+Read-only operations, and writes that are naturally idempotent (e.g. setting a field to a specific value rather than incrementing it) do not require a key.
+
+</details>
+
 You'll do three things in this module:
 
 1. Reproduce the bug: an Activity that POSTs and then fails on its first two attempts. The Webhook receiver processes 3 deliveries for one logical request.
