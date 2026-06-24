@@ -16,26 +16,6 @@ notes:
 
     When something happens in your application - a payment clears, an order ships, a user signs up - you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry does not double-deliver.
 
-    The same `deliverWebhook` activity runs through every module of this tutorial:
-
-    - **Module 1**: Run the Activity directly from a client. Inspect it in the Temporal UI.
-    - **Module 2**: Make retries safe with an idempotency key.
-    - **Module 3**: Reject duplicate jobs at the platform level.
-    - **Module 4**: Cap throughput and prioritize urgent jobs.
-    - **Module 5**: Long-running jobs that heartbeat progress and resume after a crash.
-    - **Module 6**: The same Activity, called from a Workflow. Same code, two job types.
-
-    ## What's already running in this sandbox
-
-    - **Temporal Service and Web UI**: already running and ready.
-    - **Webhook receiver**: records webhook deliveries so you can verify what your Worker actually sent.
-
-    You don't need to start any of these. They boot with the sandbox.
-
-    ## Prerequisites
-
-    - Comfortable reading and writing TypeScript (functions, interfaces, imports, async/await).
-    - Familiar with Temporal Activities and Workers at the level [Temporal 101 in TypeScript](https://learn.temporal.io/courses/temporal_101/typescript/) covers. If those words are new, take that course first and come back.
 tabs:
 - id: se53gi9xr1js
   title: Exercise
