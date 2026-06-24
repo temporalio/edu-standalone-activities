@@ -57,6 +57,11 @@ tabs:
   type: service
   hostname: workshop
   port: 8233
+- id: ""
+  title: Checkpoint demo
+  type: service
+  hostname: workshop
+  port: 9001
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
@@ -137,6 +142,8 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"p
 The receiver had no way to know they were duplicates because each carries a different `eventId`.
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeatDetails`. So it starts at `startIndex = 0` and redoes everything.
+
+Open the [button label="Checkpoint demo" background="#444CE7"](tab-6) tab to step through what just happened: the code on the left, the execution state on the right.
 
 ---
 

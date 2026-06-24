@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartbeat checkpoint demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0f1a;
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding: 0.8em 1em 1.2em;
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15em; }
+.subtitle { text-align: center; color: #718096; font-size: 0.78em; margin-bottom: 0.75em; }
+
+.step-banner {
+  text-align: center;
+  min-height: 2.2em;
+  font-size: 0.85em;
+  color: #b794f6;
+  line-height: 1.45;
+  margin-bottom: 0.7em;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── main layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9em;
+  max-width: 900px;
+  margin: 0 auto;
+}
+@media (max-width: 680px) { .layout { grid-template-columns: 1fr; } }
+
+.panel {
+  background: #141420;
+  border: 1px solid #2d3748;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.panel-title {
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #718096;
+  padding: 0.45em 0.75em;
+  border-bottom: 1px solid #2d3748;
+  background: #0f0f1a;
+}
+
+/* ── code panel ── */
+.code-pre {
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75em;
+  line-height: 1.65;
+  padding: 0.6em 0;
+  overflow-x: auto;
+}
+
+.code-line {
+  display: flex;
+  padding: 0 0.75em;
+  transition: background 0.25s;
+  white-space: pre;
+}
+.code-line .ln {
+  color: #2d3748;
+  user-select: none;
+  min-width: 1.8em;
+  text-align: right;
+  margin-right: 1em;
+  flex-shrink: 0;
+}
+.code-line .src { color: #a0aec0; flex: 1; }
+.code-line .src .kw  { color: #b794f6; }
+.code-line .src .fn  { color: #7aa2ff; }
+.code-line .src .str { color: #9ae6b4; }
+.code-line .src .cmt { color: #4a5568; font-style: italic; }
+.code-line .src .num { color: #f6ad55; }
+.code-line .src .tag { color: #fc8181; font-weight: 600; }
+
+.code-line.active   { background: rgba(68, 76, 231, 0.18); }
+.code-line.active .ln { color: #667eea; }
+.code-line.active .src { color: #e2e8f0; }
+
+.code-line.bug      { background: rgba(229, 62, 62, 0.18); }
+.code-line.bug .ln  { color: #fc8181; }
+.code-line.bug .src { color: #fbd38d; }
+
+.code-line.dim .src { color: #2d3748; }
+
+.bug-label {
+  display: none;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: #fc8181;
+  margin-left: 0.5em;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.code-line.bug .bug-label { display: inline; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── execution panel ── */
+.exec-panel { padding: 0.65em 0.75em; display: flex; flex-direction: column; gap: 0.6em; }
+
+/* attempt + worker row */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+.attempt-badge {
+  background: #2d3748;
+  border-radius: 4px;
+  padding: 0.25em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #e2e8f0;
+  transition: background 0.3s, color 0.3s;
+}
+.attempt-badge.a1 { background: #2a2a4a; color: #a78bfa; border: 1px solid #5b4fcf; }
+.attempt-badge.a2 { background: #3a1f1f; color: #fc8181; border: 1px solid #9b2c2c; }
+
+.worker-badge {
+  background: #2d3748;
+  border-radius: 4px;
+  padding: 0.25em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #a0aec0;
+  transition: background 0.3s, color 0.3s;
+}
+.worker-badge.running { background: #1c3a1c; color: #9ae6b4; border: 1px solid #276749; }
+.worker-badge.killed  { background: #3a1515; color: #fc8181; border: 1px solid #9b2c2c; }
+
+/* items grid */
+.items-label { font-size: 0.68em; color: #4a5568; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.3em;
+}
+
+.item-cell {
+  background: #1a1a2e;
+  border: 1px solid #2d3748;
+  border-radius: 4px;
+  padding: 0.3em 0.2em;
+  text-align: center;
+  transition: background 0.25s, border-color 0.25s;
+  position: relative;
+}
+.item-cell .item-id  { font-size: 0.62em; color: #4a5568; font-family: ui-monospace, monospace; }
+.item-cell .item-ico { font-size: 1em; line-height: 1.2; min-height: 1.2em; }
+.item-cell .item-dup { font-size: 0.6em; font-weight: 700; color: #fc8181; display: none; }
+
+.item-cell.pending   { }
+.item-cell.active    { border-color: #f6e05e; background: #1f1f10; }
+.item-cell.done1     { border-color: #38a169; background: #0e2218; }
+.item-cell.duplicate { border-color: #e53e3e; background: #1f1010; }
+.item-cell.duplicate .item-dup { display: block; }
+.item-cell.done2     { border-color: #4299e1; background: #0e1a2e; }
+
+/* info boxes */
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4em;
+}
+
+.info-box {
+  background: #1a1a2e;
+  border: 1px solid #2d3748;
+  border-radius: 5px;
+  padding: 0.45em 0.6em;
+}
+.info-box-label {
+  font-size: 0.62em;
+  color: #718096;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: ui-monospace, monospace;
+}
+.info-box-val {
+  font-size: 1.4em;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  line-height: 1.15;
+  margin-top: 0.1em;
+  transition: color 0.3s;
+  color: #e2e8f0;
+}
+#stored-hb-box .info-box-val  { color: #b794f6; }
+#proc-count-box .info-box-val { color: #9ae6b4; }
+#proc-count-box.warn .info-box-val { color: #fc8181; }
+
+/* ── controls ── */
+.controls {
+  text-align: center;
+  margin: 0.75em auto 0;
+  max-width: 900px;
+}
+button {
+  background: #444ce7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.38em 0.85em;
+  margin: 0 0.2em;
+  font-size: 0.82em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover:not(:disabled) { background: #5a61f0; }
+button:disabled { opacity: 0.38; cursor: not-allowed; }
+
+.progress {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 0.5em;
+}
+.pip { width: 7px; height: 7px; background: #2d3748; border-radius: 50%; transition: background 0.2s; }
+.pip.active { background: #b794f6; }
+.pip.phase-kill { background: #fc8181; }
+.pip.phase-retry { background: #f6ad55; }
+</style>
+</head>
+<body>
+
+<h1>Heartbeats and checkpointing: the bug</h1>
+<div class="subtitle">The Activity heartbeats progress. The Worker dies mid-batch. The retry ignores the stored checkpoint.</div>
+<div class="step-banner" id="step-banner"></div>
+
+<div class="layout">
+  <!-- left: code -->
+  <div class="panel">
+    <div class="panel-title">src/activities.ts (exercise)</div>
+    <div class="code-pre" id="code-pre">
+      <div class="code-line dim" id="cl-1"><span class="ln">1</span><span class="src"><span class="kw">export async function</span> <span class="fn">deliverWebhookBatch</span>(</span></div>
+      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  req: WebhookDeliveryBatch</span></div>
+      <div class="code-line dim" id="cl-3"><span class="ln">3</span><span class="src">): <span class="kw">Promise</span>&lt;<span class="kw">number</span>&gt; {</span></div>
+      <div class="code-line" id="cl-4"><span class="ln">4</span><span class="src">  <span class="kw">const</span> { attempt, heartbeatDetails } = <span class="fn">activityInfo</span>();</span></div>
+      <div class="code-line" id="cl-5"><span class="ln">5</span><span class="src"></span></div>
+      <div class="code-line" id="cl-6"><span class="ln">6</span><span class="src">  <span class="cmt">// TODO: read heartbeatDetails on retry</span></span></div>
+      <div class="code-line" id="cl-7"><span class="ln">7</span><span class="src">  <span class="kw">let</span> startIndex = <span class="num">0</span>;<span class="bug-label">← BUG</span></span></div>
+      <div class="code-line" id="cl-8"><span class="ln">8</span><span class="src"></span></div>
+      <div class="code-line" id="cl-9"><span class="ln">9</span><span class="src">  <span class="kw">let</span> delivered = startIndex;</span></div>
+      <div class="code-line dim" id="cl-10"><span class="ln">10</span><span class="src">  <span class="kw">try</span> {</span></div>
+      <div class="code-line" id="cl-11"><span class="ln">11</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; req.items.length; i++) {</span></div>
+      <div class="code-line" id="cl-12"><span class="ln">12</span><span class="src">      <span class="kw">const</span> item = req.items[i];</span></div>
+      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(req.url, { method: <span class="str">'POST'</span>, ... });</span></div>
+      <div class="code-line" id="cl-14"><span class="ln">14</span><span class="src">      delivered++;</span></div>
+      <div class="code-line" id="cl-15"><span class="ln">15</span><span class="src">      <span class="fn">heartbeat</span>(delivered);</span></div>
+      <div class="code-line" id="cl-16"><span class="ln">16</span><span class="src">      <span class="kw">await</span> <span class="fn">sleep</span>(<span class="num">1000</span>);</span></div>
+      <div class="code-line dim" id="cl-17"><span class="ln">17</span><span class="src">    }</span></div>
+      <div class="code-line dim" id="cl-18"><span class="ln">18</span><span class="src">  } <span class="kw">catch</span> (err) { ... }</span></div>
+      <div class="code-line dim" id="cl-19"><span class="ln">19</span><span class="src">  <span class="kw">return</span> delivered;</span></div>
+      <div class="code-line dim" id="cl-20"><span class="ln">20</span><span class="src">}</span></div>
+    </div>
+  </div>
+
+  <!-- right: execution state -->
+  <div class="panel exec-panel">
+    <div class="panel-title" style="margin: -0.65em -0.75em 0.65em; border-radius: 7px 7px 0 0;">Execution state</div>
+
+    <div class="status-row">
+      <div class="attempt-badge" id="attempt-badge">Waiting</div>
+      <div class="worker-badge" id="worker-badge">Worker: idle</div>
+    </div>
+
+    <div>
+      <div class="items-label" style="margin-bottom:0.3em">Items (10 total)</div>
+      <div class="items-grid" id="items-grid">
+      </div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-box" id="stored-hb-box">
+        <div class="info-box-label">heartbeatDetails stored</div>
+        <div class="info-box-val" id="stored-hb">none</div>
+      </div>
+      <div class="info-box" id="proc-count-box">
+        <div class="info-box-label">processed_count</div>
+        <div class="info-box-val" id="proc-count">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btn-prev">⏮ Back</button>
+  <button id="btn-step">⏭ Step</button>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-reset">⟲ Reset</button>
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ── item state ────────────────────────────────────────────────────────────
+// states: 'pending' | 'active' | 'done1' | 'duplicate' | 'done2'
+const itemState = Array(10).fill('pending');
+let storedHb = 'none';
+let procCount = 0;
+
+function buildGrid() {
+  const grid = $('items-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'item-cell';
+    cell.id = `item-${i}`;
+    cell.innerHTML = `
+      <div class="item-id">item_${String(i).padStart(3,'0')}</div>
+      <div class="item-ico" id="item-ico-${i}"></div>
+      <div class="item-dup" id="item-dup-${i}">×2 duplicate</div>
+    `;
+    grid.appendChild(cell);
+  }
+}
+
+function renderItems() {
+  const icons = { pending: '', active: '⏳', done1: '✓', duplicate: '✓', done2: '✓' };
+  for (let i = 0; i < 10; i++) {
+    const cell = $(`item-${i}`);
+    cell.className = `item-cell ${itemState[i]}`;
+    $(`item-ico-${i}`).textContent = icons[itemState[i]] || '';
+  }
+}
+
+function setItems(states) {
+  for (let i = 0; i < 10; i++) {
+    if (states[i] !== undefined) itemState[i] = states[i];
+  }
+  renderItems();
+}
+
+function setStoredHb(val) {
+  storedHb = val;
+  $('stored-hb').textContent = val;
+}
+
+function setProcCount(n, warn) {
+  procCount = n;
+  $('proc-count').textContent = n;
+  $('proc-count-box').className = warn ? 'info-box warn' : 'info-box';
+}
+
+// ── code highlighting ─────────────────────────────────────────────────────
+function clearCode() {
+  for (let i = 1; i <= 20; i++) {
+    const el = $(`cl-${i}`);
+    if (el) {
+      el.classList.remove('active', 'bug');
+      // keep dim if it was originally dim
+    }
+  }
+}
+
+function highlightLines(lines, mode) {
+  // mode: 'active' | 'bug'
+  clearCode();
+  for (const ln of lines) {
+    const el = $(`cl-${ln}`);
+    if (el) el.classList.add(mode || 'active');
+  }
+}
+
+// ── attempt + worker badges ───────────────────────────────────────────────
+function setAttempt(label, cls) {
+  const el = $('attempt-badge');
+  el.textContent = label;
+  el.className = `attempt-badge${cls ? ' ' + cls : ''}`;
+}
+
+function setWorker(label, cls) {
+  const el = $('worker-badge');
+  el.textContent = label;
+  el.className = `worker-badge${cls ? ' ' + cls : ''}`;
+}
+
+// ── reset ─────────────────────────────────────────────────────────────────
+function resetAll() {
+  for (let i = 0; i < 10; i++) itemState[i] = 'pending';
+  buildGrid();
+  renderItems();
+  setStoredHb('none');
+  setProcCount(0, false);
+  clearCode();
+  setAttempt('Waiting', '');
+  setWorker('Worker: idle', '');
+}
+
+// ── steps ─────────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    desc: 'A 10-item batch is submitted as a Standalone Activity. Click <b>Step</b> or <b>Play</b>.',
+    phase: 'none',
+    apply: resetAll,
+  },
+  {
+    desc: 'Attempt 1 starts. <code>activityInfo().attempt === 1</code>. <code>startIndex = 0</code>. The loop begins.',
+    phase: 'a1',
+    apply: () => {
+      setAttempt('Attempt 1', 'a1');
+      setWorker('Worker: running', 'running');
+      highlightLines([4, 7, 11], 'active');
+    },
+  },
+  {
+    desc: 'Item 0 delivered. <code>heartbeat(1)</code> called. Temporal stores the checkpoint.',
+    phase: 'a1',
+    apply: () => {
+      setItems({ 0: 'done1' });
+      setProcCount(1);
+      setStoredHb('1');
+      highlightLines([13, 15], 'active');
+    },
+  },
+  {
+    desc: 'Item 1 delivered. <code>heartbeat(2)</code> stored.',
+    phase: 'a1',
+    apply: () => {
+      setItems({ 1: 'done1' });
+      setProcCount(2);
+      setStoredHb('2');
+    },
+  },
+  {
+    desc: 'Item 2 delivered. <code>heartbeat(3)</code> stored.',
+    phase: 'a1',
+    apply: () => {
+      setItems({ 2: 'done1' });
+      setProcCount(3);
+      setStoredHb('3');
+    },
+  },
+  {
+    desc: 'Item 3 delivered. <code>heartbeat(4)</code> stored. The Worker is killed mid-run.',
+    phase: 'a1',
+    apply: () => {
+      setItems({ 3: 'done1' });
+      setProcCount(4);
+      setStoredHb('4');
+      highlightLines([15], 'active');
+    },
+  },
+  {
+    desc: '<b>kill-worker.sh</b> kills the process. Items 4-9 never ran. Heartbeat checkpoint 4 is safely stored in Temporal.',
+    phase: 'kill',
+    apply: () => {
+      setWorker('Worker: killed', 'killed');
+      highlightLines([], 'active');
+    },
+  },
+  {
+    desc: 'No heartbeat for 5 seconds. Temporal marks the attempt as dead and schedules a retry. Checkpoint <b>4</b> is still stored.',
+    phase: 'kill',
+    apply: () => {
+      setAttempt('Retry scheduled', '');
+      setWorker('Worker: idle', '');
+    },
+  },
+  {
+    desc: 'Attempt 2 starts. <code>heartbeatDetails</code> is available but <b>never read</b>. <code>startIndex</code> is set to <b>0</b> again.',
+    phase: 'a2',
+    apply: () => {
+      setAttempt('Attempt 2', 'a2');
+      setWorker('Worker: running', 'running');
+      highlightLines([4, 6, 7], 'bug');
+    },
+  },
+  {
+    desc: 'The loop starts at <code>i = 0</code>. Item 0 is fetched and delivered to the receiver again.',
+    phase: 'a2',
+    apply: () => {
+      setItems({ 0: 'duplicate' });
+      setProcCount(5, true);
+      highlightLines([11, 13], 'active');
+    },
+  },
+  {
+    desc: 'Items 1, 2, and 3 are delivered again. The receiver has no way to know these are duplicates.',
+    phase: 'a2',
+    apply: () => {
+      setItems({ 1: 'duplicate', 2: 'duplicate', 3: 'duplicate' });
+      setProcCount(8, true);
+      highlightLines([13, 14, 15], 'active');
+    },
+  },
+  {
+    desc: 'Items 4-9 are delivered for the first time. The Activity completes successfully.',
+    phase: 'a2',
+    apply: () => {
+      setItems({ 4: 'done2', 5: 'done2', 6: 'done2', 7: 'done2', 8: 'done2', 9: 'done2' });
+      setProcCount(14, true);
+      highlightLines([13, 14, 15, 16], 'active');
+    },
+  },
+  {
+    desc: '<b>Result: <code>processed_count: 14</code></b> for a 10-item batch. Items 0-3 were delivered twice because the retry never read <code>heartbeatDetails</code>. The fix is one block: read it and set <code>startIndex</code>.',
+    phase: 'a2',
+    apply: () => {
+      setWorker('Worker: done', 'running');
+      highlightLines([6, 7], 'bug');
+    },
+  },
+];
+
+// ── stepper ───────────────────────────────────────────────────────────────
+let current = 0;
+let playing = false;
+let timer = null;
+const INTERVAL = 2000;
+
+const PHASE_PIP = { none: '', a1: '', kill: 'phase-kill', retry: '', a2: 'phase-retry' };
+
+function renderPips() {
+  const wrap = $('progress');
+  wrap.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i === current ? ' active' : '') + (s.phase && PHASE_PIP[s.phase] ? ' ' + PHASE_PIP[s.phase] : '');
+    wrap.appendChild(p);
+  });
+}
+
+function goTo(i) {
+  current = Math.max(0, Math.min(STEPS.length - 1, i));
+  $('step-banner').innerHTML = STEPS[current].desc;
+  STEPS[current].apply();
+  $('btn-step').disabled = current >= STEPS.length - 1;
+  $('btn-prev').disabled = current <= 0;
+  renderPips();
+}
+
+function startPlay() {
+  playing = true;
+  $('btn-play').textContent = '⏸ Pause';
+  if (current >= STEPS.length - 1) goTo(0);
+  timer = setInterval(() => {
+    if (current < STEPS.length - 1) goTo(current + 1);
+    else stopPlay();
+  }, INTERVAL);
+}
+
+function stopPlay() {
+  playing = false;
+  $('btn-play').textContent = '▶ Play';
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+$('btn-step').onclick  = () => { stopPlay(); goTo(current + 1); };
+$('btn-prev').onclick  = () => { stopPlay(); goTo(current - 1); };
+$('btn-reset').onclick = () => { stopPlay(); goTo(0); };
+$('btn-play').onclick  = () => playing ? stopPlay() : startPlay();
+
+buildGrid();
+goTo(0);
+</script>
+</body>
+</html>
