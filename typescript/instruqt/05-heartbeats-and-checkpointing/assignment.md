@@ -3,65 +3,66 @@ slug: heartbeats-and-checkpointing
 id: o5ebgrd1o7vj
 type: challenge
 title: Heartbeats and checkpointing
-teaser: Resume a long-running Standalone Activity from where it left off after a Worker
+teaser:
+  Resume a long-running Standalone Activity from where it left off after a Worker
   crash.
 notes:
-- type: text
-  contents: |
-    # Heartbeats and checkpointing
+  - type: text
+    contents: |
+      # Heartbeats and checkpointing
 
-    A single Standalone Activity that processes a batch of webhook deliveries can
-    take minutes. When the Worker crashes mid-batch, many job queues either lose
-    in-flight progress or expect *you* to invent a checkpointing scheme for each
-    job type.
+      A single Standalone Activity that processes a batch of webhook deliveries can
+      take minutes. When the Worker crashes mid-batch, many job queues either lose
+      in-flight progress or expect *you* to invent a checkpointing scheme for each
+      job type.
 
-    Standalone Activities have heartbeats built in. The Activity calls
-    `Context.current().heartbeat(progress)` after each unit of work; the Temporal
-    server stores that value. If the attempt dies (Worker crash, machine reboot,
-    deploy), the next attempt reads `activityInfo().heartbeatDetails` and
-    resumes from the last reported checkpoint instead of redoing work.
+      Standalone Activities have heartbeats built in. The Activity calls
+      `Context.current().heartbeat(progress)` after each unit of work; the Temporal
+      server stores that value. If the attempt dies (Worker crash, machine reboot,
+      deploy), the next attempt reads `activityInfo().heartbeatDetails` and
+      resumes from the last reported checkpoint instead of redoing work.
 
-    ## What you'll do
+      ## What you'll do
 
-    1. Run a long-running Activity that delivers 10 webhooks. Bring the service down mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
-    2. Add one block to read `heartbeatDetails` on retry and skip items already delivered.
-    3. Re-run, kill again, and watch the retry resume from the checkpoint with no duplicates.
+      1. Run a long-running Activity that delivers 10 webhooks. Bring the service down mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
+      2. Add one block to read `heartbeatDetails` on retry and skip items already delivered.
+      3. Re-run, kill again, and watch the retry resume from the checkpoint with no duplicates.
 tabs:
-- id: sbv6tdxf84bw
-  title: Exercise
-  type: code
-  hostname: workshop
-  path: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- id: fgfaf46l2ptn
-  title: Solution
-  type: code
-  hostname: workshop
-  path: /root/workshop/exercises/05-heartbeats-and-checkpointing/solution
-- id: fdvjxaoeakdm
-  title: Terminal
-  type: terminal
-  hostname: workshop
-  workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- id: uh3awnpu2kyr
-  title: Worker
-  type: terminal
-  hostname: workshop
-  workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- id: 04e9jrkq4tpk
-  title: Webhook receiver
-  type: service
-  hostname: workshop
-  port: 9000
-- id: vibdvz1wszcr
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
-- id: yywrk8cjd1y3
-  title: Checkpoint demo
-  type: service
-  hostname: workshop
-  port: 9001
+  - id: sbv6tdxf84bw
+    title: Exercise
+    type: code
+    hostname: workshop
+    path: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
+  - id: fgfaf46l2ptn
+    title: Solution
+    type: code
+    hostname: workshop
+    path: /root/workshop/exercises/05-heartbeats-and-checkpointing/solution
+  - id: fdvjxaoeakdm
+    title: Terminal
+    type: terminal
+    hostname: workshop
+    workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
+  - id: uh3awnpu2kyr
+    title: Worker
+    type: terminal
+    hostname: workshop
+    workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
+  - id: 04e9jrkq4tpk
+    title: Webhook receiver
+    type: service
+    hostname: workshop
+    port: 9000
+  - id: vibdvz1wszcr
+    title: Temporal UI
+    type: service
+    hostname: workshop
+    port: 8233
+  - id: yywrk8cjd1y3
+    title: Interactive Diagram
+    type: service
+    hostname: workshop
+    port: 9001
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
@@ -85,7 +86,7 @@ The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
 ## 1. See the bug: retry restarts from item 0 (~3 min)
 
-Open `src/activities.ts` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The Activity already calls `ctx.heartbeat(delivered)` after each item, so the server *has* the progress data. What's missing is the read on retry.
+Open `src/activities.ts` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The Activity already calls `ctx.heartbeat(delivered)` after each item, so the server _has_ the progress data. What's missing is the read on retry.
 
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
@@ -104,6 +105,7 @@ sleep 4 && scripts/kill-worker.sh
 ```
 
 That sequence:
+
 - Submits a batch of 10 items (1s delay between each = ~10s total).
 - Waits 4 seconds (~4 items delivered), then brings the service down.
 - Leaves the `sendBatch` client waiting in the background.
@@ -143,7 +145,24 @@ The receiver had no way to know they were duplicates because each carries a diff
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeatDetails`. So it starts at `startIndex = 0` and redoes everything.
 
-Open the [button label="Checkpoint demo" background="#444CE7"](tab-6) tab to step through what just happened: the code on the left, the execution state on the right.
+Open the [button label="Interactive Diagram" background="#444CE7"](tab-6) tab to step through what just happened: the code on the left, the execution state on the right.
+
+### What's a checkpoint?
+
+Think of it like a video game checkpoint system.
+
+The scenario: Your activity is processing 1,000 emails. It takes 10 minutes. Halfway through, the worker crashes.
+
+Without heartbeats for checkpoints, Temporal retries from zero — you reprocess the 500 emails you already sent. Bad.
+
+Heartbeats are useful when an activity is doing long, resumable work where restarting from zero would be wasteful or harmful.
+
+**Quick check:** When should you use heartbeats? Select all that apply.
+
+[x] Processing a large list (emails, records, files) — skip already-done items on retry
+[x] Uploading/downloading a large file — resume from byte offset instead of restarting
+[x] Work where "doing it twice" causes problems (duplicate charges, duplicate emails)
+[x] You need the activity to detect it's been externally cancelled mid-loop (heartbeat throws a `CancelledError` when cancellation is requested)
 
 ---
 
@@ -161,7 +180,7 @@ with:
 let startIndex = 0;
 if (heartbeatDetails && heartbeatDetails.length > 0) {
   startIndex = heartbeatDetails[0] as number;
-  log.info('Resuming from checkpoint', { startIndex, attempt });
+  log.info("Resuming from checkpoint", { startIndex, attempt });
 }
 ```
 
@@ -212,6 +231,16 @@ The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"pr
 
 > **The takeaway:** same Activity, same kill, same restart. But the receiver sees each item exactly once. Heartbeating is how a long-running Activity saves progress before the next crash.
 
+## Try Interactive Diagram
+
+Open the [button label="Interactive Diagram" background="#444CE7"](tab-6) tab. Switch between **Bug (Exercise)** and **Fixed (Solution)** to step through both attempts side by side: the code on the left, execution state on the right.
+
+**Quick check:** When should you skip heartbeats? Select all that apply.
+
+[x] The activity is short (under ~10s) — not worth the complexity
+[x] The work is naturally idempotent and fast to redo — just let it retry from scratch
+[x] There's no meaningful "progress" to save (e.g., a single API call)
+
 ---
 
 ## Handle cancellation cleanly
@@ -221,7 +250,7 @@ Heartbeating also delivers **cancellation**. When someone runs `temporal activit
 Long-running Activities should catch it and exit cleanly:
 
 ```typescript
-import { CancelledFailure } from '@temporalio/activity';
+import { CancelledFailure } from "@temporalio/activity";
 
 try {
   for (let i = startIndex; i < req.items.length; i++) {
@@ -230,7 +259,7 @@ try {
   }
 } catch (err) {
   if (err instanceof CancelledFailure) {
-    log.info('Cancelled', { delivered });
+    log.info("Cancelled", { delivered });
     throw err;
   }
   throw err;

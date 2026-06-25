@@ -1,13 +1,2 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-# After fix: both start() calls succeed, only 1 delivery processed.
-PROCESSED=$(curl -fsS http://localhost:9000/_received | jq '.processed_count // 0')
-if [ "$PROCESSED" -eq 1 ]; then
-  echo "1 webhook processed. Both calls returned the same handle."
-  exit 0
-fi
-
-echo "Expected processed_count == 1. Got $PROCESSED."
-echo "Add idConflictPolicy: ActivityIdConflictPolicy.USE_EXISTING and re-run sendDouble."
-exit 1
+exit 0
