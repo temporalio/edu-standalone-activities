@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=/root/workshop/exercises/02-idempotency-and-crash-safety
+cp -r /opt/workshop/solution/02-idempotency-and-crash-safety/src/. "$DIR/exercise/src/"
