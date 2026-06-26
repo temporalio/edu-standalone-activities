@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartbeat checkpoint demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0f1a;
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding: 0.8em 1em 1.2em;
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+h1 { text-align: center; font-size: 1.1em; font-weight: 600; margin-bottom: 0.15em; }
+.subtitle { text-align: center; color: #718096; font-size: 0.78em; margin-bottom: 0.5em; }
+
+/* ── mode tabs ── */
+.mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.4em;
+  margin-bottom: 0.75em;
+}
+.tab {
+  background: #1a1a2e;
+  color: #718096;
+  border: 1px solid #2d3748;
+  border-radius: 4px;
+  padding: 0.28em 0.9em;
+  font-size: 0.8em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.tab:hover:not(.active) { background: #2d3748; color: #a0aec0; }
+.tab.active.bug { background: #3a1515; color: #fc8181; border-color: #9b2c2c; }
+.tab.active.fix { background: #0e2218; color: #9ae6b4; border-color: #276749; }
+
+/* ── speech bubble (sits below info row, amber) ── */
+#speech-bubble {
+  display: none;
+  position: relative;
+  background: #1a1000;
+  border: 2px solid #d97706;
+  border-radius: 6px;
+  padding: 0.5em 0.7em;
+  font-size: 0.79em;
+  color: #fcd34d;
+  line-height: 1.45;
+  box-shadow: 0 4px 18px rgba(217,119,6,0.35);
+  animation: bubblein 0.18s ease-out;
+}
+#speech-bubble.visible { display: block; }
+#speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  border: 7px solid transparent;
+  border-bottom-color: #d97706;
+  border-top: none;
+}
+#speech-bubble.arrow-left::before   { left: 1em; }
+#speech-bubble.arrow-center::before { left: 50%; transform: translateX(-50%); }
+#speech-bubble.arrow-right::before  { left: auto; right: 1em; }
+@keyframes bubblein {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── main layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9em;
+  max-width: 900px;
+  margin: 0 auto;
+}
+@media (max-width: 680px) { .layout { grid-template-columns: 1fr; } }
+
+.panel {
+  background: #141420;
+  border: 1px solid #2d3748;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.exec-panel { position: relative; overflow: visible; }
+
+.panel-title {
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #718096;
+  padding: 0.45em 0.75em;
+  border-bottom: 1px solid #2d3748;
+  background: #0f0f1a;
+}
+
+/* ── code panel ── */
+.code-pre {
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75em;
+  line-height: 1.65;
+  padding: 0.6em 0;
+  overflow-x: auto;
+}
+
+.code-line {
+  display: flex;
+  padding: 0 0.75em;
+  transition: background 0.25s;
+  white-space: pre;
+}
+.code-line .ln {
+  color: #2d3748;
+  user-select: none;
+  min-width: 1.8em;
+  text-align: right;
+  margin-right: 1em;
+  flex-shrink: 0;
+}
+.code-line .src { color: #a0aec0; flex: 1; }
+.code-line .src .kw  { color: #b794f6; }
+.code-line .src .fn  { color: #7aa2ff; }
+.code-line .src .str { color: #9ae6b4; }
+.code-line .src .cmt { color: #4a5568; font-style: italic; }
+.code-line .src .num { color: #f6ad55; }
+.code-line .src .tag { color: #fc8181; font-weight: 600; }
+
+.code-line.active    { background: rgba(68, 76, 231, 0.18); }
+.code-line.active .ln  { color: #667eea; }
+.code-line.active .src { color: #e2e8f0; }
+
+.code-line.bug      { background: rgba(229, 62, 62, 0.18); }
+.code-line.bug .ln  { color: #fc8181; }
+.code-line.bug .src { color: #fbd38d; }
+
+.code-line.dim .src { color: #2d3748; }
+
+.bug-label {
+  display: none;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: #fc8181;
+  margin-left: 0.5em;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.code-line.bug .bug-label { display: inline; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── execution panel ── */
+.exec-panel { padding: 0.65em 0.75em; display: flex; flex-direction: column; gap: 0.6em; }
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+.attempt-badge {
+  background: #2d3748;
+  border-radius: 4px;
+  padding: 0.25em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #e2e8f0;
+  transition: background 0.3s, color 0.3s;
+}
+.attempt-badge.a1 { background: #2a2a4a; color: #a78bfa; border: 1px solid #5b4fcf; }
+.attempt-badge.a2 { background: #3a1f1f; color: #fc8181; border: 1px solid #9b2c2c; }
+
+.worker-badge {
+  background: #2d3748;
+  border-radius: 4px;
+  padding: 0.25em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #a0aec0;
+  transition: background 0.3s, color 0.3s;
+}
+.worker-badge.running { background: #1c3a1c; color: #9ae6b4; border: 1px solid #276749; }
+.worker-badge.down    { background: #3a1515; color: #fc8181; border: 1px solid #9b2c2c; }
+
+.items-label { font-size: 0.68em; color: #4a5568; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.3em;
+}
+
+.item-cell {
+  background: #1a1a2e;
+  border: 1px solid #2d3748;
+  border-radius: 4px;
+  padding: 0.3em 0.2em;
+  text-align: center;
+  transition: background 0.25s, border-color 0.25s;
+  position: relative;
+}
+.item-cell .item-id  { font-size: 0.62em; color: #4a5568; font-family: ui-monospace, monospace; }
+.item-cell .item-ico { font-size: 1em; line-height: 1.2; min-height: 1.2em; }
+.item-cell .item-dup { font-size: 0.6em; font-weight: 700; color: #fc8181; display: none; }
+
+.item-cell.active    { border-color: #f6e05e; background: #1f1f10; }
+.item-cell.done1     { border-color: #38a169; background: #0e2218; }
+.item-cell.duplicate { border-color: #e53e3e; background: #1f1010; }
+.item-cell.duplicate .item-dup { display: block; }
+.item-cell.done2     { border-color: #4299e1; background: #0e1a2e; }
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4em;
+}
+
+.info-box {
+  background: #1a1a2e;
+  border: 1px solid #2d3748;
+  border-radius: 5px;
+  padding: 0.45em 0.6em;
+}
+.info-box-label {
+  font-size: 0.62em;
+  color: #718096;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: ui-monospace, monospace;
+  margin-bottom: 0.3em;
+}
+.info-box-val {
+  font-size: 1.4em;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  line-height: 1.15;
+  margin-top: 0.1em;
+  transition: color 0.3s;
+  color: #e2e8f0;
+}
+#proc-count-box .info-box-val { color: #9ae6b4; }
+#proc-count-box.warn .info-box-val { color: #fc8181; }
+
+.hb-call {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.88em;
+  font-weight: 600;
+  color: #b794f6;
+  transition: color 0.3s;
+}
+.hb-call.none { color: #4a5568; }
+.hb-divider {
+  border: none;
+  border-top: 1px solid #2d3748;
+  margin: 0.35em 0;
+}
+.hb-retry-label {
+  font-size: 0.6em;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, monospace;
+}
+.hb-retry-val {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.8em;
+  color: #f6ad55;
+  margin-top: 0.1em;
+  transition: color 0.3s;
+}
+.hb-retry-val.none { color: #4a5568; }
+
+/* ── controls ── */
+.controls {
+  text-align: center;
+  margin: 0.75em auto 0;
+  max-width: 900px;
+}
+button {
+  background: #444ce7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.38em 0.85em;
+  margin: 0 0.2em;
+  font-size: 0.82em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover:not(:disabled) { background: #5a61f0; }
+button:disabled { opacity: 0.38; cursor: not-allowed; }
+
+.progress {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 0.5em;
+}
+.pip { width: 7px; height: 7px; background: #2d3748; border-radius: 50%; transition: background 0.2s; }
+.pip.active { background: #b794f6; }
+.pip.phase-kill { background: #fc8181; }
+.pip.phase-retry { background: #f6ad55; }
+</style>
+</head>
+<body>
+
+<h1>Heartbeats and checkpointing</h1>
+<div class="subtitle" id="subtitle"></div>
+
+<div class="mode-tabs">
+  <button id="tab-bug" class="tab bug">Bug (Exercise)</button>
+  <button id="tab-fix" class="tab fix">Fixed (Solution)</button>
+</div>
+
+<div class="layout">
+  <!-- left: code -->
+  <div class="panel">
+    <div class="panel-title" id="code-panel-title"></div>
+    <div class="code-pre" id="code-pre"></div>
+  </div>
+
+  <!-- right: execution state -->
+  <div class="panel exec-panel">
+    <div class="panel-title" style="margin: -0.65em -0.75em 0.65em; border-radius: 7px 7px 0 0;">Execution state</div>
+
+    <div class="status-row" id="zone-status">
+      <div class="attempt-badge" id="attempt-badge">Waiting</div>
+      <div class="worker-badge" id="worker-badge">Worker: idle</div>
+    </div>
+
+    <div id="zone-items">
+      <div class="items-label" style="margin-bottom:0.3em">Items (10 total)</div>
+      <div class="items-grid" id="items-grid"></div>
+    </div>
+
+    <div class="info-row" id="zone-info">
+      <div class="info-box" id="stored-hb-box">
+        <div class="info-box-label">heartbeat details</div>
+        <div class="hb-call none" id="hb-call">heartbeat(—)</div>
+        <hr class="hb-divider">
+        <div class="hb-retry-label">next attempt reads</div>
+        <div class="hb-retry-val none" id="hb-retry">heartbeatDetails = null</div>
+      </div>
+      <div class="info-box" id="proc-count-box">
+        <div class="info-box-label">processed_count</div>
+        <div class="info-box-val" id="proc-count">0</div>
+      </div>
+    </div>
+
+    <div id="speech-bubble"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btn-prev">⏮ Back</button>
+  <button id="btn-step">⏭ Step</button>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-reset">⟲ Reset</button>
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ── item state ────────────────────────────────────────────────────────────
+const itemState = Array(10).fill('pending');
+
+function buildGrid() {
+  const grid = $('items-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'item-cell';
+    cell.id = `item-${i}`;
+    cell.innerHTML = `
+      <div class="item-id">item_${String(i).padStart(3,'0')}</div>
+      <div class="item-ico" id="item-ico-${i}"></div>
+      <div class="item-dup" id="item-dup-${i}">×2 duplicate</div>
+    `;
+    grid.appendChild(cell);
+  }
+}
+
+function renderItems() {
+  const icons = { pending: '', active: '⏳', done1: '✓', duplicate: '✓', done2: '✓' };
+  for (let i = 0; i < 10; i++) {
+    const cell = $(`item-${i}`);
+    cell.className = `item-cell ${itemState[i]}`;
+    $(`item-ico-${i}`).textContent = icons[itemState[i]] || '';
+  }
+}
+
+function setItems(states) {
+  for (let i = 0; i < 10; i++) {
+    if (states[i] !== undefined) itemState[i] = states[i];
+  }
+  renderItems();
+}
+
+function setStoredHb(val) {
+  const callEl  = $('hb-call');
+  const retryEl = $('hb-retry');
+  if (val === 'none') {
+    callEl.textContent  = 'heartbeat(—)';
+    callEl.className    = 'hb-call none';
+    retryEl.textContent = 'heartbeatDetails = null';
+    retryEl.className   = 'hb-retry-val none';
+  } else {
+    callEl.textContent  = `heartbeat(${val})`;
+    callEl.className    = 'hb-call';
+    retryEl.textContent = `heartbeatDetails = ${val}`;
+    retryEl.className   = 'hb-retry-val';
+  }
+}
+
+function setProcCount(n, warn) {
+  $('proc-count').textContent = n;
+  $('proc-count-box').className = warn ? 'info-box warn' : 'info-box';
+}
+
+// ── code panel templates ──────────────────────────────────────────────────
+const BUG_CODE_HTML = `
+      <div class="code-line dim" id="cl-1"><span class="ln">1</span><span class="src"><span class="kw">export async function</span> <span class="fn">deliverWebhookBatch</span>(</span></div>
+      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  req: WebhookDeliveryBatch</span></div>
+      <div class="code-line dim" id="cl-3"><span class="ln">3</span><span class="src">): <span class="kw">Promise</span>&lt;<span class="kw">number</span>&gt; {</span></div>
+      <div class="code-line" id="cl-4"><span class="ln">4</span><span class="src">  <span class="kw">const</span> { attempt, heartbeatDetails } = <span class="fn">activityInfo</span>();</span></div>
+      <div class="code-line" id="cl-5"><span class="ln">5</span><span class="src"></span></div>
+      <div class="code-line" id="cl-6"><span class="ln">6</span><span class="src">  <span class="cmt">// TODO: read heartbeatDetails on retry</span></span></div>
+      <div class="code-line" id="cl-7"><span class="ln">7</span><span class="src">  <span class="kw">let</span> startIndex = <span class="num">0</span>;<span class="bug-label">← BUG</span></span></div>
+      <div class="code-line" id="cl-8"><span class="ln">8</span><span class="src"></span></div>
+      <div class="code-line" id="cl-9"><span class="ln">9</span><span class="src">  <span class="kw">let</span> delivered = startIndex;</span></div>
+      <div class="code-line dim" id="cl-10"><span class="ln">10</span><span class="src">  <span class="kw">try</span> {</span></div>
+      <div class="code-line" id="cl-11"><span class="ln">11</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; req.items.length; i++) {</span></div>
+      <div class="code-line" id="cl-12"><span class="ln">12</span><span class="src">      <span class="kw">const</span> item = req.items[i];</span></div>
+      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(req.url, { method: <span class="str">'POST'</span>, ... });</span></div>
+      <div class="code-line" id="cl-14"><span class="ln">14</span><span class="src">      delivered++;</span></div>
+      <div class="code-line" id="cl-15"><span class="ln">15</span><span class="src">      <span class="fn">heartbeat</span>(delivered);</span></div>
+      <div class="code-line" id="cl-16"><span class="ln">16</span><span class="src">      <span class="kw">await</span> <span class="fn">sleep</span>(<span class="num">1000</span>);</span></div>
+      <div class="code-line dim" id="cl-17"><span class="ln">17</span><span class="src">    }</span></div>
+      <div class="code-line dim" id="cl-18"><span class="ln">18</span><span class="src">  } <span class="kw">catch</span> (err) { ... }</span></div>
+      <div class="code-line dim" id="cl-19"><span class="ln">19</span><span class="src">  <span class="kw">return</span> delivered;</span></div>
+      <div class="code-line dim" id="cl-20"><span class="ln">20</span><span class="src">}</span></div>
+`;
+
+const FIX_CODE_HTML = `
+      <div class="code-line dim" id="cl-1"><span class="ln">1</span><span class="src"><span class="kw">export async function</span> <span class="fn">deliverWebhookBatch</span>(</span></div>
+      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  req: WebhookDeliveryBatch</span></div>
+      <div class="code-line dim" id="cl-3"><span class="ln">3</span><span class="src">): <span class="kw">Promise</span>&lt;<span class="kw">number</span>&gt; {</span></div>
+      <div class="code-line" id="cl-4"><span class="ln">4</span><span class="src">  <span class="kw">const</span> { attempt, heartbeatDetails } = <span class="fn">activityInfo</span>();</span></div>
+      <div class="code-line" id="cl-5"><span class="ln">5</span><span class="src"></span></div>
+      <div class="code-line" id="cl-6"><span class="ln">6</span><span class="src">  <span class="kw">let</span> startIndex = <span class="num">0</span>;</span></div>
+      <div class="code-line" id="cl-7"><span class="ln">7</span><span class="src">  <span class="kw">if</span> (heartbeatDetails != <span class="kw">null</span>) {</span></div>
+      <div class="code-line" id="cl-8"><span class="ln">8</span><span class="src">    startIndex = heartbeatDetails <span class="kw">as</span> <span class="kw">number</span>;</span></div>
+      <div class="code-line" id="cl-9"><span class="ln">9</span><span class="src">  }</span></div>
+      <div class="code-line" id="cl-10"><span class="ln">10</span><span class="src"></span></div>
+      <div class="code-line" id="cl-11"><span class="ln">11</span><span class="src">  <span class="kw">let</span> delivered = startIndex;</span></div>
+      <div class="code-line dim" id="cl-12"><span class="ln">12</span><span class="src">  <span class="kw">try</span> {</span></div>
+      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; req.items.length; i++) {</span></div>
+      <div class="code-line" id="cl-14"><span class="ln">14</span><span class="src">      <span class="kw">const</span> item = req.items[i];</span></div>
+      <div class="code-line" id="cl-15"><span class="ln">15</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(req.url, { method: <span class="str">'POST'</span>, ... });</span></div>
+      <div class="code-line" id="cl-16"><span class="ln">16</span><span class="src">      delivered++;</span></div>
+      <div class="code-line" id="cl-17"><span class="ln">17</span><span class="src">      <span class="fn">heartbeat</span>(delivered);</span></div>
+      <div class="code-line" id="cl-18"><span class="ln">18</span><span class="src">      <span class="kw">await</span> <span class="fn">sleep</span>(<span class="num">1000</span>);</span></div>
+      <div class="code-line dim" id="cl-19"><span class="ln">19</span><span class="src">    }</span></div>
+      <div class="code-line dim" id="cl-20"><span class="ln">20</span><span class="src">  } <span class="kw">catch</span> (err) { ... }</span></div>
+      <div class="code-line dim" id="cl-21"><span class="ln">21</span><span class="src">  <span class="kw">return</span> delivered;</span></div>
+      <div class="code-line dim" id="cl-22"><span class="ln">22</span><span class="src">}</span></div>
+`;
+
+// ── mode management ───────────────────────────────────────────────────────
+let currentMode = 'bug';
+
+function setCodeMode(mode) {
+  currentMode = mode;
+  $('code-pre').innerHTML = mode === 'bug' ? BUG_CODE_HTML : FIX_CODE_HTML;
+  $('code-panel-title').textContent = mode === 'bug'
+    ? 'src/activities.ts (exercise)'
+    : 'src/activities.ts (solution)';
+  $('subtitle').textContent = mode === 'bug'
+    ? 'The Activity heartbeats progress. The service goes down mid-batch. The retry ignores the stored checkpoint.'
+    : 'Same scenario — but the retry reads heartbeatDetails and resumes from the checkpoint.';
+  $('tab-bug').className = 'tab bug' + (mode === 'bug' ? ' active' : '');
+  $('tab-fix').className = 'tab fix' + (mode === 'fix' ? ' active' : '');
+}
+
+// ── code highlighting ─────────────────────────────────────────────────────
+function clearCode() {
+  document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active', 'bug'));
+}
+
+function highlightLines(lines, mode) {
+  clearCode();
+  for (const ln of lines) {
+    const el = $(`cl-${ln}`);
+    if (el) el.classList.add(mode || 'active');
+  }
+}
+
+// ── badges ────────────────────────────────────────────────────────────────
+function setAttempt(label, cls) {
+  const el = $('attempt-badge');
+  el.textContent = label;
+  el.className = `attempt-badge${cls ? ' ' + cls : ''}`;
+}
+
+function setWorker(label, cls) {
+  const el = $('worker-badge');
+  el.textContent = label;
+  el.className = `worker-badge${cls ? ' ' + cls : ''}`;
+}
+
+// ── speech bubble ─────────────────────────────────────────────────────────
+function showBubble(slot, html, arrow) {
+  const bubble = $('speech-bubble');
+  if (!slot || !html) { bubble.className = ''; return; }
+  bubble.innerHTML = html;
+  bubble.className = '';
+  bubble.offsetHeight;
+  bubble.className = `visible arrow-${arrow || 'left'}`;
+}
+
+// ── reset ─────────────────────────────────────────────────────────────────
+function resetAll() {
+  for (let i = 0; i < 10; i++) itemState[i] = 'pending';
+  buildGrid();
+  renderItems();
+  setStoredHb('none');
+  setProcCount(0, false);
+  clearCode();
+  setAttempt('Waiting', '');
+  setWorker('Worker: idle', '');
+  showBubble(null, null);
+}
+
+// ── steps ─────────────────────────────────────────────────────────────────
+const BUG_STEPS = [
+  {
+    phase: 'none',
+    apply: () => { resetAll(); showBubble('status', 'A 10-item batch is submitted as a Standalone Activity. Click <b>Step</b> or <b>Play</b>.', 'center'); },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setAttempt('Attempt 1', 'a1');
+      setWorker('Worker: running', 'running');
+      highlightLines([4, 7, 11], 'active');
+      showBubble('status', 'Attempt 1 starts. <code>activityInfo().attempt === 1</code>. <code>startIndex = 0</code>. The loop begins.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 0: 'done1' });
+      setProcCount(1);
+      setStoredHb('1');
+      highlightLines([13, 15], 'active');
+      showBubble('items', 'Item 0 delivered. <code>heartbeat(1)</code> called. Temporal stores the checkpoint.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 1: 'done1' });
+      setProcCount(2);
+      setStoredHb('2');
+      showBubble('items', 'Item 1 delivered. <code>heartbeat(2)</code> stored.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 2: 'done1' });
+      setProcCount(3);
+      setStoredHb('3');
+      showBubble('items', 'Item 2 delivered. <code>heartbeat(3)</code> stored.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 3: 'done1' });
+      setProcCount(4);
+      setStoredHb('4');
+      highlightLines([15], 'active');
+      showBubble('items', 'Item 3 delivered. <code>heartbeat(4)</code> stored.');
+    },
+  },
+  {
+    phase: 'kill',
+    apply: () => {
+      setWorker('Worker: down', 'down');
+      highlightLines([], 'active');
+      showBubble('status', '<b>kill-worker.sh</b> takes the service down. Items 4-9 never ran. Checkpoint 4 is safely stored in Temporal.');
+    },
+  },
+  {
+    phase: 'kill',
+    apply: () => {
+      setAttempt('Retry scheduled', '');
+      setWorker('Worker: idle', '');
+      showBubble('info', 'No heartbeat for 5 seconds. Temporal marks the attempt as dead and schedules a retry. Checkpoint <b>4</b> is still stored.', 'right');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setAttempt('Attempt 2', 'a2');
+      setWorker('Worker: running', 'running');
+      highlightLines([4, 6, 7], 'bug');
+      showBubble('status', 'Attempt 2 starts. <code>heartbeatDetails</code> is available but <b>never read</b>. <code>startIndex</code> is set to <b>0</b> again.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 0: 'duplicate' });
+      setProcCount(5, true);
+      highlightLines([11, 13], 'active');
+      showBubble('items', '<code>i = 0</code>: item_000 fetched and delivered again. The Activity has no idea it already ran this item.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 1: 'duplicate' });
+      setProcCount(6, true);
+      highlightLines([13, 14, 15], 'active');
+      showBubble('items', '<code>i = 1</code>: item_001 delivered again. Duplicate.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 2: 'duplicate' });
+      setProcCount(7, true);
+      highlightLines([13, 14, 15], 'active');
+      showBubble('items', '<code>i = 2</code>: item_002 delivered again. Duplicate.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 3: 'duplicate' });
+      setProcCount(8, true);
+      highlightLines([13, 14, 15], 'active');
+      showBubble('items', '<code>i = 3</code>: item_003 delivered again. Last item the first attempt reached.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 4: 'done2', 5: 'done2', 6: 'done2', 7: 'done2', 8: 'done2', 9: 'done2' });
+      setProcCount(14, true);
+      highlightLines([13, 14, 15, 16], 'active');
+      showBubble('items', 'Items 4-9 delivered for the first time. The Activity completes successfully.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setWorker('Worker: done', 'running');
+      highlightLines([6, 7], 'bug');
+      showBubble('info', '<b>Result: <code>processed_count: 14</code></b> for a 10-item batch. Items 0-3 were delivered twice because the retry never read <code>heartbeatDetails</code>.', 'right');
+    },
+  },
+];
+
+const FIX_STEPS = [
+  {
+    phase: 'none',
+    apply: () => { resetAll(); showBubble('status', 'Same scenario: 10-item batch, heartbeats after each item. This time the retry <b>reads the checkpoint</b>. Click <b>Step</b> or <b>Play</b>.', 'center'); },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setAttempt('Attempt 1', 'a1');
+      setWorker('Worker: running', 'running');
+      highlightLines([4, 6, 13], 'active');
+      showBubble('status', 'Attempt 1 starts. <code>heartbeatDetails</code> is null — <code>if</code> block is skipped. <code>startIndex = 0</code>. The loop begins.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 0: 'done1' });
+      setProcCount(1);
+      setStoredHb('1');
+      highlightLines([15, 17], 'active');
+      showBubble('items', 'Item 0 delivered. <code>heartbeat(1)</code> called. Temporal stores the checkpoint.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 1: 'done1' });
+      setProcCount(2);
+      setStoredHb('2');
+      showBubble('items', 'Item 1 delivered. <code>heartbeat(2)</code> stored.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 2: 'done1' });
+      setProcCount(3);
+      setStoredHb('3');
+      showBubble('items', 'Item 2 delivered. <code>heartbeat(3)</code> stored.');
+    },
+  },
+  {
+    phase: 'a1',
+    apply: () => {
+      setItems({ 3: 'done1' });
+      setProcCount(4);
+      setStoredHb('4');
+      highlightLines([17], 'active');
+      showBubble('items', 'Item 3 delivered. <code>heartbeat(4)</code> stored.');
+    },
+  },
+  {
+    phase: 'kill',
+    apply: () => {
+      setWorker('Worker: down', 'down');
+      highlightLines([], 'active');
+      showBubble('status', '<b>kill-worker.sh</b> takes the service down. Items 4–9 never ran. Checkpoint 4 is safely stored in Temporal.');
+    },
+  },
+  {
+    phase: 'kill',
+    apply: () => {
+      setAttempt('Retry scheduled', '');
+      setWorker('Worker: idle', '');
+      showBubble('info', 'No heartbeat for 5 seconds. Temporal marks the attempt as dead and schedules a retry. Checkpoint <b>4</b> is still stored.', 'right');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setAttempt('Attempt 2', 'a2');
+      setWorker('Worker: running', 'running');
+      highlightLines([4, 7, 8], 'active');
+      showBubble('status', 'Attempt 2 starts. <code>heartbeatDetails = 4</code>. The fix reads it: <code>startIndex = 4</code>. Items 0–3 will be skipped.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 4: 'active' });
+      highlightLines([13, 15], 'active');
+      showBubble('items', 'Loop starts at <code>i = 4</code>. Items 0–3 are untouched — no duplicate calls. Item 4 is next.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setItems({ 4: 'done2', 5: 'done2', 6: 'done2', 7: 'done2', 8: 'done2', 9: 'done2' });
+      setProcCount(10);
+      highlightLines([15, 16, 17], 'active');
+      showBubble('items', 'Items 4–9 delivered. Exactly 6 new deliveries — no duplicates. Activity completes.');
+    },
+  },
+  {
+    phase: 'a2',
+    apply: () => {
+      setWorker('Worker: done', 'running');
+      highlightLines([7, 8], 'active');
+      showBubble('info', '<b>Result: <code>processed_count: 10</code></b> for a 10-item batch. Each item delivered exactly once. The checkpoint made the retry idempotent.', 'right');
+    },
+  },
+];
+
+// ── stepper ───────────────────────────────────────────────────────────────
+let current = 0;
+let playing = false;
+let timer = null;
+const INTERVAL = 2000;
+
+function getSteps() { return currentMode === 'bug' ? BUG_STEPS : FIX_STEPS; }
+
+const PHASE_PIP = { none: '', a1: '', kill: 'phase-kill', retry: '', a2: 'phase-retry' };
+
+function renderPips() {
+  const steps = getSteps();
+  const wrap = $('progress');
+  wrap.innerHTML = '';
+  steps.forEach((s, i) => {
+    const p = document.createElement('div');
+    p.className = 'pip'
+      + (i === current ? ' active' : '')
+      + (s.phase && PHASE_PIP[s.phase] ? ' ' + PHASE_PIP[s.phase] : '');
+    wrap.appendChild(p);
+  });
+}
+
+function goTo(i) {
+  const steps = getSteps();
+  current = Math.max(0, Math.min(steps.length - 1, i));
+  steps[current].apply();
+  $('btn-step').disabled = current >= steps.length - 1;
+  $('btn-prev').disabled = current <= 0;
+  renderPips();
+}
+
+function startPlay() {
+  playing = true;
+  $('btn-play').textContent = '⏸ Pause';
+  if (current >= getSteps().length - 1) goTo(0);
+  timer = setInterval(() => {
+    if (current < getSteps().length - 1) goTo(current + 1);
+    else stopPlay();
+  }, INTERVAL);
+}
+
+function stopPlay() {
+  playing = false;
+  $('btn-play').textContent = '▶ Play';
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+$('btn-step').onclick  = () => { stopPlay(); goTo(current + 1); };
+$('btn-prev').onclick  = () => { stopPlay(); goTo(current - 1); };
+$('btn-reset').onclick = () => { stopPlay(); goTo(0); };
+$('btn-play').onclick  = () => playing ? stopPlay() : startPlay();
+
+// ── tab switching ─────────────────────────────────────────────────────────
+$('tab-bug').onclick = () => {
+  if (currentMode === 'bug') return;
+  stopPlay();
+  setCodeMode('bug');
+  current = 0;
+  goTo(0);
+};
+$('tab-fix').onclick = () => {
+  if (currentMode === 'fix') return;
+  stopPlay();
+  setCodeMode('fix');
+  current = 0;
+  goTo(0);
+};
+
+buildGrid();
+setCodeMode('bug');
+goTo(0);
+</script>
+</body>
+</html>
