@@ -35,4 +35,4 @@ RUN ts-node --version
 # Make scripts executable.
 RUN chmod +x /opt/workshop/scripts/*.sh
 
-EXPOSE 7233 8233 9000
+EXPOSE 7233 8233 9000 9001

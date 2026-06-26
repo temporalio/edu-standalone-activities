@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartbeat checkpoint — topology</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0f1a;
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding: 0.8em 1em 1.2em;
+  min-height: 100vh;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 { font-size: 1.1em; font-weight: 600; margin-bottom: 0.15em; }
+.subtitle { color: #718096; font-size: 0.78em; margin-bottom: 1em; text-align: center; }
+
+/* ── step banner ── */
+.step-banner {
+  min-height: 2.8em;
+  font-size: 0.84em;
+  color: #fcd34d;
+  background: #1a1000;
+  border: 1px solid #d97706;
+  border-radius: 6px;
+  padding: 0.5em 0.9em;
+  margin-bottom: 1em;
+  max-width: 760px;
+  width: 100%;
+  line-height: 1.5;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+/* ── topology canvas ── */
+.topology {
+  position: relative;
+  width: 760px;
+  height: 260px;
+  max-width: 100%;
+}
+
+svg.topo-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── node boxes ── */
+.node {
+  position: absolute;
+  border: 2px solid #2d3748;
+  border-radius: 8px;
+  background: #141420;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  padding: 0.6em 0.8em;
+  transition: border-color 0.3s, background 0.3s, opacity 0.4s;
+}
+.node .node-icon { font-size: 1.6em; line-height: 1; }
+.node .node-label {
+  font-size: 0.7em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #718096;
+}
+.node .node-sub {
+  font-family: ui-monospace, monospace;
+  font-size: 0.68em;
+  color: #4a5568;
+  text-align: center;
+  min-height: 1.2em;
+  transition: color 0.3s;
+}
+
+/* worker node */
+#node-worker {
+  left: 30px;
+  top: 80px;
+  width: 140px;
+  height: 100px;
+}
+#node-worker.running { border-color: #276749; background: #0a1f14; }
+#node-worker.running .node-label { color: #9ae6b4; }
+#node-worker.crash  { border-color: #9b2c2c; background: #1f0a0a; }
+#node-worker.crash  .node-label { color: #fc8181; }
+#node-worker.faded  { opacity: 0.25; }
+
+/* new worker node */
+#node-worker2 {
+  left: 30px;
+  top: 80px;
+  width: 140px;
+  height: 100px;
+  opacity: 0;
+  transition: border-color 0.3s, background 0.3s, opacity 0.5s;
+}
+#node-worker2.visible { opacity: 1; }
+#node-worker2.running { border-color: #276749; background: #0a1f14; }
+#node-worker2.running .node-label { color: #9ae6b4; }
+
+/* temporal service node */
+#node-temporal {
+  right: 30px;
+  top: 50px;
+  width: 160px;
+  height: 160px;
+}
+#node-temporal.pulse { border-color: #b794f6; background: #1a1030; }
+#node-temporal .node-label { color: #a78bfa; }
+#node-temporal .node-sub { color: #4a5568; }
+#node-temporal .node-sub.stored { color: #9ae6b4; }
+
+/* ── item track ── */
+.item-track {
+  position: absolute;
+  top: 190px;
+  left: 30px;
+  right: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.item-block {
+  flex: 1;
+  height: 22px;
+  border-radius: 3px;
+  background: #1a1a2e;
+  border: 1px solid #2d3748;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, monospace;
+  font-size: 0.58em;
+  color: #4a5568;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+.item-block.done1     { background: #0e2218; border-color: #38a169; color: #9ae6b4; }
+.item-block.duplicate { background: #1f1010; border-color: #e53e3e; color: #fc8181; }
+.item-block.done2     { background: #0e1a2e; border-color: #4299e1; color: #63b3ed; }
+.item-block.processing { background: #1f1f10; border-color: #f6e05e; color: #f6e05e; }
+
+/* ── animated packet ── */
+.packet {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #b794f6;
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+.packet.hb  { background: #b794f6; box-shadow: 0 0 6px #b794f6; }
+.packet.read { background: #63b3ed; box-shadow: 0 0 6px #63b3ed; }
+@keyframes fly-right {
+  0%   { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(350px); }
+}
+@keyframes fly-left {
+  0%   { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-350px); }
+}
+.packet.animate-right { animation: fly-right 0.6s ease-in forwards; }
+.packet.animate-left  { animation: fly-left  0.6s ease-in forwards; }
+
+/* crash flash */
+@keyframes crash-flash {
+  0%   { opacity: 1; }
+  20%  { opacity: 0.2; }
+  40%  { opacity: 1; }
+  60%  { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+.crash-flash { animation: crash-flash 0.5s ease; }
+
+/* checkpoint pulse on temporal */
+@keyframes hb-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(183, 148, 246, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(183, 148, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(183, 148, 246, 0); }
+}
+.hb-pulse { animation: hb-pulse 0.5s ease-out; }
+
+/* ── checkpoint store display ── */
+.checkpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 0.2em;
+  min-height: 3em;
+}
+.cp-entry {
+  font-family: ui-monospace, monospace;
+  font-size: 0.65em;
+  color: #4a5568;
+  transition: color 0.3s;
+}
+.cp-entry.latest { color: #9ae6b4; font-weight: 700; }
+.cp-entry.old    { color: #2d3748; }
+
+/* ── controls ── */
+.controls {
+  text-align: center;
+  margin-top: 1em;
+  width: 100%;
+  max-width: 760px;
+}
+button {
+  background: #444ce7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.38em 0.85em;
+  margin: 0 0.2em;
+  font-size: 0.82em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover:not(:disabled) { background: #5a61f0; }
+button:disabled { opacity: 0.38; cursor: not-allowed; }
+.progress { display: flex; justify-content: center; gap: 5px; margin-top: 0.5em; }
+.pip { width: 7px; height: 7px; background: #2d3748; border-radius: 50%; transition: background 0.2s; }
+.pip.active { background: #b794f6; }
+.pip.kill   { background: #fc8181; }
+.pip.retry  { background: #f6ad55; }
+</style>
+</head>
+<body>
+
+<h1>Heartbeat checkpointing — topology view</h1>
+<div class="subtitle">How heartbeats flow between the Worker and Temporal, and what happens on retry</div>
+
+<div class="step-banner" id="step-banner">Click <b>Step</b> or <b>Play</b> to begin.</div>
+
+<div class="topology" id="topology">
+  <svg class="topo-svg" id="topo-svg">
+    <!-- connection line worker → temporal -->
+    <line id="line-fwd" x1="175" y1="130" x2="568" y2="130"
+          stroke="#2d3748" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <!-- connection line temporal → worker2 (for checkpoint read) -->
+    <line id="line-back" x1="568" y1="150" x2="175" y2="150"
+          stroke="#2d3748" stroke-width="1.5" stroke-dasharray="4 3" opacity="0"/>
+    <!-- arrow markers -->
+    <defs>
+      <marker id="arr-purple" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#b794f6"/>
+      </marker>
+      <marker id="arr-blue" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#63b3ed"/>
+      </marker>
+    </defs>
+    <line id="arrow-fwd" x1="500" y1="130" x2="562" y2="130"
+          stroke="#b794f6" stroke-width="1.5" marker-end="url(#arr-purple)" opacity="0"/>
+    <line id="arrow-back" x1="240" y1="150" x2="180" y2="150"
+          stroke="#63b3ed" stroke-width="1.5" marker-end="url(#arr-blue)" opacity="0"/>
+  </svg>
+
+  <!-- Worker node -->
+  <div class="node" id="node-worker">
+    <div class="node-icon">⚙️</div>
+    <div class="node-label">Worker</div>
+    <div class="node-sub" id="worker-sub">idle</div>
+  </div>
+
+  <!-- New Worker (spawns on retry) -->
+  <div class="node" id="node-worker2">
+    <div class="node-icon">⚙️</div>
+    <div class="node-label">Worker (retry)</div>
+    <div class="node-sub" id="worker2-sub">idle</div>
+  </div>
+
+  <!-- Temporal Service node -->
+  <div class="node" id="node-temporal">
+    <div class="node-icon">🗄</div>
+    <div class="node-label">Temporal</div>
+    <div class="node-sub" id="temporal-sub">checkpoint store</div>
+    <div class="checkpoint-list" id="checkpoint-list"></div>
+  </div>
+
+  <!-- Item track -->
+  <div class="item-track" id="item-track"></div>
+
+  <!-- Animated packets (reused) -->
+  <div class="packet hb"  id="pkt-hb"  style="left:175px; top:124px;"></div>
+  <div class="packet read" id="pkt-read" style="left:568px; top:144px;"></div>
+</div>
+
+<div class="controls">
+  <button id="btn-prev">⏮ Back</button>
+  <button id="btn-step">⏭ Step</button>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-reset">⟲ Reset</button>
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ── item track ────────────────────────────────────────────────────────────
+function buildTrack() {
+  const track = $('item-track');
+  track.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const b = document.createElement('div');
+    b.className = 'item-block';
+    b.id = `ib-${i}`;
+    b.textContent = i;
+    track.appendChild(b);
+  }
+}
+
+function setBlock(i, cls) {
+  const el = $(`ib-${i}`);
+  if (el) el.className = `item-block${cls ? ' ' + cls : ''}`;
+}
+
+// ── checkpoint list ───────────────────────────────────────────────────────
+const checkpoints = [];
+
+function addCheckpoint(n) {
+  checkpoints.push(n);
+  renderCheckpoints();
+  pulseNode('node-temporal');
+  flashArrow('arrow-fwd');
+}
+
+function renderCheckpoints() {
+  const list = $('checkpoint-list');
+  list.innerHTML = '';
+  const recent = checkpoints.slice(-3);
+  recent.forEach((n, i) => {
+    const el = document.createElement('div');
+    el.className = 'cp-entry' + (i === recent.length - 1 ? ' latest' : ' old');
+    el.textContent = `hb(${n}) stored`;
+    list.appendChild(el);
+  });
+}
+
+// ── node helpers ──────────────────────────────────────────────────────────
+function setNodeState(id, cls, sub) {
+  const node = $(id);
+  node.className = 'node' + (cls ? ' ' + cls : '');
+  if (sub !== undefined) $(id.replace('node-', '') + '-sub').textContent = sub;
+}
+
+function pulseNode(id) {
+  const node = $(id);
+  node.classList.remove('hb-pulse');
+  node.offsetHeight;
+  node.classList.add('hb-pulse');
+  setTimeout(() => node.classList.remove('hb-pulse'), 600);
+}
+
+function flashArrow(id) {
+  const el = $(id);
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 500);
+}
+
+// ── packet animation ──────────────────────────────────────────────────────
+function firePacket(id, dir) {
+  const pkt = $(id);
+  pkt.classList.remove('animate-right', 'animate-left');
+  pkt.style.opacity = '0';
+  pkt.offsetHeight;
+  pkt.classList.add(dir === 'right' ? 'animate-right' : 'animate-left');
+}
+
+// ── reset ─────────────────────────────────────────────────────────────────
+function resetAll() {
+  checkpoints.length = 0;
+  $('checkpoint-list').innerHTML = '';
+  buildTrack();
+  setNodeState('node-worker', '', 'idle');
+  $('node-worker').style.opacity = '1';
+  setNodeState('node-worker2', '', 'idle');
+  $('node-worker2').className = 'node';
+  $('node-temporal').className = 'node';
+  $('temporal-sub').textContent = 'checkpoint store';
+  $('line-back').setAttribute('opacity', '0');
+  $('arrow-fwd').style.opacity = '0';
+  $('arrow-back').style.opacity = '0';
+  $('pkt-hb').style.opacity = '0';
+  $('pkt-read').style.opacity = '0';
+}
+
+// ── steps ─────────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    phase: 'none',
+    banner: 'A Standalone Activity processes 10 items. After each delivery, it calls <code>heartbeat(n)</code> — sending a checkpoint to Temporal.',
+    apply: () => resetAll(),
+  },
+  {
+    phase: 'a1',
+    banner: 'Attempt 1 starts. Worker picks up the task. <code>heartbeatDetails</code> is null — this is the first run.',
+    apply: () => {
+      setNodeState('node-worker', 'running', 'processing...');
+    },
+  },
+  {
+    phase: 'a1',
+    banner: 'Items 0, 1, 2 processed. Each <code>heartbeat(n)</code> call sends the count to Temporal, which stores it as the latest checkpoint.',
+    apply: () => {
+      [0,1,2].forEach(i => setBlock(i, 'done1'));
+      addCheckpoint(1); addCheckpoint(2); addCheckpoint(3);
+      firePacket('pkt-hb', 'right');
+    },
+  },
+  {
+    phase: 'a1',
+    banner: 'Item 3 processed. <code>heartbeat(4)</code>. Temporal now holds checkpoint <b>4</b>. Items 4–9 are still pending.',
+    apply: () => {
+      setBlock(3, 'done1');
+      addCheckpoint(4);
+      firePacket('pkt-hb', 'right');
+    },
+  },
+  {
+    phase: 'kill',
+    banner: '<b>⚡ Worker process killed.</b> Items 4–9 never ran. The connection to Temporal is severed — but checkpoint 4 is safely persisted.',
+    apply: () => {
+      setNodeState('node-worker', 'crash', 'CRASHED');
+      $('node-worker').classList.add('crash-flash');
+      $('line-back').setAttribute('opacity', '0');
+    },
+  },
+  {
+    phase: 'kill',
+    banner: 'Temporal detects a missed heartbeat (timeout). The activity attempt is marked failed. A retry is scheduled. Checkpoint 4 is intact.',
+    apply: () => {
+      setNodeState('node-worker', 'crash faded', 'CRASHED');
+      $('node-worker').style.opacity = '0.2';
+      $('temporal-sub').textContent = 'scheduling retry...';
+    },
+  },
+  {
+    phase: 'a2',
+    banner: 'New Worker picks up Attempt 2. On start, it calls <code>activityInfo()</code> and reads <code>heartbeatDetails = 4</code> from Temporal.',
+    apply: () => {
+      $('node-worker2').className = 'node running visible';
+      $('worker2-sub').textContent = 'reading checkpoint...';
+      $('temporal-sub').textContent = 'hb(4) → sending';
+      $('line-back').setAttribute('opacity', '1');
+      flashArrow('arrow-back');
+      firePacket('pkt-read', 'left');
+    },
+  },
+  {
+    phase: 'a2',
+    banner: '<code>startIndex = 4</code>. Items 0–3 are already done — the worker skips them entirely. Loop starts at <code>i = 4</code>.',
+    apply: () => {
+      $('worker2-sub').textContent = 'startIndex = 4';
+      $('temporal-sub').textContent = 'checkpoint store';
+      setBlock(4, 'processing');
+    },
+  },
+  {
+    phase: 'a2',
+    banner: 'Items 4–9 delivered (shown in blue). Each sends a new heartbeat. Zero duplicates — the Activity completes correctly.',
+    apply: () => {
+      [4,5,6,7,8,9].forEach(i => setBlock(i, 'done2'));
+      $('worker2-sub').textContent = 'done ✓';
+      addCheckpoint(5); addCheckpoint(6);
+      firePacket('pkt-hb', 'right');
+    },
+  },
+  {
+    phase: 'a2',
+    banner: '<b>Result: 10 items delivered, 0 duplicates.</b> Green = attempt 1. Blue = attempt 2 resumed from checkpoint. The heartbeat made it idempotent.',
+    apply: () => {
+      $('node-worker2').className = 'node running visible';
+      $('worker2-sub').textContent = 'completed ✓';
+    },
+  },
+];
+
+// ── stepper ───────────────────────────────────────────────────────────────
+let current = 0;
+let playing = false;
+let timer = null;
+const INTERVAL = 2500;
+
+const PHASE_PIP = { none: '', a1: '', kill: 'kill', retry: '', a2: 'retry' };
+
+function setBanner(html) {
+  $('step-banner').innerHTML = html;
+}
+
+function renderPips() {
+  const wrap = $('progress');
+  wrap.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const p = document.createElement('div');
+    p.className = 'pip'
+      + (i === current ? ' active' : '')
+      + (s.phase && PHASE_PIP[s.phase] ? ' ' + PHASE_PIP[s.phase] : '');
+    wrap.appendChild(p);
+  });
+}
+
+function goTo(i) {
+  current = Math.max(0, Math.min(STEPS.length - 1, i));
+  STEPS[current].apply();
+  setBanner(STEPS[current].banner);
+  $('btn-step').disabled = current >= STEPS.length - 1;
+  $('btn-prev').disabled = current <= 0;
+  renderPips();
+}
+
+function startPlay() {
+  playing = true;
+  $('btn-play').textContent = '⏸ Pause';
+  if (current >= STEPS.length - 1) goTo(0);
+  timer = setInterval(() => {
+    if (current < STEPS.length - 1) goTo(current + 1);
+    else stopPlay();
+  }, INTERVAL);
+}
+
+function stopPlay() {
+  playing = false;
+  $('btn-play').textContent = '▶ Play';
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+$('btn-step').onclick  = () => { stopPlay(); goTo(current + 1); };
+$('btn-prev').onclick  = () => { stopPlay(); goTo(current - 1); };
+$('btn-reset').onclick = () => { stopPlay(); goTo(0); };
+$('btn-play').onclick  = () => playing ? stopPlay() : startPlay();
+
+buildTrack();
+goTo(0);
+</script>
+</body>
+</html>
