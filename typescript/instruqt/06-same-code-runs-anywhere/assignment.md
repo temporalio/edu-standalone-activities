@@ -177,7 +177,7 @@ This is the upgrade path traditional job queues don't have. When the requirement
 
 ## Coinbase did exactly this
 
-At Replay 2026, Coinbase described migrating their custom Background Jobs Service onto Standalone Activities. That service handles 200 to 600 million jobs per day across 186 namespaces. The same Activity code can run standalone today and be composed into Workflows tomorrow, which lets one system replace a separate job queue and orchestrator.
+At Replay 2026, Coinbase described migrating their custom Background Jobs Service onto Standalone Activities. That service handles 200 to 600 million jobs per day across 186 Namespaces. The same Activity code can run standalone today and be composed into Workflows tomorrow, which lets one system replace a separate job queue and orchestrator.
 
 The full talk: [Standalone Activities for durable job processing, Coinbase at Replay 2026](https://www.youtube.com/watch?v=zsF5Y-IOMOw).
 

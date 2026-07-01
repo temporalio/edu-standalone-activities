@@ -263,7 +263,7 @@
       apply: () => { reset(); }
     },
     {
-      desc: 'Step 1: the Activity attempt POSTs to the webhook receiver. The activity body is in flight.',
+      desc: 'Step 1: the Activity attempt POSTs to the webhook receiver. The Activity body is in flight.',
       apply: () => { moveDots('mid'); }
     },
     {
@@ -271,7 +271,7 @@
       apply: () => { moveDots('echo'); setMetrics(1, 1, 1, 1); }
     },
     {
-      desc: 'Step 3: 💥 the activity raises a transient error <em>after</em> the POST succeeded but <em>before</em> Temporal heard "done".',
+      desc: 'Step 3: the Activity raises a transient error <em>after</em> the POST succeeded but <em>before</em> Temporal heard "done".',
       apply: () => { hideDots(); crash(true); }
     },
     {

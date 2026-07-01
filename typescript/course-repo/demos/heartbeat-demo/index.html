@@ -774,7 +774,7 @@ const FIX_STEPS = [
     apply: () => {
       setWorker('Worker: done', 'running');
       highlightLines([7, 8], 'active');
-      showBubble('info', '<b>Result: <code>processed_count: 10</code></b> for a 10-item batch. Each item delivered exactly once. The checkpoint made the retry idempotent.', 'right');
+      showBubble('info', '<b>Result: <code>processed_count: 10</code></b> for a 10-item batch. Each item delivered exactly once. The checkpoint let the retry resume from where it stopped instead of restarting from zero.', 'right');
     },
   },
 ];

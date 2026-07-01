@@ -11,7 +11,7 @@ notes:
     # Concurrency and rate limits
 
     Your Activity retries safely now. By default, Temporal dispatches Activities
-    as fast as the Worker can pull them off the task queue. That is often faster
+    as fast as the Worker can pull them off the Task Queue. That is often faster
     than the service your Activity is calling can handle.
 
     The downstream service has a rate limit. POST faster than that limit and you
@@ -19,7 +19,7 @@ notes:
 
     The fix is one option on the Worker: `maxActivitiesPerSecond`. The Worker
     dispatches Activities at the configured pace. Everything else waits in the
-    task queue on the server.
+    Task Queue on the server.
 
     ## What you'll do
 

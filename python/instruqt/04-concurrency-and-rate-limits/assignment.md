@@ -10,11 +10,11 @@ notes:
   contents: |
     # Concurrency and rate limits
 
-    Your Activity retries safely now. By default, though, Temporal dispatches Activities as fast as the Worker can pull them off the task queue. That is often faster than the service your Activity is calling can handle.
+    Your Activity retries safely now. By default, though, Temporal dispatches Activities as fast as the Worker can pull them off the Task Queue. That is often faster than the service your Activity is calling can handle.
 
     The downstream service (Stripe's API, the customer's webhook endpoint, your own internal queue) has a rate limit. POST faster than that limit and you get 429s back, the receiver throttles you, and your delivery latency goes up.
 
-    The fix is one keyword argument on the Worker: max_activities_per_second. The Worker dispatches Activities at the configured pace. Everything else waits in the task queue on the server, so work is paced instead of dropped.
+    The fix is one keyword argument on the Worker: max_activities_per_second. The Worker dispatches Activities at the configured pace. Everything else waits in the Task Queue on the server, so work is paced instead of dropped.
 
     ## What you'll do
 

@@ -442,7 +442,7 @@ const STEPS = [
   },
   {
     phase: 'kill',
-    banner: 'Temporal detects a missed heartbeat (timeout). The activity attempt is marked failed. A retry is scheduled. Checkpoint 4 is intact.',
+    banner: 'Temporal detects a missed heartbeat (timeout). The Activity attempt is marked failed. A retry is scheduled. Checkpoint 4 is intact.',
     apply: () => {
       setNodeState('node-worker', 'crash faded', 'CRASHED');
       $('node-worker').style.opacity = '0.2';
@@ -463,7 +463,7 @@ const STEPS = [
   },
   {
     phase: 'a2',
-    banner: '<code>startIndex = 4</code>. Items 0–3 are already done — the worker skips them entirely. Loop starts at <code>i = 4</code>.',
+    banner: '<code>startIndex = 4</code>. Items 0–3 are already done — the Worker skips them entirely. Loop starts at <code>i = 4</code>.',
     apply: () => {
       $('worker2-sub').textContent = 'startIndex = 4';
       $('temporal-sub').textContent = 'checkpoint store';
@@ -482,7 +482,7 @@ const STEPS = [
   },
   {
     phase: 'a2',
-    banner: '<b>Result: 10 items delivered, 0 duplicates.</b> Green = attempt 1. Blue = attempt 2 resumed from checkpoint. The heartbeat made it idempotent.',
+    banner: '<b>Result: 10 items delivered, 0 duplicates.</b> Green = attempt 1. Blue = attempt 2 resumed from checkpoint. The heartbeat let the retry resume from the checkpoint instead of restarting from zero.',
     apply: () => {
       $('node-worker2').className = 'node running visible';
       $('worker2-sub').textContent = 'completed ✓';

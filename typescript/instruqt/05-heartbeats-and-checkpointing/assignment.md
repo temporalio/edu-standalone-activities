@@ -141,7 +141,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"p
 }
 ```
 
-The receiver had no way to know they were duplicates because each carries a different `eventId`.
+The receiver had no way to know these were duplicates: each batch item is a distinct delivery with its own `eventId`, so the receiver-side idempotency key from Module 02 wouldn't catch them. Resuming from a checkpoint is what avoids the re-delivery here.
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeatDetails`. So it starts at `startIndex = 0` and redoes everything.
 
@@ -153,16 +153,16 @@ Think of it like a video game checkpoint system.
 
 The scenario: Your activity is processing 1,000 emails. It takes 10 minutes. Halfway through, the worker crashes.
 
-Without heartbeats for checkpoints, Temporal retries from zero — you reprocess the 500 emails you already sent. Bad.
+Without heartbeats for checkpoints, Temporal retries from zero — you reprocess the 500 emails you already sent.
 
 Heartbeats are useful when an activity is doing long, resumable work where restarting from zero would be wasteful or harmful.
 
 **Quick check:** When should you use heartbeats? Select all that apply.
 
 [x] Processing a large list (emails, records, files) — skip already-done items on retry
-[x] Uploading/downloading a large file — resume from byte offset instead of restarting
-[x] Work where "doing it twice" causes problems (duplicate charges, duplicate emails)
-[x] You need the activity to detect it's been externally cancelled mid-loop (heartbeat throws a `CancelledError` when cancellation is requested)
+[x] Uploading or downloading a large file — resume from the last byte offset instead of restarting
+[x] Work where doing it twice causes problems (duplicate charges, duplicate emails)
+[x] You need the Activity to detect that it was cancelled mid-loop (heartbeat throws a `CancelledFailure` when cancellation is requested)
 
 ---
 

@@ -177,7 +177,7 @@ Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You
 
 Three POSTs still landed at the receiver because the Activity still retried three times. The receiver saw the same idempotency key on each one, so it returned a cached response to attempts 2 and 3 without processing new deliveries.
 
-> **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
+> **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 
 ---
 
@@ -205,7 +205,7 @@ For permanent failures the Activity itself can recognize, throw `ApplicationFail
 
 Each retry generates a different random code, so the idempotency key changes per attempt. The receiver sees N different keys for the same logical request and accepts all N. The "idempotency" dedupes nothing.
 
-The fix is to make the key deterministic across retries: derive it from input fields the caller already chose (e.g. `req.eventId`), or for workflow-bound Activities, use `workflowRunId + activityId`. If you need a random code as part of the side effect, generate it in the caller and pass it in as Activity input.
+The fix is to make the key deterministic across retries: derive it from input fields the caller already chose (e.g. `req.eventId`), or for Workflow-bound Activities, use `workflowRunId + activityId`. If you need a random code as part of the side effect, generate it in the caller and pass it in as Activity input.
 
 </details>
 
