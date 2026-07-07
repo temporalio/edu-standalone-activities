@@ -317,7 +317,7 @@ Port from `origin/add-typescript-track:typescript/course-repo/solution/02-*`. Ke
 
 - [ ] **Step 1: `webhook/shared.go`** — same as Module 01 but import path base is `.../02-idempotency-and-crash-safety/webhook`. (No `workflow.go` in this module.)
 
-- [ ] **Step 2: `webhook/activity.go` (solution)** — add the idempotency key header and a simulated-transient-failure on attempt 1 to drive the crash/retry lesson. Use `activity.GetInfo(ctx).Attempt`:
+- [ ] **Step 2: `webhook/activity.go` (solution)** — POST with a stable idempotency key, then throw a simulated transient failure on attempts 1-2 so Temporal retries and the same delivery is POSTed three times (the receiver dedupes attempts 2-3). Verified against the TS reference (`ApplicationFailure` on `attempt < 3`, key `webhook:<eventId>`):
 
 ```go
 package webhook
@@ -330,11 +330,12 @@ import (
 	"net/http"
 
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/temporal"
 )
 
 func DeliverWebhook(ctx context.Context, req WebhookDelivery) (int, error) {
-	info := activity.GetInfo(ctx)
-	activity.GetLogger(ctx).Info("Delivering webhook", "eventId", req.EventID, "attempt", info.Attempt)
+	attempt := activity.GetInfo(ctx).Attempt
+	activity.GetLogger(ctx).Info("Delivering webhook", "eventId", req.EventID, "attempt", attempt)
 
 	body, _ := json.Marshal(req.Payload)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, req.URL, bytes.NewReader(body))
@@ -342,8 +343,9 @@ func DeliverWebhook(ctx context.Context, req WebhookDelivery) (int, error) {
 		return 0, err
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
-	// Stable idempotency key: the receiver dedupes retries of the SAME event.
-	httpReq.Header.Set("Idempotency-Key", req.EventID)
+	// The event id is stable across retries, so every retry POSTs the same
+	// logical delivery key and the receiver dedupes the side effect.
+	httpReq.Header.Set("Idempotency-Key", "webhook:"+req.EventID)
 
 	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
@@ -353,23 +355,32 @@ func DeliverWebhook(ctx context.Context, req WebhookDelivery) (int, error) {
 	if resp.StatusCode >= 300 {
 		return 0, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
+
+	// Simulate a transient failure on attempts 1-2 so Temporal retries and the
+	// same delivery is POSTed three times. A stable Idempotency-Key keeps the
+	// receiver from processing it more than once.
+	if attempt < 3 {
+		return 0, temporal.NewApplicationError(
+			fmt.Sprintf("Simulated transient failure on attempt %d", attempt), "TransientError")
+	}
 	return resp.StatusCode, nil
 }
 ```
 
 - [ ] **Step 3: `worker/main.go`** — like Module 01 but register only the Activity (no Workflow), import `.../02-.../webhook`.
 
-- [ ] **Step 4: `sendstandalone/main.go`** — like Module 01's, import `.../02-.../webhook`, `StartToCloseTimeout: 20 * time.Second` (leaves room to crash the Worker mid-flight per AGENTS.md chaos guidance). Do NOT block on `handle.Get` immediately if the assignment kills the Worker in the same terminal; instead submit and print the handle ID, then optionally `handle.Get`. Match the TS flow: submit, then `handle.Get` at the end (the starter process can exit; the job is durable server-side).
+- [ ] **Step 4: `sendstandalone/main.go`** — import `.../02-.../webhook` and `go.temporal.io/sdk/temporal`; `StartToCloseTimeout: 10 * time.Second` and `RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: 5}` so the 3 simulated failures are all retried. Submit, then `handle.Get(ctx, &status)`, print `log.Printf("Activity completed with status %d", status)`.
 
-- [ ] **Step 5: Exercise mirror** — copy, swap import paths to `exercise/`, and in the exercise `activity.go` remove the `Idempotency-Key` header line and leave a TODO:
+- [ ] **Step 5: Exercise mirror** — copy, swap import paths to `exercise/`, and in the exercise `activity.go` replace ONLY the `Idempotency-Key` header line with a TODO (keep the simulated failure — it is the retry driver, not the thing being taught):
 ```go
-	// TODO: set a stable "Idempotency-Key" header (req.EventID) so retries dedupe.
+	// TODO: set a stable "Idempotency-Key" header (e.g. "webhook:"+req.EventID)
+	//       so the retries below dedupe instead of triple-delivering.
 ```
-(The exercise version still compiles and delivers, just without dedup — that's the fail-then-fix.)
+(The exercise version compiles and delivers, but its 3 retries all process at the receiver — that is the fail-then-fix.)
 
 - [ ] **Step 6: Build + commit**
 ```bash
-cd go/course-repo && go build ./...02-idempotency-and-crash-safety/...
+cd go/course-repo && go build ./solution/02-idempotency-and-crash-safety/... ./exercise/02-idempotency-and-crash-safety/...
 git add go/course-repo/{solution,exercise}/02-idempotency-and-crash-safety
 git commit -m "Go track: module 02 course code (idempotency + crash safety)"
 ```
