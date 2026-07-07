@@ -9,6 +9,7 @@ import (
 	"standaloneactivities/exercise/02-idempotency-and-crash-safety/webhook"
 
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 )
 
 func main() {
@@ -35,7 +36,8 @@ func main() {
 	handle, err := c.ExecuteActivity(context.Background(), client.StartActivityOptions{
 		ID:                  "deliver-" + eventID,
 		TaskQueue:           webhook.TaskQueue,
-		StartToCloseTimeout: 20 * time.Second,
+		StartToCloseTimeout: 10 * time.Second,
+		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 5},
 	}, webhook.DeliverWebhook, req)
 	if err != nil {
 		log.Fatalln("Unable to start standalone activity", err)
@@ -45,5 +47,5 @@ func main() {
 	if err := handle.Get(context.Background(), &status); err != nil {
 		log.Fatalln("Standalone activity failed", err)
 	}
-	log.Printf("Standalone Activity completed with status %d", status)
+	log.Printf("Activity completed with status %d", status)
 }
