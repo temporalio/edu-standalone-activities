@@ -562,7 +562,7 @@ func main() {
 }
 ```
 
-- [ ] **Step 4: `sendbulkdemo/main.go`** — port TS `sendBulkDemo.ts` (read it first: `git show origin/add-typescript-track:typescript/course-repo/solution/04-concurrency-and-rate-limits/src/sendBulkDemo.ts`). It arms the receiver's rate limit via `POST /_rate_limit?limit=N` before the bulk send so learners see 429s, then sends bulk. Reproduce that behavior in Go (`http.Post` to the `_rate_limit` control endpoint, then the same fan-out as `sendbulk`).
+- [ ] **Step 4: `sendbulkdemo/main.go`** — IDENTICAL to `sendbulk/main.go` except it uses `demo-%03d` activity IDs and payload `{"eventId": "demo_%03d", "type": "demo_rate_limit"}`. It does NOT arm the rate limit (verified against TS `sendBulkDemo.ts`); the assignment arms the receiver via a manual `curl -X POST http://localhost:9000/_rate_limit?limit=2` in section 2, then runs this script so leftover `demo-*` retries don't collide with the `bulk-*` IDs from sections 1 and 3.
 
 - [ ] **Step 5: Exercise mirror** — exercise `worker/main.go` uses `worker.Options{}` with a TODO:
 ```go
