@@ -111,7 +111,7 @@ In the [button label="Terminal" background="#444CE7"](tab-2) tab, turn on a 2 re
 curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
 ```
 
-Now send 60 deliveries against the rate-limited receiver using `sendbulkdemo` (separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 3):
+Now send 60 deliveries against the rate-limited receiver using `sendbulkdemo` (separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 4):
 
 ```bash,run
 # Reset and fan out 60 deliveries against the rate-limited receiver. Watch the 429s.
