@@ -246,13 +246,15 @@ You should see:
 Batch delivery completed: 10 items delivered.
 ```
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count": 10`. No duplicates. The retry read the heartbeat details, jumped to the checkpoint index, and finished the remaining items without redoing anything.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count"` close to 10, a big drop from the 14 you saw without a checkpoint. The retry read the heartbeat details, jumped near the checkpoint index, and finished the remaining items instead of redoing the whole batch.
 
-Look at the Worker console logs for the second attempt. You should see a line containing `Resuming from checkpoint`, with `startIndex 4` and `attempt 2` (or similar, depending on exactly how far the first attempt got).
+The Go SDK throttles how often heartbeats actually reach the server, capping updates to roughly 80% of `HeartbeatTimeout`. That means the checkpoint the server has on file can lag a beat behind what the Activity already delivered locally, so do not be surprised if one or two items right at the crash boundary show up twice. That is still far better than redoing the whole batch, and it is why heartbeating is worth using even though it is not a perfect exactly-once guarantee.
 
-That log line, together with the receiver's counts, is your evidence the resume worked. A **Completed** Standalone Activity's record in the Temporal UI does not show a per-attempt breakdown or prove it was retried; the attempt count is only visible while the Activity is **Running**.
+Look at the Worker console logs for the second attempt. You should see a line containing `Resuming from checkpoint`, with a `startIndex` close to wherever the first attempt got interrupted and `attempt 2` (the exact number depends on heartbeat throttling timing).
 
-> **The takeaway:** same Activity, same kill, same restart. But the receiver sees each item exactly once. Heartbeating is how a long-running Activity saves progress before the next crash.
+That log line, together with the receiver's counts, is your evidence the resume worked: instead of restarting at item 0, the retry picked up from somewhere in the middle. A **Completed** Standalone Activity's record in the Temporal UI does not show a per-attempt breakdown or prove it was retried; the attempt count is only visible while the Activity is **Running**.
+
+> **The takeaway:** same Activity, same kill, same restart. But the receiver sees most items exactly once instead of the whole batch twice. Heartbeating is how a long-running Activity saves progress before the next crash, even if the last checkpoint the server has can lag slightly behind due to throttling.
 
 ## Try Interactive Diagram
 

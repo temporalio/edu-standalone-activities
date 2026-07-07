@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-pkill -f "exe/worker" 2>/dev/null || true
 pkill -f "go run ./worker" 2>/dev/null || true
+pkill -f "exe/worker" 2>/dev/null || true
+pkill -f "go-build.*/worker$" 2>/dev/null || true
+pkill -f "/worker$" 2>/dev/null || true
 pkill -f "temporal server" 2>/dev/null || true
 pkill -f "webhook-receiver" 2>/dev/null || true
 pkill -f "demo-server" 2>/dev/null || true
