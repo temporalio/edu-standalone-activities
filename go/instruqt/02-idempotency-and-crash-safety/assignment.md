@@ -92,7 +92,7 @@ The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
 Open `webhook/activity.go` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The Activity is set up to POST the webhook, then return a simulated transient error on its first two attempts. This simulates a transient failure after the side effect already happened: the receiver processed the request, but the Activity returned an error before Temporal heard "done." On each retry Temporal re-runs the Activity body, POST included.
 
-There's a `TODO` above the `httpReq.Header.Set("Content-Type", ...)` line. Leave it alone for now so you can see what goes wrong before the fix.
+There's a `TODO` just below the `httpReq.Header.Set("Content-Type", ...)` line. Leave it alone for now so you can see what goes wrong before the fix.
 
 In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
 
