@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"sync"
@@ -22,14 +21,6 @@ func main() {
 			count = n
 		}
 	}
-
-	// Arm the receiver's rate limit (2 req/sec) so this run produces real 429s.
-	if resp, err := http.Post("http://localhost:9000/_rate_limit?limit=2", "application/json", nil); err != nil {
-		log.Fatalln("Unable to arm rate limit", err)
-	} else {
-		resp.Body.Close()
-	}
-
 	c, err := client.Dial(client.Options{HostPort: "localhost:7233"})
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
@@ -40,7 +31,7 @@ func main() {
 	for i := 0; i < count; i++ {
 		id := fmt.Sprintf("demo_%03d", i)
 		handle, err := c.ExecuteActivity(context.Background(), client.StartActivityOptions{
-			ID:                  "demo-" + id,
+			ID:                  fmt.Sprintf("demo-%03d", i),
 			TaskQueue:           webhook.TaskQueue,
 			StartToCloseTimeout: 30 * time.Second,
 		}, webhook.DeliverWebhook, webhook.WebhookDelivery{
