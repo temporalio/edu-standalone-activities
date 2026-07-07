@@ -1,61 +1,68 @@
 ---
 slug: heartbeats-and-checkpointing
+id: maxg6hgxfkbr
 type: challenge
 title: Heartbeats and checkpointing
-teaser:
-  Resume a long-running Standalone Activity from where it left off after a Worker
+teaser: Resume a long-running Standalone Activity from where it left off after a Worker
   crash.
 notes:
-  - type: text
-    contents: |
-      # Heartbeats and checkpointing (Go)
+- type: text
+  contents: |
+    # Heartbeats and checkpointing (Go)
 
-      A single Standalone Activity that processes a batch of webhook deliveries can
-      take minutes. When the Worker crashes mid-batch, many job queues either lose
-      in-flight progress or expect *you* to invent a checkpointing scheme for each
-      job type.
+    A single Standalone Activity that processes a batch of webhook deliveries can
+    take minutes. When the Worker crashes mid-batch, many job queues either lose
+    in-flight progress or expect *you* to invent a checkpointing scheme for each
+    job type.
 
-      Standalone Activities have heartbeats built in. The Activity calls
-      `activity.RecordHeartbeat(ctx, progress)` after each unit of work; the Temporal
-      server stores that value. If the attempt dies (Worker crash, machine reboot,
-      deploy), the next attempt reads the heartbeat details with
-      `activity.GetHeartbeatDetails(ctx, &checkpoint)` and resumes from the last
-      reported checkpoint instead of redoing work.
+    Standalone Activities have heartbeats built in. The Activity calls
+    `activity.RecordHeartbeat(ctx, progress)` after each unit of work; the Temporal
+    server stores that value. If the attempt dies (Worker crash, machine reboot,
+    deploy), the next attempt reads the heartbeat details with
+    `activity.GetHeartbeatDetails(ctx, &checkpoint)` and resumes from the last
+    reported checkpoint instead of redoing work.
 
-      ## What you'll do
+    ## What you'll do
 
-      1. Run a long-running Activity that delivers 10 webhooks. Bring the service down mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
-      2. Add one block to read the heartbeat details on retry and skip items already delivered.
-      3. Re-run, kill again, and watch the retry resume from the checkpoint with no duplicates.
+    1. Run a long-running Activity that delivers 10 webhooks. Bring the service down mid-batch. Watch the retry start from item 0, and the receiver records duplicates.
+    2. Add one block to read the heartbeat details on retry and skip items already delivered.
+    3. Re-run, kill again, and watch the retry resume from the checkpoint with no duplicates.
 tabs:
-  - title: Exercise
-    type: code
-    hostname: workshop
-    path: /root/workshop/exercise/05-heartbeats-and-checkpointing
-  - title: Solution
-    type: code
-    hostname: workshop
-    path: /root/workshop/solution/05-heartbeats-and-checkpointing
-  - title: Terminal
-    type: terminal
-    hostname: workshop
-    workdir: /root/workshop/exercise/05-heartbeats-and-checkpointing
-  - title: Worker
-    type: terminal
-    hostname: workshop
-    workdir: /root/workshop/exercise/05-heartbeats-and-checkpointing
-  - title: Webhook receiver
-    type: service
-    hostname: workshop
-    port: 9000
-  - title: Temporal UI
-    type: service
-    hostname: workshop
-    port: 8233
-  - title: Interactive Diagram
-    type: service
-    hostname: workshop
-    port: 9001
+- id: pcvy8zhtfgbj
+  title: Exercise
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercise/05-heartbeats-and-checkpointing
+- id: jmzm8lpnb360
+  title: Solution
+  type: code
+  hostname: workshop
+  path: /root/workshop/solution/05-heartbeats-and-checkpointing
+- id: l8y4lvxd7831
+  title: Terminal
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop/exercise/05-heartbeats-and-checkpointing
+- id: krux7fwuttyh
+  title: Worker
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop/exercise/05-heartbeats-and-checkpointing
+- id: 1sos15fcvgk4
+  title: Webhook receiver
+  type: service
+  hostname: workshop
+  port: 9000
+- id: hdulk465ossy
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
+- id: zixp3x1ndwyd
+  title: Interactive Diagram
+  type: service
+  hostname: workshop
+  port: 9001
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null

@@ -1,5 +1,6 @@
 ---
 slug: same-code-runs-anywhere
+id: b9a2vpzrk3qt
 type: challenge
 title: Same code runs anywhere
 teaser: The same Activity you've been writing, now called from a Workflow. One Activity,
@@ -23,27 +24,33 @@ notes:
     you've used all tutorial) and via `client.ExecuteWorkflow` (a Workflow that
     calls the Activity as a step). Same Activity, two job types.
 tabs:
-- title: Exercise
+- id: m0dgqhtrc9zd
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercise/06-same-code-runs-anywhere
-- title: Solution
+- id: vtpi0kncvncr
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/solution/06-same-code-runs-anywhere
-- title: Terminal
+- id: vlj0y4esuv3x
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercise/06-same-code-runs-anywhere
-- title: Worker
+- id: 3rhel1o9ng9i
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercise/06-same-code-runs-anywhere
-- title: Webhook receiver
+- id: 446pmbzndp9l
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: sb3lrkgzuzhm
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
