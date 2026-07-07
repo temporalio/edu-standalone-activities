@@ -29,15 +29,15 @@ func main() {
 
 	var wg sync.WaitGroup
 	for i := 0; i < count; i++ {
-		id := fmt.Sprintf("bulk_%03d", i)
+		seq := fmt.Sprintf("%03d", i)
 		handle, err := c.ExecuteActivity(context.Background(), client.StartActivityOptions{
-			ID:                  "bulk-" + id,
+			ID:                  "bulk-" + seq,
 			TaskQueue:           webhook.TaskQueue,
 			StartToCloseTimeout: 30 * time.Second,
 		}, webhook.DeliverWebhook, webhook.WebhookDelivery{
 			URL:     webhook.WebhookReceiverURL,
-			Payload: map[string]any{"eventId": id, "type": "bulk_send"},
-			EventID: id,
+			Payload: map[string]any{"eventId": "bulk_" + seq, "type": "bulk_send"},
+			EventID: "bulk_" + seq,
 		})
 		if err != nil {
 			log.Fatalln("submit failed", err)
