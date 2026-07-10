@@ -62,7 +62,7 @@ timelimit: 1500
 enhanced_loading: null
 ---
 
-# Reject duplicate jobs at the platform
+# Reject duplicate jobs before any Worker sees them
 
 Many job queues dedupe in the wrong place, after a Worker has already picked up the job, or they don't dedupe at all. You end up writing per-service dedup logic that behaves a little differently each time.
 

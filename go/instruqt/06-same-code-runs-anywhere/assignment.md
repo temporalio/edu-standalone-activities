@@ -166,6 +166,19 @@ The same `DeliverWebhook` Activity ran in both cases. The receiver recorded two 
 
 ---
 
+## Check your understanding
+
+> A teammate wants to reuse your `DeliverWebhook` Activity as a step inside a new multi-step order Workflow. What do they have to change in the Activity's code to make it callable from a Workflow?
+
+<details>
+<summary>Answer</summary>
+
+Nothing. The Activity function is identical either way. That's the whole point of this module.
+
+What differs is the **caller**, not the Activity. A Workflow invokes it with `workflow.ExecuteActivity`; a client invokes it with `client.ExecuteActivity`. The Activity never knows which path reached it. The only setup: the Worker has to register the Workflow too, and Activity options like `StartToCloseTimeout` are set by the caller rather than baked into the Activity.
+
+</details>
+
 ## Why this matters
 
 Every Activity you've written in this tutorial is a reusable building block:

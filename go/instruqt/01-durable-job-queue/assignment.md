@@ -56,12 +56,9 @@ enhanced_loading: null
 With many job queues, you still have to solve the hard parts yourself:
 
 - Jobs vanish during deploys, crashes, and restarts.
-- Bring your own broker, result store, scheduler, and monitoring.
-- Retry logic reimplemented in every service, all behaving differently.
-- Slow consumers can block everything behind them.
-- If the work grows into orchestration, you often have to rewrite it elsewhere.
-- No polyglot support in most job queue frameworks.
-- A Tier-0 service nobody wants to maintain.
+- You bring your own broker, result store, scheduler, and monitoring.
+- Retry logic gets reimplemented in every service, each behaving a little differently.
+- A crash mid-job can double-deliver, or lose the job entirely.
 
 **Standalone Activities are Temporal's durable job queue.** You write a regular Go function and submit it with one API call. Temporal persists it, retries it on failure, and makes it visible in the UI. No broker, scheduler, or result store to deploy.
 

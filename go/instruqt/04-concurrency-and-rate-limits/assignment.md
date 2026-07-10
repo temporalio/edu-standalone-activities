@@ -145,7 +145,7 @@ MaxConcurrentActivityExecutionSize: 10,
 WorkerActivitiesPerSecond: 2,
 ```
 
-The Worker now dispatches at most 2 Activities per second. The full version is in the **Solution** tab.
+Two knobs, two jobs. `MaxConcurrentActivityExecutionSize: 10` is the *concurrency* cap: at most 10 Activities run on this Worker at once. `WorkerActivitiesPerSecond: 2` is the *rate* cap: the Worker starts at most 2 per second no matter how many slots are free. Rate limiting is what protects the receiver here; the concurrency cap bounds how much this Worker takes on at any instant. The full version is in the **Solution** tab.
 
 > **Where does the excess go?** It waits in the Task Queue on the Temporal server. The Worker polls, and the server hands it work at the configured rate. Unscheduled work stays in the queue and nothing is lost.
 

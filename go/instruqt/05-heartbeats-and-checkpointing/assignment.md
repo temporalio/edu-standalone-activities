@@ -149,11 +149,11 @@ Open the [button label="Interactive Diagram" background="#444CE7"](tab-6) tab to
 
 ### What's a checkpoint?
 
-Think of it like a video game checkpoint system.
+Think of it like a video game checkpoint. Die after the checkpoint and you respawn there, not at the start of the level. A heartbeat is your Activity reaching a checkpoint; the retry respawns from the last one it reached.
 
 The scenario: your Activity is processing 1,000 emails. It takes 10 minutes. Halfway through, the Worker crashes.
 
-Without heartbeats for checkpoints, Temporal retries from zero. You reprocess the 500 emails you already sent.
+Without heartbeats, Temporal retries from zero. You reprocess the 500 emails you already sent, like losing all your progress and restarting the level.
 
 Heartbeats are useful when an Activity is doing long, resumable work where restarting from zero would be wasteful or harmful.
 
