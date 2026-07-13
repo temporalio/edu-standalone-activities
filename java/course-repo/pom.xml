@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    Parent POM for the Standalone Activities course.
+
+    It plays two roles:
+      1. Parent: every module (exercise + solution) inherits the Temporal SDK
+         dependency, Java 21 compiler settings, and the exec-maven-plugin used
+         to run the Worker and starter programs.
+      2. Aggregator: `mvn compile` from this directory compiles all 12 module
+         directories at once, which the sandbox image build uses to validate
+         that every stub and solution compiles.
+
+    The sandbox image installs this POM into the local Maven repository
+    (`mvn -N install`), so each seeded module directory can resolve it by
+    coordinates even though it is copied out on its own at runtime.
+  -->
+  <groupId>io.temporal.edu</groupId>
+  <artifactId>webhooks-parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <name>Standalone Activities Webhook Course (parent)</name>
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Standalone Activities are Public Preview in the Java SDK as of 1.36.0. -->
+    <temporal.version>1.36.0</temporal.version>
+    <jackson.version>2.17.2</jackson.version>
+    <slf4j.version>2.0.13</slf4j.version>
+    <exec.plugin.version>3.5.0</exec.plugin.version>
+  </properties>
+
+  <!-- Inherited by every module so their POMs stay a few lines long. -->
+  <dependencies>
+    <dependency>
+      <groupId>io.temporal</groupId>
+      <artifactId>temporal-sdk</artifactId>
+      <version>${temporal.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <!-- Prints Worker and SDK logs to the console; keeps SDK internals quiet. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${exec.plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <!-- Build-time validation only; not copied into seeded learner directories. -->
+  <modules>
+    <module>exercise/01-durable-job-queue</module>
+    <module>exercise/02-idempotency-and-crash-safety</module>
+    <module>exercise/03-dedup-via-id-reuse</module>
+    <module>exercise/04-concurrency-and-rate-limits</module>
+    <module>exercise/05-heartbeats-and-checkpointing</module>
+    <module>exercise/06-same-code-runs-anywhere</module>
+    <module>solution/01-durable-job-queue</module>
+    <module>solution/02-idempotency-and-crash-safety</module>
+    <module>solution/03-dedup-via-id-reuse</module>
+    <module>solution/04-concurrency-and-rate-limits</module>
+    <module>solution/05-heartbeats-and-checkpointing</module>
+    <module>solution/06-same-code-runs-anywhere</module>
+  </modules>
+</project>

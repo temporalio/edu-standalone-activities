@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Capstone module: no code changes required. Clear any leftover Worker and rate limit.
+pkill -f "webhooks.Worker" 2>/dev/null || true
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true
+exit 0

@@ -1,0 +1,6 @@
+# Keep the build context small: build output is regenerated inside the image.
+course-repo/**/target
+**/target
+**/*.class
+.git
+.DS_Store
