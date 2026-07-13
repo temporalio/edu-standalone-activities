@@ -1,4 +1,5 @@
 slug: standalone-activities-java-instruqt-skill
+id: a2boxs4dcnbx
 title: Build a Job Queue with Standalone Activities (Java)
 teaser: Build a durable webhook-delivery service with Standalone Activities, Temporal's
   durable job queue. No broker, no scheduler, no retry library to operate.
@@ -63,4 +64,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentLeft
   default_layout_sidebar_size: 33
+checksum: "15757111023166120867"
 enhanced_loading: true

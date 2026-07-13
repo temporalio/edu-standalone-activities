@@ -1,5 +1,6 @@
 ---
 slug: idempotency-and-crash-safety
+id: elvgkixiqdnx
 type: challenge
 title: Idempotency and crash safety
 teaser: Crash the Worker mid-flight; watch duplicate deliveries; fix them with one
@@ -20,27 +21,33 @@ notes:
     1. Run an Activity that POSTs a webhook, then errors out on its first two attempts. Watch the Webhook receiver process 3 deliveries for one logical event.
     2. Add a one-line idempotency key to the POST. Re-run. Watch the Webhook receiver receive 3 requests but process only 1 delivery.
 tabs:
-- title: Exercise
+- id: tdg2hjqrnbys
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
-- title: Solution
+- id: 2nq60r8x8dxg
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/02-idempotency-and-crash-safety/solution
-- title: Terminal
+- id: 4tpc3hsc3q7f
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
-- title: Worker
+- id: 3shyufrlv98r
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/02-idempotency-and-crash-safety/exercise
-- title: Webhook receiver
+- id: qwwkdtb0haos
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: a9ixdkck8epe
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233

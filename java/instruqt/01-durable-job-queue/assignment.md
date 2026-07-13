@@ -1,5 +1,6 @@
 ---
 slug: durable-job-queue
+id: mern0chxaqb7
 type: challenge
 title: 'Standalone Activities: the durable job queue'
 teaser: Run a webhook delivery as a durable job, with no broker, scheduler, or result
@@ -15,27 +16,33 @@ notes:
 
     When something happens in your application - a payment clears, an order ships, a user signs up - you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry does not double-deliver.
 tabs:
-- title: Exercise
+- id: 4bmnhsjrhyxu
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-durable-job-queue/exercise
-- title: Solution
+- id: x8pazswqt8px
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/01-durable-job-queue/solution
-- title: Terminal
+- id: ycrspkq0xggw
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/01-durable-job-queue/exercise
-- title: Worker
+- id: jggj9sd2hwks
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/01-durable-job-queue/exercise
-- title: Webhook receiver
+- id: tgludkymlmav
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: uc8xfepvz8pg
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
@@ -75,7 +82,7 @@ Open `src/main/java/webhooks/WebhookActivitiesImpl.java` in the [button label="E
 Replace the body of `deliverWebhook` with this code:
 
 ```java
-log.info("Delivering webhook for event {} to {}", req.eventId, req.url);
+System.out.println("Delivering webhook for event " + req.eventId + " to " + req.url);
 try {
   String body = MAPPER.writeValueAsString(req.payload);
   HttpRequest request = HttpRequest.newBuilder()

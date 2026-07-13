@@ -1,5 +1,6 @@
 ---
 slug: heartbeats-and-checkpointing
+id: ukjxyr8xw6pu
 type: challenge
 title: Heartbeats and checkpointing
 teaser: Resume a long-running Standalone Activity from where it left off after the
@@ -19,31 +20,38 @@ notes:
     2. Add one block to read the checkpoint on retry and skip items already delivered.
     3. Re-run, take the service down again, and watch the retry resume from the checkpoint with no duplicates.
 tabs:
-- title: Exercise
+- id: 0j9gamqe0t9k
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- title: Solution
+- id: dyookrp1q2pr
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/05-heartbeats-and-checkpointing/solution
-- title: Terminal
+- id: cxgcbkfwsgw4
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- title: Worker
+- id: 5tnytsnx5fzy
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/05-heartbeats-and-checkpointing/exercise
-- title: Webhook receiver
+- id: idv0v8rqyrvz
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: xnr8c5bdlcjk
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
-- title: Interactive Diagram
+- id: p1dnzwp3imp6
+  title: Interactive Diagram
   type: service
   hostname: workshop
   port: 9001
@@ -243,7 +251,7 @@ try {
     ctx.heartbeat(delivered);
   }
 } catch (ActivityCanceledException e) {
-  log.info("Cancelled after delivering {} items", delivered);
+  System.out.println("Cancelled after delivering " + delivered + " items");
   throw e;
 }
 ```

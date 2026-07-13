@@ -1,5 +1,6 @@
 ---
 slug: same-code-runs-anywhere
+id: yiuarsyfhmgv
 type: challenge
 title: Same code runs anywhere
 teaser: The same Activity you've been writing, now called from a Workflow. One Activity,
@@ -24,27 +25,33 @@ notes:
     that runs a Workflow calling the Activity as a step (`SendViaWorkflow.java`).
     Same Activity, two job types.
 tabs:
-- title: Exercise
+- id: bvszm71czner
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercises/06-same-code-runs-anywhere/exercise
-- title: Solution
+- id: v4ta24kgjxby
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/exercises/06-same-code-runs-anywhere/solution
-- title: Terminal
+- id: exrpibfs8vds
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/06-same-code-runs-anywhere/exercise
-- title: Worker
+- id: 23jdlyikulys
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercises/06-same-code-runs-anywhere/exercise
-- title: Webhook receiver
+- id: zhb20ez2rcjm
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
-- title: Temporal UI
+- id: zk2rnvutaznt
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
@@ -76,7 +83,7 @@ Open `src/main/java/webhooks/WebhookActivitiesImpl.java` in the [button label="E
 ```java
 @Override
 public int deliverWebhook(WebhookDelivery req) {
-  log.info("Delivering webhook for event {} to {}", req.eventId, req.url);
+  System.out.println("Delivering webhook for event " + req.eventId + " to " + req.url);
   try {
     String body = MAPPER.writeValueAsString(req.payload);
     HttpRequest request =
