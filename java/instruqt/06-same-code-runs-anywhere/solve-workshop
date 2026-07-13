@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Capstone walkthrough: exercise and solution are identical, so there is nothing
+# to fill in. Copy the solution sources over the exercise to be safe.
+DIR=/root/workshop/exercises/06-same-code-runs-anywhere
+cp -r /opt/workshop/solution/06-same-code-runs-anywhere/src/. "$DIR/exercise/src/"
+exit 0

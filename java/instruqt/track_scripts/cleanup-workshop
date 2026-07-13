@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+pkill -f "webhooks.Worker" 2>/dev/null || true
+pkill -f "temporal server" 2>/dev/null || true
+pkill -f "webhooks.server.WebhookReceiver" 2>/dev/null || true
+pkill -f "webhooks.server.DemoServer" 2>/dev/null || true
