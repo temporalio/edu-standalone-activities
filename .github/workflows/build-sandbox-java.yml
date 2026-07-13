@@ -57,8 +57,10 @@ jobs:
           # Instruqt sandboxes run linux/amd64. Pin explicitly.
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
+          # Dedicated tag for the devrel-skill track so it never shares the mutable
+          # :java-latest tag with another Java track (e.g. PR #60).
           tags: |
-            ${{ env.IMAGE }}:java-latest
-            ${{ env.IMAGE }}:java-${{ github.sha }}
+            ${{ env.IMAGE }}:java-devrel-skill-latest
+            ${{ env.IMAGE }}:java-devrel-skill-${{ github.sha }}
           cache-from: type=gha,scope=java
           cache-to: type=gha,mode=max,scope=java

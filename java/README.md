@@ -40,7 +40,7 @@ The Instruqt lab is the supported path; local runs are for the curious.
 java/
 ├── instruqt/                 # Track definition
 │   ├── track.yml             # Track config (no challenges: list; auto-discovered)
-│   ├── config.yml            # Container image reference (:java-latest)
+│   ├── config.yml            # Container image reference (:java-devrel-skill-latest)
 │   ├── track_scripts/        # setup-workshop, cleanup-workshop
 │   └── NN-<slug>/            # One per challenge
 │       ├── assignment.md     # Frontmatter + markdown body
@@ -95,7 +95,7 @@ instruqt track pull           # populate server-assigned ids
 ```bash
 # Build + push the sandbox image (context is the repo root)
 docker buildx build --platform linux/amd64 -f java/sandbox/Dockerfile \
-  -t ghcr.io/temporalio/edu-standalone-activities-sandbox:java-latest --push .
+  -t ghcr.io/temporalio/edu-standalone-activities-sandbox:java-devrel-skill-latest --push .
 
 # Register the slug, then push the track
 instruqt track create standalone-activities-java \

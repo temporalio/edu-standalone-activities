@@ -88,7 +88,7 @@ TypeScript edition.
 ## First push checklist
 
 1. Build and push the sandbox image (build context is the repo root):
-   `docker buildx build --platform linux/amd64 -f java/sandbox/Dockerfile -t ghcr.io/temporalio/edu-standalone-activities-sandbox:java-latest --push .`
+   `docker buildx build --platform linux/amd64 -f java/sandbox/Dockerfile -t ghcr.io/temporalio/edu-standalone-activities-sandbox:java-devrel-skill-latest --push .`
 2. Create the Instruqt track slug: `instruqt track create standalone-activities-java --title "Build a Job Queue with Standalone Activities (Java)"`.
 3. Push the track: `cd java/instruqt && instruqt track push --force`.
 4. Pull the server-assigned ids: `instruqt track pull`.
