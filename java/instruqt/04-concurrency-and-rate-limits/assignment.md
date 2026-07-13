@@ -1,5 +1,6 @@
 ---
 slug: concurrency-and-rate-limits
+id: bvvndmerv8xg
 type: challenge
 title: Concurrency and rate limits
 teaser: Cap your Worker's throughput so a large fan-out doesn't overwhelm the downstream
@@ -27,27 +28,33 @@ notes:
     3. Add a per-Worker rate cap of 2. Re-run with the rate-limited receiver. The flood of 429s stops.
     4. See where Priority fits for ordering urgent work.
 tabs:
-- title: Temporal UI
+- id: 5pauxaytiznp
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
-- title: Exercise
+- id: hhoglzb6lrgs
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercise/04-concurrency-and-rate-limits
-- title: Solution
+- id: 9jvkdyzqi6w2
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/solution/04-concurrency-and-rate-limits
-- title: Terminal
+- id: wbixofmmyw0g
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercise/04-concurrency-and-rate-limits
-- title: Worker
+- id: zsxzxykuheeo
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercise/04-concurrency-and-rate-limits
-- title: Webhook receiver
+- id: vxyyjaqxbfex
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000

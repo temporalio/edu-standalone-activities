@@ -1,5 +1,6 @@
 ---
 slug: durable-job-queue
+id: ppfyodxx5g0m
 type: challenge
 title: 'Standalone Activities: the durable job queue'
 teaser: Run a webhook delivery as a durable job, with no broker, scheduler, or result
@@ -15,27 +16,33 @@ notes:
 
     When something happens in your application - a payment clears, an order ships, a user signs up - you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry does not double-deliver.
 tabs:
-- title: Temporal UI
+- id: rhcpsmeq13ac
+  title: Temporal UI
   type: service
   hostname: workshop
   port: 8233
-- title: Exercise
+- id: 9cxisoc2jnpk
+  title: Exercise
   type: code
   hostname: workshop
   path: /root/workshop/exercise/01-durable-job-queue
-- title: Solution
+- id: os2pk78r54j5
+  title: Solution
   type: code
   hostname: workshop
   path: /root/workshop/solution/01-durable-job-queue
-- title: Terminal
+- id: 8xbqcp73ciro
+  title: Terminal
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercise/01-durable-job-queue
-- title: Worker
+- id: m3w5ieewaqr6
+  title: Worker
   type: terminal
   hostname: workshop
   workdir: /root/workshop/exercise/01-durable-job-queue
-- title: Webhook receiver
+- id: piy91gynlpy1
+  title: Webhook receiver
   type: service
   hostname: workshop
   port: 9000
