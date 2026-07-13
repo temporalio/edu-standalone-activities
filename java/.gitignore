@@ -1,0 +1,5 @@
+.gradle/
+build/
+*.class
+.DS_Store
+/tmp/
