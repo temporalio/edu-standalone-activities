@@ -79,5 +79,5 @@ jobs:
           instruqt track validate
           # --force overwrites the remote, so CI owns deployment and never has to
           # commit the checksum back through branch protection. The checksum field
-          # in track.yml is no longer maintained in-repo (see instruqt-tracks.md).
+          # in track.yml is no longer maintained in-repo (see AGENTS.md).
           instruqt track push --force

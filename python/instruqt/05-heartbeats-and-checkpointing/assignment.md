@@ -19,6 +19,11 @@ notes:
     1. Run a long-running Activity that delivers 10 webhooks. Kill the Worker mid-batch. Watch the retry start from item 0, and the receiver records duplicates of items already delivered.
     2. Add one line to read heartbeat_details on retry. Re-run. Kill again. Watch the retry pick up where it left off, with no duplicates.
 tabs:
+- id: f9litgnhwwoy
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: pxzal47h0ue3
   title: Exercise
   type: code
@@ -44,11 +49,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: f9litgnhwwoy
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
@@ -72,15 +72,15 @@ The **Solution** tab has the finished code. Estimated time: 10 minutes.
 
 ## 1. See the bug: retry restarts from item 0 (~3 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. The Activity already calls `activity.heartbeat(delivered)` after each item, so the server *has* the progress data. What's missing is the read on retry.
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. The Activity already calls `activity.heartbeat(delivered)` after each item, so the server *has* the progress data. What's missing is the read on retry.
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send a 10-item batch and immediately kill the Worker while it's running:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, send a 10-item batch and immediately kill the Worker while it's running:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -97,8 +97,8 @@ That sequence:
 
 Before you restart the Worker, take a look at where things stand:
 
-- Click the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You'll see **about 4 deliveries**, the items that landed before the kill. That partial progress is real and already sitting at the receiver.
-- Click the [button label="Temporal UI" background="#444CE7"](tab-5) tab, go to **Standalone Activities**, and click into `deliver-batch-10`. The Activity is still listed as a running Standalone Activity. Temporal has not given up on it. It is waiting for a Worker to come back and finish the job. **It stays in this in-flight state until you restart the Worker.**
+- Click the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You'll see **about 4 deliveries**, the items that landed before the kill. That partial progress is real and already sitting at the receiver.
+- Click the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **Standalone Activities**, and click into `deliver-batch-10`. The Activity is still listed as a running Standalone Activity. Temporal has not given up on it. It is waiting for a Worker to come back and finish the job. **It stays in this in-flight state until you restart the Worker.**
 
 Now restart the Worker so the retry has somewhere to run:
 
@@ -106,7 +106,7 @@ Now restart the Worker so the retry has somewhere to run:
 uv run python -m webhooks.worker
 ```
 
-Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait for the background client to finish:
+Return to the [button label="Terminal" background="#444CE7"](tab-3) tab and wait for the background client to finish:
 
 ```bash,run
 wait
@@ -114,9 +114,9 @@ wait
 
 In about 5 seconds, `heartbeat_timeout` fires on the server. No heartbeat for 5s means the attempt is dead, so Temporal triggers a retry and the new Worker picks it up. The retry replays the Activity body **from the top**, including items already delivered.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. You should see **14+ deliveries** for a 10-item batch: items 0–3 (or however many got through before the kill) are recorded *twice*. The receiver had no way to know these were duplicates: each batch item is a distinct delivery with its own `event_id`, so the receiver-side idempotency key from Module 02 wouldn't catch them. Resuming from a checkpoint is what avoids the re-delivery here.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. You should see **14+ deliveries** for a 10-item batch: items 0–3 (or however many got through before the kill) are recorded *twice*. The receiver had no way to know these were duplicates: each batch item is a distinct delivery with its own `event_id`, so the receiver-side idempotency key from Module 02 wouldn't catch them. Resuming from a checkpoint is what avoids the re-delivery here.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → find `deliver-batch-10`. It's a single Activity execution, now **Completed**, and its **Attempt** count shows it was retried. The recorded failure on the earlier attempt is a heartbeat timeout from when you killed the Worker. This is one execution that timed out and was retried, not two separate runs.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** → find `deliver-batch-10`. It's a single **Completed** Activity record: one execution that timed out and was retried, not two separate runs. A completed Standalone Activity does not show that it was retried; the attempt count and the heartbeat-timeout failure appear only while it is still **Running**. The lasting evidence of the retry is on the receiver, which recorded **14+ deliveries** because the retry redid items already sent.
 
 > **What's happening:** the Activity heartbeated its progress on the first attempt, but the second attempt never reads `heartbeat_details`. So it starts `start_index = 0` and redoes everything.
 
@@ -124,7 +124,7 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 
 ## 2. Read the checkpoint on retry (~2 min)
 
-Back in the [button label="Exercise" background="#444CE7"](tab-0) tab, find the `TODO` in `deliver_webhook_batch`. Replace:
+Back in the [button label="Exercise" background="#444CE7"](tab-1) tab, find the `TODO` in `deliver_webhook_batch`. Replace:
 
 ```python
 start_index = 0
@@ -149,13 +149,13 @@ That's the fix. The full solution is in the **Solution** tab.
 
 ## 3. Verify the fix (~3 min)
 
-Restart the Worker so it picks up the new code. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then re-run:
+Restart the Worker so it picks up the new code. In the [button label="Worker" background="#444CE7"](tab-4) tab, press **Ctrl+C**, then re-run:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, repeat the kill-mid-batch dance:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, repeat the kill-mid-batch dance:
 
 ```bash,run
 scripts/reset-receiver.sh
@@ -167,8 +167,8 @@ sleep 4 && scripts/kill-worker.sh
 
 Same drill as section 1. Peek before restarting:
 
-- Click the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. **About 4 deliveries** so far (items 0–3 or thereabouts). The first attempt heartbeated its progress to the server before it died.
-- Click the [button label="Temporal UI" background="#444CE7"](tab-5) tab, go to **Standalone Activities**, then open `deliver-batch-10`. The Activity is still in flight, waiting for a Worker. **It will stay in this state until you restart the Worker**. This time, when the retry runs, it will read `heartbeat_details` and pick up from item 4 instead of item 0.
+- Click the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. **About 4 deliveries** so far (items 0–3 or thereabouts). The first attempt heartbeated its progress to the server before it died.
+- Click the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **Standalone Activities**, then open `deliver-batch-10`. The Activity is still in flight, waiting for a Worker. **It will stay in this state until you restart the Worker**. This time, when the retry runs, it will read `heartbeat_details` and pick up from item 4 instead of item 0.
 
 Restart the Worker:
 
@@ -176,15 +176,15 @@ Restart the Worker:
 uv run python -m webhooks.worker
 ```
 
-Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait for the background client to finish:
+Return to the [button label="Terminal" background="#444CE7"](tab-3) tab and wait for the background client to finish:
 
 ```bash,run
 wait
 ```
 
-In the [button label="Webhook receiver" background="#444CE7"](tab-4) tab, count climbs to exactly **10**. The retry read `heartbeat_details`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
+In the [button label="Webhook receiver" background="#444CE7"](tab-5) tab, count climbs to exactly **10**. The retry read `heartbeat_details`, jumped to the checkpoint index, and finished the remaining items without redoing anything.
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** → `deliver-batch-10`. Same shape as the buggy run: one **Completed** Activity whose **Attempt** count shows it was retried after the heartbeat timeout. The proof the checkpoint was read is not in the UI. The Standalone Activities view shows an Activity's status, attempt count, and last failure, but not its application logs or a per-attempt breakdown. The proof is the receiver count landing on exactly **10** with no duplicates: the retry resumed from `heartbeat_details` instead of redoing delivered items.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities** → `deliver-batch-10`. Same shape as the buggy run: one **Completed** Activity record. Once it finishes, the view does not show that it was retried after the heartbeat timeout; the attempt count and last failure are visible only while the Activity is still **Running**, and the Standalone Activities view never shows application logs or a per-attempt breakdown. The proof the checkpoint was read is the receiver count landing on exactly **10** with no duplicates: the retry resumed from `heartbeat_details` instead of redoing delivered items.
 
 > **The takeaway:** the Activity, `kill-worker.sh`, and restart are the same, but the receiver sees each item exactly once. Heartbeating is how a long-running Activity saves progress before the next crash.
 

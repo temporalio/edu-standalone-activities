@@ -16,6 +16,11 @@ notes:
 
     This module proves it. The exact same deliver_webhook function is submitted two ways: directly via client.execute_activity (the Standalone Activity path you've used all tutorial) and via client.execute_workflow (a Workflow that calls the Activity as a step). Same Activity, two job types.
 tabs:
+- id: s5duvkctvcpf
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
 - id: ripqsfaeunnx
   title: Exercise
   type: code
@@ -41,11 +46,6 @@ tabs:
   type: service
   hostname: workshop
   port: 9000
-- id: s5duvkctvcpf
-  title: Temporal UI
-  type: service
-  hostname: workshop
-  port: 8233
 difficulty: basic
 timelimit: 1500
 enhanced_loading: null
@@ -69,7 +69,7 @@ Estimated time: 8 minutes.
 
 ## 1. Look at the Activity (~1 min)
 
-Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-0) tab. You'll recognize it. It's the `deliver_webhook` Activity you wrote in Module 01:
+Open `src/webhooks/activities.py` in the [button label="Exercise" background="#444CE7"](tab-1) tab. You'll recognize it. It's the `deliver_webhook` Activity you wrote in Module 01:
 
 ```python
 @activity.defn
@@ -102,13 +102,13 @@ The Workflow imports `deliver_webhook` from the same module the standalone calle
 
 ## 2. Submit it as a Standalone Activity (~2 min)
 
-In the [button label="Worker" background="#444CE7"](tab-3) tab, start the Worker:
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
 
 ```bash,run
 uv run python -m webhooks.worker
 ```
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, send one standalone delivery:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, send one standalone delivery:
 
 ```bash,run
 uv run python -m webhooks.send_standalone evt_001
@@ -120,13 +120,13 @@ You should see:
 Standalone Activity completed with status 200
 ```
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities**. You'll see `deliver-evt_001` listed as a completed Standalone Activity. This is the API surface you've used through all five previous modules.
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab → **Standalone Activities**. You'll see `deliver-evt_001` listed as a completed Standalone Activity. This is the API surface you've used through all five previous modules.
 
 ---
 
 ## 3. Submit the same Activity as a Workflow step (~2 min)
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, run the second starter:
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, run the second starter:
 
 ```bash,run
 uv run python -m webhooks.send_via_workflow evt_002
@@ -138,7 +138,7 @@ You should see:
 Workflow completed with Activity returning status 200
 ```
 
-Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab. Now look at both views:
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab. Now look at both views:
 
 - **Standalone Activities** tab: `deliver-evt_001` from step 2 is here.
 - **Workflows** tab: `wf-evt_002` is here, and clicking it shows the Activity as a step in its history.
