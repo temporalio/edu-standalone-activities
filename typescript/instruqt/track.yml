@@ -1,0 +1,68 @@
+slug: standalone-activities-typescript
+id: ghk3fx9zjxcs
+title: Build a Job Queue with Standalone Activities (TypeScript)
+teaser: Build a durable webhook-delivery service with Standalone Activities, Temporal's
+  durable job queue. No broker, no scheduler, no retry library to operate.
+description: |
+  Standalone Activities are Temporal's durable job queue. Submit jobs as top-level
+  Activities with one API call. They are persisted, retried on failure, and addressable
+  in the UI. No broker or scheduler to operate. The same Activity code runs inside
+  a Workflow later when the job grows into multi-step work. You'll build a durable
+  webhook delivery service across six modules covering crash safety, deduplication,
+  rate limits, heartbeats, and the Activity-in-Workflow upgrade path.
+icon: ""
+tags:
+- activities
+- standalone-activities
+- temporal
+- job-queue
+- typescript
+owner: temporal
+developers:
+- nikolay.advolodkin@temporal.io
+skipping_enabled: true
+idle_timeout: 3600
+timelimit: 7200
+lab_config:
+  extend_ttl: 1800
+  sidebar_enabled: true
+  feedback_recap_enabled: true
+  feedback_tab_enabled: true
+  loadingMessages:
+  - Standalone Activities are Temporal's durable job queue.
+  - Same activity code. Standalone today, Workflow step tomorrow.
+  - Five SDKs. One action per job. No broker to run.
+  - Jobs persist before acknowledgment. Survive deploys, crashes, restarts.
+  - Declarative retries. No retry library to wire up per service.
+  - Every job is addressable through the UI, CLI, SDK, and API.
+  - client.activity.start returns a handle you can cancel, terminate, or describe.
+  - Standalone Activities support retryPolicy, timeouts, heartbeats.
+  - temporal activity list shows Standalone Activities, in flight or done.
+  - Pause a running Activity from the CLI. Resume it later.
+  - Same Worker hosts Standalone Activities and Workflows alike.
+  - Stable idempotency keys keep retried side effects from duplicating.
+  - Server-driven retries. Your client can disconnect; the Activity finishes.
+  - 'Module 02: crash the Worker. Without idempotency, you double-deliver.'
+  - 'Module 03: same job ID submitted twice? Temporal returns the existing one.'
+  - 'Module 04: cap your Worker''s rate so a fan-out does not overwhelm the receiver.'
+  - 'Module 05: long-running jobs heartbeat progress and resume after a crash.'
+  - 'Module 06: same Activity called from a Workflow. Same code, two job types.'
+  - Ziggy is rehydrating after a 30-year nap...
+  - Ziggy is curling into a tun to ride out the cold start...
+  - Ziggy is surviving the vacuum of space to provision your sandbox...
+  - Tardigrades are durable. Temporal Workflows are durable. Loading both...
+  - Ziggy is shuffling your container across the moss on eight tiny legs...
+  - Ziggy is gnawing through cosmic radiation to wake the dev server...
+  - Ziggy is in cryptobiosis while the Namespaces come up...
+  - Ziggy is the Temporal mascot because Workflows, like tardigrades, never die...
+  - Ziggy is chewing a bit of lichen while your Worker registers...
+  - Ziggy has outlived five mass extinctions. Your Worker will start any moment now...
+  - Ziggy says if a Workflow can sleep ten minutes, he can sleep ten years...
+  theme:
+    name: modern-dark
+  override_challenge_layout: true
+  hideStopButton: false
+  default_layout: AssignmentLeft
+  default_layout_sidebar_size: 33
+checksum: "15485836183579746973"
+enhanced_loading: true
