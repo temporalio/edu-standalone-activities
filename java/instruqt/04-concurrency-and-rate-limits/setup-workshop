@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+pkill -9 -f "mainClass=webhook.Worker" 2>/dev/null || true
+pkill -9 -f "webhook.Worker" 2>/dev/null || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true

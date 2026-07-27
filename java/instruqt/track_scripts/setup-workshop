@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p /var/log/workshop
+
+# Temporal dev server. Single partition keeps Task Queue ordering deterministic (Module 04).
+# Standalone Activities are enabled by default on the bundled dev server.
+nohup temporal server start-dev \
+  --ip 0.0.0.0 --ui-port 8233 --db-filename /tmp/temporal.db --log-level warn \
+  --dynamic-config-value matching.numTaskqueueReadPartitions=1 \
+  --dynamic-config-value matching.numTaskqueueWritePartitions=1 \
+  > /var/log/workshop/temporal.log 2>&1 &
+
+# Shared, SDK-agnostic webhook receiver (port 9000) and a static demo server (port 9001).
+nohup python3 /opt/workshop/server/webhook_receiver.py > /var/log/workshop/receiver.log 2>&1 &
+nohup python3 -m http.server 9001 --directory /opt/workshop/demos > /var/log/workshop/demo.log 2>&1 &
+
+# Wait for ports (timeout 60s).
+for i in $(seq 1 60); do
+  if (echo > /dev/tcp/localhost/7233) 2>/dev/null && (echo > /dev/tcp/localhost/8233) 2>/dev/null \
+     && (echo > /dev/tcp/localhost/9000) 2>/dev/null && (echo > /dev/tcp/localhost/9001) 2>/dev/null; then break; fi
+  sleep 1
+done
+
+# Seed the course modules into /root/workshop (learners edit here). Includes the pre-built
+# Gradle outputs so the first `gradle execute` is fast.
+mkdir -p /root/workshop
+cp -r /opt/workshop/. /root/workshop/
+
+# Give each module dir its own copy of scripts/ so `scripts/kill-worker.sh` resolves from
+# the module dir the terminal is opened in.
+for NN in 01-durable-job-queue 02-idempotency-and-crash-safety 03-dedup-via-id-reuse \
+          04-concurrency-and-rate-limits 05-heartbeats-and-checkpointing 06-same-code-runs-anywhere; do
+  for SIDE in exercise solution; do
+    cp -r /opt/workshop/scripts "/root/workshop/$SIDE/$NN/scripts"
+    chmod +x "/root/workshop/$SIDE/$NN/scripts/"*.sh
+  done
+done
+
+echo "Workshop setup complete."

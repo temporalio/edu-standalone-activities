@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+NN=04-concurrency-and-rate-limits
+cp -rf /opt/workshop/solution/$NN/src/. /root/workshop/exercise/$NN/src/
