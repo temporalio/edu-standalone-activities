@@ -1,0 +1,72 @@
+name: Push TypeScript Instruqt track
+
+# Keeps the deployed TypeScript Instruqt track in sync with main so it is never
+# out of date. Any merge to main that touches track content triggers
+# `instruqt track push`.
+#
+# Setup required (one time): the repo secret INSTRUQT_TOKEN must contain an
+# Instruqt service-account token for the `temporal` team.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Everything that can change what a learner sees.
+      - 'typescript/instruqt/**'
+      - 'typescript/course-repo/**'
+      - 'typescript/sandbox/**'
+  workflow_dispatch:
+
+# Never run two pushes at once; let an in-flight push finish before the next.
+concurrency:
+  group: push-instruqt-track-typescript
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read   # needed to watch the sandbox image build run
+
+jobs:
+  push-track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for sandbox image build (if this commit triggered one)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The track references :typescript-latest. If this commit also changed
+          # the image, build-sandbox-typescript.yml is rebuilding it right now —
+          # wait for it so we don't point the track at a stale image.
+          run_id=""
+          for _ in $(seq 1 18); do
+            run_id=$(gh run list --workflow build-sandbox-typescript.yml --commit "$GITHUB_SHA" \
+              --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)
+            [ -n "$run_id" ] && break
+            sleep 5
+          done
+          if [ -n "$run_id" ]; then
+            echo "Waiting for TypeScript sandbox image build run $run_id ..."
+            gh run watch "$run_id" --exit-status
+          else
+            echo "No sandbox image build for this commit (track-only change); continuing."
+          fi
+
+      - name: Install Instruqt CLI
+        run: |
+          set -euo pipefail
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install instruqt/tap/instruqt
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Validate and push track
+        working-directory: typescript/instruqt
+        env:
+          INSTRUQT_TOKEN: ${{ secrets.INSTRUQT_TOKEN }}
+        run: |
+          set -euo pipefail
+          instruqt config set team temporal
+          instruqt track validate
+          instruqt track push --force

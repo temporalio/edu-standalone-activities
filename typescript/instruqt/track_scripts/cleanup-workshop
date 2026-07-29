@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+pkill -f "ts-node.*worker.ts" 2>/dev/null || true
+pkill -f "temporal server" 2>/dev/null || true
+pkill -f "webhookReceiver" 2>/dev/null || true

@@ -420,7 +420,7 @@
         const errDot = document.getElementById('dot-b-up-r');
         errDot.classList.add('return-err');
         moveDot('dot-b-up-r', 100, 0);
-        setState('caller-b-state-r', '✗ WorkflowAlreadyStartedError', 'error');
+        setState('caller-b-state-r', '✗ ActivityAlreadyStartedError', 'error');
         bumpStat('stat-errored-r', 1);
 
         // Right: success dot travels back up to Caller B carrying the same handle.
