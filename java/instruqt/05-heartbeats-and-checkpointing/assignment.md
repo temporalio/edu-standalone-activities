@@ -196,7 +196,7 @@ For TODO 2, scroll down into the delivery `for` loop. It sits below the status-c
 context.heartbeat(delivered);
 ```
 
-You'll also need to import `java.util.Optional`. The full solution is in the **Solution** tab.
+The `Optional` import is already at the top of the file. The full solution is in the **Solution** tab.
 
 The heartbeat details are whatever you passed to `context.heartbeat(...)` in the previous attempt. We pass a single number (`delivered`), so the decoded checkpoint is the count of items already done.
 

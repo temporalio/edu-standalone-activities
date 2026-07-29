@@ -152,7 +152,7 @@ WorkerOptions options = WorkerOptions.newBuilder()
 var worker = factory.newWorker(Webhook.TASK_QUEUE, options);
 ```
 
-The Worker now dispatches at most 2 Activities per second. The full version is in the **Solution** tab.
+The `WorkerOptions` import is already at the top of the file. The Worker now dispatches at most 2 Activities per second, and the full version is in the **Solution** tab.
 
 > **Where does the excess go?** It waits in the Task Queue on the Temporal server. The Worker polls, and the server hands it work at the configured rate. Unscheduled work stays in the queue and nothing is lost.
 
