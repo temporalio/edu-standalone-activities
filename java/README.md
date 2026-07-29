@@ -5,8 +5,6 @@ queue by building a webhook-delivery service across six modules: durable submit,
 and crash safety, dedup via ID reuse, concurrency and rate limits, heartbeats and
 checkpointing, and the Activity-in-Workflow upgrade path.
 
-This mirrors the Python reference track (`../python`), translated to the Java SDK.
-
 ## Layout
 
 ```
@@ -33,14 +31,14 @@ Temporal CLI >= 1.7).
 
 ## Run a module locally
 
-Each module is an independent Gradle project. From a module directory:
+Each module is an independent Gradle project. Run these from the `java/` directory:
 
 ```bash
 # Terminal 1: Temporal dev server (Standalone Activities enabled by default)
 temporal server start-dev --ui-port 8233
 
 # Terminal 2: the shared webhook receiver
-python3 ../../../shared/webhook-receiver/webhook_receiver.py
+python3 ../shared/webhook-receiver/webhook_receiver.py
 
 # Terminal 3: the Worker
 cd course-repo/exercise/01-durable-job-queue

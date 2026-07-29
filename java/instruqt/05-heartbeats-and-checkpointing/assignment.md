@@ -16,9 +16,9 @@ notes:
     job type.
 
     Standalone Activities have heartbeats built in. The Activity calls
-    ctx.heartbeat(progress) after each unit of work; the Temporal server stores
+    context.heartbeat(progress) after each unit of work; the Temporal server stores
     that value. If the attempt dies (Worker crash, machine reboot, deploy), the
-    next attempt reads the heartbeat details with ctx.getHeartbeatDetails(...) and
+    next attempt reads the heartbeat details with context.getHeartbeatDetails(...) and
     resumes from the last reported checkpoint instead of redoing work.
 
     ## What you'll do
@@ -71,7 +71,7 @@ enhanced_loading: null
 
 Many job queues lose in-flight work when the Worker crashes. For a 30-second job that's annoying. For a 30-minute batch that's already half done, it is a real cost. The typical fix is to invent a per-job-type checkpointing scheme that lives in a side database.
 
-Standalone Activities include heartbeats and checkpointing. `ctx.heartbeat(progress)` reports liveness and stores progress on the Temporal server. When the next attempt starts, it reads the heartbeat details and resumes from there. No side database required.
+Standalone Activities include heartbeats and checkpointing. `context.heartbeat(progress)` reports liveness and stores progress on the Temporal server. When the next attempt starts, it reads the heartbeat details and resumes from there. No side database required.
 
 You'll do three things in this module:
 
@@ -97,23 +97,23 @@ gradle -q execute -PmainClass=webhook.Worker
 In the [button label="Terminal" background="#444CE7"](tab-3) tab, send a 10-item batch and bring the service down mid-run:
 
 ```bash,run
-# Reset the receiver, submit a 10-item batch, bring the service down after ~4 items
+# Reset the receiver, submit a 10-item batch, bring the service down once ~5 items land
 scripts/reset-receiver.sh
-gradle -q execute -PmainClass=webhook.SendBatch -PappArgs=10 &
-sleep 4 && scripts/kill-worker.sh
+gradle -q execute -PmainClass=webhook.SendBatch -PappArgs=10 > /tmp/sendbatch.log 2>&1 &
+scripts/kill-worker-after.sh 5
 ```
 
 That sequence:
 
 - Submits a batch of 10 items (1s delay between each = ~10s total).
-- Waits 4 seconds (~4 items delivered), then brings the service down.
+- Waits until 5 items have actually landed at the receiver, then brings the service down. Five rather than four because the SDK only flushes a heartbeat to the server every ~4s, and section 3 needs at least one flush on record. It polls instead of sleeping a fixed time because Gradle can take several seconds to start.
 - Leaves the `SendBatch` client waiting in the background.
 
 ### Observe the state while the Worker is down
 
 Before restarting, look at where things stand:
 
-- [button label="Webhook receiver" background="#444CE7"](tab-5): about 4 deliveries, the items that landed before the kill.
+- [button label="Webhook receiver" background="#444CE7"](tab-5): 5 deliveries, the items that landed before the kill.
 - [button label="Temporal UI" background="#444CE7"](tab-0), **Standalone Activities**, `deliver-batch-10`: the Activity is still listed as **Running**. Temporal has not given up on it. It is waiting for a Worker to come back.
 
 Restart the Worker:
@@ -126,17 +126,18 @@ gradle -q execute -PmainClass=webhook.Worker
 Return to the [button label="Terminal" background="#444CE7"](tab-3) tab and wait for the background client to finish:
 
 ```bash,run
-# Wait for the background SendBatch client to finish
+# Wait for the background SendBatch client, then read its captured output
 wait
+cat /tmp/sendbatch.log
 ```
 
 After ~5 seconds, the Activity's heartbeat timeout fires on the server. No heartbeat for 5s means the attempt is dead, so Temporal triggers a retry and the new Worker picks it up. The retry replays the Activity body **from the top**, including items already delivered.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. `"processed_count"` should exceed 10. Items 0 through 3 are recorded twice because the retry started from item 0:
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. `"processed_count"` should exceed 10. Items 0 through 4 are recorded twice because the retry started from item 0:
 
 ```json,nocopy
 {
-  "processed_count": 14
+  "processed_count": 15
 }
 ```
 
@@ -156,12 +157,19 @@ Without heartbeats for checkpoints, Temporal retries from zero. You reprocess th
 
 Heartbeats are useful when an Activity is doing long, resumable work where restarting from zero would be wasteful or harmful.
 
-**Quick check:** When should you use heartbeats? Select all that apply.
+> **Quick check:** Which kinds of Activity work are worth heartbeating?
 
-[x] Processing a large list (emails, records, files): skip already-done items on retry
-[x] Uploading or downloading a large file: resume from the last byte offset instead of restarting
-[x] Work where doing it twice causes problems (duplicate charges, duplicate emails)
-[x] You need the Activity to detect that it was cancelled mid-loop (`ctx.heartbeat(...)` throws `ActivityCompletionException` when cancellation is requested)
+<details>
+<summary>Reveal the answer</summary>
+
+All four of these:
+
+- Processing a large list (emails, records, files): skip already-done items on retry.
+- Uploading or downloading a large file: resume from the last byte offset instead of restarting.
+- Work where doing it twice causes problems (duplicate charges, duplicate emails).
+- Work that needs to detect it was cancelled mid-loop. `context.heartbeat(...)` throws `ActivityCompletionException` once cancellation is requested.
+
+</details>
 
 ---
 
@@ -172,21 +180,25 @@ Back in the [button label="Exercise" background="#444CE7"](tab-1) tab, find TODO
 For TODO 1, add this block just below `int startIndex = 0;`:
 
 ```java
-Optional<Integer> checkpoint = ctx.getHeartbeatDetails(Integer.class);
+Optional<Integer> checkpoint = context.getHeartbeatDetails(Integer.class);
 if (checkpoint.isPresent()) {
     startIndex = checkpoint.get();
+    log.info("Resuming from checkpoint startIndex={} attempt={}",
+            startIndex, context.getInfo().getAttempt());
 }
 ```
 
-For TODO 2, add this line right after `delivered++;`:
+The `log.info` is what you'll look for in the Worker console in section 3 to confirm the retry actually read the checkpoint.
+
+For TODO 2, scroll down into the delivery `for` loop. It sits below the status-check block, right after `delivered++;`. Add this line there:
 
 ```java
-ctx.heartbeat(delivered);
+context.heartbeat(delivered);
 ```
 
 You'll also need to import `java.util.Optional`. The full solution is in the **Solution** tab.
 
-The heartbeat details are whatever you passed to `ctx.heartbeat(...)` in the previous attempt. We pass a single number (`delivered`), so the decoded checkpoint is the count of items already done.
+The heartbeat details are whatever you passed to `context.heartbeat(...)` in the previous attempt. We pass a single number (`delivered`), so the decoded checkpoint is the count of items already done.
 
 ---
 
@@ -204,13 +216,13 @@ In the [button label="Terminal" background="#444CE7"](tab-3) tab, repeat the kil
 ```bash,run
 # Same as section 1: reset, submit batch, kill mid-run to trigger the retry
 scripts/reset-receiver.sh
-gradle -q execute -PmainClass=webhook.SendBatch -PappArgs=10 &
-sleep 4 && scripts/kill-worker.sh
+gradle -q execute -PmainClass=webhook.SendBatch -PappArgs=10 > /tmp/sendbatch.log 2>&1 &
+scripts/kill-worker-after.sh 5
 ```
 
 Peek before restarting:
 
-- [button label="Webhook receiver" background="#444CE7"](tab-5): about 4 deliveries. The first attempt heartbeated its progress.
+- [button label="Webhook receiver" background="#444CE7"](tab-5): about 5 deliveries. The first attempt heartbeated its progress.
 - [button label="Temporal UI" background="#444CE7"](tab-0), **Standalone Activities**, `deliver-batch-10`: still **Running**, waiting for a Worker.
 
 Restart the Worker:
@@ -220,20 +232,21 @@ Restart the Worker:
 gradle -q execute -PmainClass=webhook.Worker
 ```
 
-Return to the [button label="Terminal" background="#444CE7"](tab-3) tab and wait:
+Return to the [button label="Terminal" background="#444CE7"](tab-3) tab and wait. The client is running in the background, so its output was redirected to a file rather than printed straight to this terminal:
 
 ```bash,run
-# Wait for the background SendBatch client to finish. Should report close to 10.
+# Wait for the background SendBatch client, then read its captured output
 wait
+cat /tmp/sendbatch.log
 ```
 
 You should see:
 
 ```bash,nocopy
-Batch delivery completed: 10 items delivered.
+14:41:53 INFO  webhook.SendBatch - Batch delivery completed: 10 items delivered.
 ```
 
-The [button label="Webhook receiver" background="#444CE7"](tab-5) tab shows `"processed_count"` close to 10, a big drop from the 14 you saw without a checkpoint. The retry read the heartbeat details, jumped near the checkpoint index, and finished the remaining items instead of redoing the whole batch.
+That number is always 10, because the Activity returns the total item count once it finishes. The interesting number is on the receiver: the [button label="Webhook receiver" background="#444CE7"](tab-5) tab shows `"processed_count"` around 11, down from the 15 you saw without a checkpoint. Only the item at the crash boundary gets redone instead of all five. The retry read the heartbeat details, jumped near the checkpoint index, and finished the remaining items instead of redoing the whole batch.
 
 The Java SDK throttles how often heartbeats actually reach the server, capping updates to roughly 80% of the heartbeat timeout. That means the checkpoint the server has on file can lag a beat behind what the Activity already delivered locally, so do not be surprised if one or two items right at the crash boundary show up twice. That is still far better than redoing the whole batch, and it is why heartbeating is worth using even though it is not a perfect exactly-once guarantee.
 
@@ -247,17 +260,24 @@ That log line, together with the receiver's counts, is your evidence the resume 
 
 Open the [button label="Interactive Diagram" background="#444CE7"](tab-6) tab. Switch between **Bug (Exercise)** and **Fixed (Solution)** to step through both attempts side by side: the code on the left, execution state on the right.
 
-**Quick check:** When should you skip heartbeats? Select all that apply.
+> **Quick check:** When is heartbeating not worth it?
 
-[x] The Activity is short (under ~10s): not worth the complexity
-[x] The work is naturally idempotent and fast to redo: just let it retry from scratch
-[x] There's no meaningful "progress" to save (e.g., a single API call)
+<details>
+<summary>Reveal the answer</summary>
+
+All three of these:
+
+- The Activity is short (under ~10s), so the complexity doesn't pay for itself.
+- The work is naturally idempotent and fast to redo, so letting it retry from scratch is fine.
+- There's no meaningful "progress" to save, such as a single API call.
+
+</details>
 
 ---
 
 ## Handle cancellation cleanly
 
-Heartbeating also delivers **cancellation**. When someone runs `temporal activity cancel deliver-batch-10` (or an enclosing Workflow cancels), Temporal can't interrupt your Java code directly. It sets a flag on the server, and the next `ctx.heartbeat(...)` call throws `ActivityCompletionException`.
+Heartbeating also delivers **cancellation**. When someone runs `temporal activity cancel deliver-batch-10` (or an enclosing Workflow cancels), Temporal can't interrupt your Java code directly. It sets a flag on the server, and the next `context.heartbeat(...)` call throws `ActivityCompletionException`.
 
 Long-running Activities should let that exception propagate so the attempt ends promptly:
 
@@ -265,7 +285,7 @@ Long-running Activities should let that exception propagate so the attempt ends 
 delivered++;
 // heartbeat() throws ActivityCompletionException when cancellation has been requested.
 // Let it propagate (don't swallow it) to end the Activity cleanly.
-ctx.heartbeat(delivered);
+context.heartbeat(delivered);
 ```
 
 If you don't heartbeat, cancellation cannot reach the Activity at all. It will run to completion regardless.
@@ -274,7 +294,7 @@ If you don't heartbeat, cancellation cannot reach the Activity at all. It will r
 
 ## Check your understanding
 
-> Your batch Activity has a 5-second heartbeat timeout and processes one item per second. Mid-batch, the Worker hangs (deadlock, not crash). It stops calling `ctx.heartbeat(...)`, but the process is still alive. What does Temporal do?
+> Your batch Activity has a 5-second heartbeat timeout and processes one item per second. Mid-batch, the Worker hangs (deadlock, not crash). It stops calling `context.heartbeat(...)`, but the process is still alive. What does Temporal do?
 
 <details>
 <summary>Reveal the answer</summary>
@@ -291,4 +311,4 @@ That's the point of the heartbeat timeout: it's the server's way to detect a stu
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

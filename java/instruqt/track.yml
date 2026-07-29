@@ -65,5 +65,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentLeft
   default_layout_sidebar_size: 33
-checksum: "3775098475760496296"
-enhanced_loading: true
+checksum: "8785084624615933420"
+enhanced_loading: false

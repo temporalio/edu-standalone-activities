@@ -73,7 +73,7 @@ Temporal guarantees an Activity runs to completion *at least once*. If the Activ
 
 You need an idempotency key when the Activity calls an external system and that call is not safe to repeat. The pattern:
 
-1. Derive a key from stable input, not from a random value generated inside the Activity. `req.getEventId()` is stable across retries. A freshly generated UUID is not.
+1. Derive a key from stable input, not from a random value generated inside the Activity. `request.getEventId()` is stable across retries. A freshly generated UUID is not.
 2. Send the key with every request (`Idempotency-Key` header, a request field, etc.).
 3. The receiver caches the result by key and returns the cached response on duplicate requests without re-executing the side effect.
 
@@ -137,12 +137,12 @@ The receiver had no way to know these were duplicates of the same logical event.
 Back in the [button label="Exercise" background="#444CE7"](tab-1) tab, find the `TODO` in `deliverWebhook`. Add this line to the `HttpRequest` builder:
 
 ```java
-.header("Idempotency-Key", "webhook:" + req.getEventId())
+.header("Idempotency-Key", "webhook:" + request.getEventId())
 ```
 
 The full solution is in the **Solution** tab.
 
-`req.getEventId()` is the logical event this Activity is delivering. That key is **stable across retries** of the same logical webhook. The Webhook receiver caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't process a new delivery.
+`request.getEventId()` is the logical event this Activity is delivering. That key is **stable across retries** of the same logical webhook. The Webhook receiver caches by this header: if it sees a key it's seen before, it returns the cached response and doesn't process a new delivery.
 
 > **Why not a freshly generated random value?** A random value is different every time you generate it. Each retry would produce a fresh key, the receiver would see N different keys for N retries of one logical request, and your "idempotency" would dedupe nothing. The key has to be deterministic across retries.
 
@@ -192,7 +192,7 @@ StartActivityOptions options = StartActivityOptions.newBuilder()
         .build();
 ```
 
-For permanent failures the Activity itself can recognize, throw `ApplicationFailure.newNonRetryableFailure(...)`. Temporal stops retrying immediately instead of using up your maximum attempts.
+For permanent failures the Activity itself can recognize, throw `ApplicationFailure.newNonRetryableFailure(...)`. Temporal stops retrying immediately instead of using up your maximum attempts. The `deliverWebhook` Activity already does this: it treats 5xx, 408, and 429 as retryable, and every other 3xx or 4xx as permanent. Bounded retries and non-retryable failures solve different halves of the problem, so use both. `RetryOptions` caps how long you keep trying something that might work; a non-retryable failure stops you from trying something that never will.
 
 ---
 
@@ -205,7 +205,7 @@ For permanent failures the Activity itself can recognize, throw `ApplicationFail
 
 Each retry generates a different random code, so the idempotency key changes per attempt. The receiver sees N different keys for the same logical request and accepts all N. The "idempotency" dedupes nothing.
 
-The fix is to make the key deterministic across retries: derive it from input fields the caller already chose (e.g. `req.getEventId()`), or for Workflow-bound Activities, use the Workflow's run ID plus the Activity ID. If you need a random code as part of the side effect, generate it in the caller and pass it in as Activity input.
+The fix is to make the key deterministic across retries: derive it from input fields the caller already chose (e.g. `request.getEventId()`), or for Workflow-bound Activities, use the Workflow's run ID plus the Activity ID. If you need a random code as part of the side effect, generate it in the caller and pass it in as Activity input.
 
 </details>
 
@@ -215,4 +215,4 @@ The fix is to make the key deterministic across retries: derive it from input fi
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

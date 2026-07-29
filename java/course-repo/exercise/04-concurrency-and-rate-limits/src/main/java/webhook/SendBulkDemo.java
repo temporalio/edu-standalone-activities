@@ -10,10 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Uses separate demo-* IDs so leftover retries don't collide with the bulk-* IDs
 // used in sections 1 and 4.
 public class SendBulkDemo {
+    private static final Logger log = LoggerFactory.getLogger(SendBulkDemo.class);
+
     public static void main(String[] args) {
         int count = args.length > 0 ? Integer.parseInt(args[0]) : 60;
 
@@ -23,19 +27,19 @@ public class SendBulkDemo {
 
         List<CompletableFuture<Integer>> futures = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String seq = String.format("%03d", i);
+            String sequence = String.format("%03d", i);
             StartActivityOptions options = StartActivityOptions.newBuilder()
-                    .setId("demo-" + seq)
-                    .setTaskQueue(Shared.TASK_QUEUE)
+                    .setId("demo-" + sequence)
+                    .setTaskQueue(Webhook.TASK_QUEUE)
                     .setStartToCloseTimeout(Duration.ofSeconds(30))
                     .build();
             ActivityHandle<Integer> handle = client.start(
                     WebhookActivities.class, WebhookActivities::deliverWebhook, options,
-                    new WebhookDelivery(Shared.WEBHOOK_RECEIVER_URL,
-                            Map.of("eventId", "demo_" + seq, "type", "demo_rate_limit"), "demo_" + seq));
+                    new WebhookDelivery(Webhook.RECEIVER_URL,
+                            Map.of("eventId", "demo_" + sequence, "type", "demo_rate_limit"), "demo_" + sequence));
             futures.add(handle.getResultAsync());
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        System.out.println("All " + count + " deliveries completed.");
+        log.info("All {} deliveries completed.", count);
     }
 }

@@ -3,3 +3,6 @@ set -euo pipefail
 pkill -9 -f "mainClass=webhook.Worker" 2>/dev/null || true
 pkill -9 -f "webhook.Worker" 2>/dev/null || true
 curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+# /_reset preserves the rate-limit cap, so clear it explicitly. Only Module 04 wants a cap,
+# and it sets its own; every other module must start uncapped.
+curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=0" > /dev/null || true

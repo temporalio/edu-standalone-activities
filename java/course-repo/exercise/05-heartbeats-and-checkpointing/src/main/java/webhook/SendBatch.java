@@ -9,8 +9,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SendBatch {
+    private static final Logger log = LoggerFactory.getLogger(SendBatch.class);
+
     public static void main(String[] args) {
         int count = args.length > 0 ? Integer.parseInt(args[0]) : 10;
 
@@ -25,15 +29,15 @@ public class SendBatch {
 
         StartActivityOptions options = StartActivityOptions.newBuilder()
                 .setId("deliver-batch-" + count)
-                .setTaskQueue(Shared.TASK_QUEUE)
+                .setTaskQueue(Webhook.TASK_QUEUE)
                 .setStartToCloseTimeout(Duration.ofMinutes(5))
                 .setHeartbeatTimeout(Duration.ofSeconds(5))
                 .build();
 
         ActivityHandle<Integer> handle = client.start(
                 WebhookActivities.class, WebhookActivities::deliverWebhookBatch, options,
-                new WebhookDeliveryBatch(Shared.WEBHOOK_RECEIVER_URL, items));
+                new WebhookDeliveryBatch(Webhook.RECEIVER_URL, items));
         int delivered = handle.getResult();
-        System.out.println("Batch delivery completed: " + delivered + " items delivered.");
+        log.info("Batch delivery completed: {} items delivered.", delivered);
     }
 }

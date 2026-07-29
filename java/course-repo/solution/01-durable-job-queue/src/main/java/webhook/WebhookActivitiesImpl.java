@@ -1,6 +1,7 @@
 package webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.temporal.failure.ApplicationFailure;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,26 +12,37 @@ import org.slf4j.LoggerFactory;
 
 public class WebhookActivitiesImpl implements WebhookActivities {
     private static final Logger log = LoggerFactory.getLogger(WebhookActivitiesImpl.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final HttpClient HTTP = HttpClient.newHttpClient();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
 
     @Override
-    public int deliverWebhook(WebhookDelivery req) {
-        log.info("Delivering webhook eventId={} url={}", req.getEventId(), req.getUrl());
+    public int deliverWebhook(WebhookDelivery request) {
+        log.info("Delivering webhook eventId={} url={}", request.getEventId(), request.getUrl());
         try {
-            String body = MAPPER.writeValueAsString(req.getPayload());
-            HttpRequest httpReq = HttpRequest.newBuilder(URI.create(req.getUrl()))
+            String body = objectMapper.writeValueAsString(request.getPayload());
+            HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(request.getUrl()))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
-            HttpResponse<String> resp = HTTP.send(httpReq, HttpResponse.BodyHandlers.ofString());
-            if (resp.statusCode() >= 300) {
-                // 4xx/5xx: throw so Temporal retries.
-                throw new RuntimeException("HTTP " + resp.statusCode());
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            int statusCode = response.statusCode();
+            if (statusCode >= 300) {
+                // 408 and 429 are transient, so a retry can succeed. Other 3xx and 4xx codes are
+                // permanent, so fail fast instead of retrying a broken request forever.
+                if (statusCode < 500 && statusCode != 408 && statusCode != 429) {
+                    throw ApplicationFailure.newNonRetryableFailure(
+                            "HTTP " + statusCode, "WebhookPermanentFailure");
+                }
+                throw new RuntimeException("HTTP " + statusCode);
             }
-            return resp.statusCode();
-        } catch (IOException | InterruptedException e) {
+            return statusCode;
+        } catch (IOException e) {
             // Network error: throw so Temporal retries.
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            // The Worker is shutting down or this Activity was cancelled. Restore the
+            // interrupt flag so the SDK still sees it, then let Temporal retry.
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

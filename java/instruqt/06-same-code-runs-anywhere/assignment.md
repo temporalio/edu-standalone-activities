@@ -80,20 +80,28 @@ Estimated time: 8 minutes.
 Open `WebhookActivitiesImpl.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. You'll recognize it. It's the `deliverWebhook` Activity you wrote in Module 01:
 
 ```java
-public int deliverWebhook(WebhookDelivery req) {
-    log.info("Delivering webhook eventId={} url={}", req.getEventId(), req.getUrl());
+public int deliverWebhook(WebhookDelivery request) {
+    log.info("Delivering webhook eventId={} url={}", request.getEventId(), request.getUrl());
     try {
-        String body = MAPPER.writeValueAsString(req.getPayload());
-        HttpRequest httpReq = HttpRequest.newBuilder(URI.create(req.getUrl()))
+        String body = objectMapper.writeValueAsString(request.getPayload());
+        HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(request.getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        HttpResponse<String> resp = HTTP.send(httpReq, HttpResponse.BodyHandlers.ofString());
-        if (resp.statusCode() >= 300) {
-            throw new RuntimeException("HTTP " + resp.statusCode());
+        HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        int statusCode = response.statusCode();
+        if (statusCode >= 300) {
+            if (statusCode < 500 && statusCode != 408 && statusCode != 429) {
+                throw ApplicationFailure.newNonRetryableFailure(
+                        "HTTP " + statusCode, "WebhookPermanentFailure");
+            }
+            throw new RuntimeException("HTTP " + statusCode);
         }
-        return resp.statusCode();
-    } catch (IOException | InterruptedException e) {
+        return statusCode;
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw new RuntimeException(e);
     }
 }
@@ -110,8 +118,8 @@ public class WebhookWorkflowImpl implements WebhookWorkflow {
                     .build());
 
     @Override
-    public int run(WebhookDelivery req) {
-        return activities.deliverWebhook(req);
+    public int run(WebhookDelivery request) {
+        return activities.deliverWebhook(request);
     }
 }
 ```
@@ -139,7 +147,7 @@ gradle -q execute -PmainClass=webhook.SendStandalone -PappArgs=evt_001
 You should see:
 
 ```bash,nocopy
-Standalone Activity completed with status 200
+14:32:19 INFO  webhook.SendStandalone - Standalone Activity completed with status 200
 ```
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, **Standalone Activities**. You'll see `deliver-evt_001` listed as a completed Standalone Activity. This is the API surface you've used through all five previous modules.
@@ -158,7 +166,7 @@ gradle -q execute -PmainClass=webhook.SendViaWorkflow -PappArgs=evt_002
 You should see:
 
 ```bash,nocopy
-Workflow completed with Activity returning status 200
+14:33:05 INFO  webhook.SendViaWorkflow - Workflow completed with Activity returning status 200
 ```
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab. Look at both views:
@@ -201,7 +209,7 @@ What you can now do with Standalone Activities in Java:
 - **`.setIdConflictPolicy(...USE_EXISTING)`**: let the server handle duplicate start calls instead of throwing.
 - **`setMaxWorkerActivitiesPerSecond`** on the Worker: cap dispatch rate to protect the downstream service.
 - **`StartActivityOptions.setPriority`**: push urgent work ahead of bulk when the queue is contended.
-- **`ctx.heartbeat(progress)` + a heartbeat timeout**: report progress from long-running jobs and resume from the last checkpoint after a crash.
+- **`context.heartbeat(progress)` + a heartbeat timeout**: report progress from long-running jobs and resume from the last checkpoint after a crash.
 - **The same Activity, called from a Workflow**: use the Activity in multi-step orchestration without rewriting it.
 
 Temporal lets you start with a job and move to a Workflow when the work grows. The Activity code you wrote still comes with you.
@@ -210,4 +218,4 @@ Click **Check** to finish the track.
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

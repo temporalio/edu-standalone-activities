@@ -98,11 +98,11 @@ gradle -q execute -PmainClass=webhook.SendDouble -PappArgs=evt_dup_001
 You should see:
 
 ```bash,nocopy
-[call-1] start activityId=deliver-evt_dup_001
-[call-1] handle ok (activityId=deliver-evt_dup_001)
-[call-2] start activityId=deliver-evt_dup_001
-[call-2] FAILED: ...already started...
-[call-1] activity completed
+14:38:01 INFO  webhook.SendDouble - [call-1] start activityId=deliver-evt_dup_001
+14:38:01 INFO  webhook.SendDouble - [call-1] handle ok (activityId=deliver-evt_dup_001)
+14:38:02 INFO  webhook.SendDouble - [call-2] start activityId=deliver-evt_dup_001
+14:38:02 ERROR webhook.SendDouble - [call-2] FAILED: ...already started...
+14:38:04 INFO  webhook.SendDouble - [call-1] activity completed
 ```
 
 The first call succeeded. The second call threw because the default conflict policy is `FAIL`. The server refuses to schedule a second Activity with an id that's already in flight.
@@ -116,11 +116,10 @@ The [button label="Webhook receiver" background="#444CE7"](tab-5) tab shows `"pr
 Open `SendDouble.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. Add one line to the `StartActivityOptions` builder in the `start` method:
 
 ```java
-.setIdConflictPolicy(
-    io.temporal.api.enums.v1.ActivityIdConflictPolicy.ACTIVITY_ID_CONFLICT_POLICY_USE_EXISTING)
+.setIdConflictPolicy(ActivityIdConflictPolicy.ACTIVITY_ID_CONFLICT_POLICY_USE_EXISTING)
 ```
 
-The finished file is in the **Solution** tab.
+The import for `ActivityIdConflictPolicy` is already at the top of the file. The finished file is in the **Solution** tab.
 
 `USE_EXISTING` tells the server: if there's already an Activity with this id in flight, return a handle to *that one* instead of throwing.
 
@@ -139,12 +138,12 @@ gradle -q execute -PmainClass=webhook.SendDouble -PappArgs=evt_dup_002
 Now you should see:
 
 ```bash,nocopy
-[call-1] start activityId=deliver-evt_dup_002
-[call-1] handle ok (activityId=deliver-evt_dup_002)
-[call-2] start activityId=deliver-evt_dup_002
-[call-2] handle ok (activityId=deliver-evt_dup_002)
-[call-1] activity completed
-[call-2] activity completed
+14:38:01 INFO  webhook.SendDouble - [call-1] start activityId=deliver-evt_dup_002
+14:38:01 INFO  webhook.SendDouble - [call-1] handle ok (activityId=deliver-evt_dup_002)
+14:38:02 INFO  webhook.SendDouble - [call-2] start activityId=deliver-evt_dup_002
+14:38:02 INFO  webhook.SendDouble - [call-2] handle ok (activityId=deliver-evt_dup_002)
+14:38:04 INFO  webhook.SendDouble - [call-1] activity completed
+14:38:04 INFO  webhook.SendDouble - [call-2] activity completed
 ```
 
 Both calls returned successfully. The second call got a handle to the Activity the first call scheduled, so `getResult()` on either handle resolves to the same outcome.
@@ -183,4 +182,4 @@ For full dedup across both windows, set both:
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

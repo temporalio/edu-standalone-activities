@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Reset for Section 4's capped run.
+# Clean up before the rate-capped run in Module 04, section 4.
 #
-# Section 4's pain demo (SendBulkDemo) fans out demo-* Standalone Activities that retry on
-# every 429. While they drain they generate hundreds of retries and keep hitting the receiver,
-# inflating the counts you check in this section. Terminate any leftover demo-* Activities,
-# then clear the receiver so this run starts from a clean zero.
+# Section 2 runs SendBulkDemo, which fans out demo-* Standalone Activities against a
+# receiver capped at 2 req/sec. Those Activities retry on every 429, so if any are still
+# draining they keep hitting the receiver and inflate the delivery counts you are asked to
+# check in section 4. Terminate any leftover demo-* Activities, then clear the receiver so
+# the capped run starts from zero.
 set -uo pipefail
 
 # SendBulkDemo uses IDs demo-000 .. demo-059. Terminating an Activity that already completed

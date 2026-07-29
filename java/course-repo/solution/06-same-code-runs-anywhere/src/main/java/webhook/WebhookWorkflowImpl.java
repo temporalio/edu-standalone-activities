@@ -13,7 +13,7 @@ public class WebhookWorkflowImpl implements WebhookWorkflow {
                     .build());
 
     @Override
-    public int run(WebhookDelivery req) {
-        return activities.deliverWebhook(req);
+    public int run(WebhookDelivery request) {
+        return activities.deliverWebhook(request);
     }
 }

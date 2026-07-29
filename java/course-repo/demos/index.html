@@ -431,7 +431,7 @@ function setProcCount(n, warn) {
 // ── code panel templates ──────────────────────────────────────────────────
 const BUG_CODE_HTML = `
       <div class="code-line dim" id="cl-1"><span class="ln">1</span><span class="src"><span class="kw">export async function</span> <span class="fn">deliverWebhookBatch</span>(</span></div>
-      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  req: WebhookDeliveryBatch</span></div>
+      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  request: WebhookDeliveryBatch</span></div>
       <div class="code-line dim" id="cl-3"><span class="ln">3</span><span class="src">): <span class="kw">Promise</span>&lt;<span class="kw">number</span>&gt; {</span></div>
       <div class="code-line" id="cl-4"><span class="ln">4</span><span class="src">  <span class="kw">const</span> { attempt, heartbeatDetails } = <span class="fn">activityInfo</span>();</span></div>
       <div class="code-line" id="cl-5"><span class="ln">5</span><span class="src"></span></div>
@@ -440,9 +440,9 @@ const BUG_CODE_HTML = `
       <div class="code-line" id="cl-8"><span class="ln">8</span><span class="src"></span></div>
       <div class="code-line" id="cl-9"><span class="ln">9</span><span class="src">  <span class="kw">let</span> delivered = startIndex;</span></div>
       <div class="code-line dim" id="cl-10"><span class="ln">10</span><span class="src">  <span class="kw">try</span> {</span></div>
-      <div class="code-line" id="cl-11"><span class="ln">11</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; req.items.length; i++) {</span></div>
-      <div class="code-line" id="cl-12"><span class="ln">12</span><span class="src">      <span class="kw">const</span> item = req.items[i];</span></div>
-      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(req.url, { method: <span class="str">'POST'</span>, ... });</span></div>
+      <div class="code-line" id="cl-11"><span class="ln">11</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; request.items.length; i++) {</span></div>
+      <div class="code-line" id="cl-12"><span class="ln">12</span><span class="src">      <span class="kw">const</span> item = request.items[i];</span></div>
+      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(request.url, { method: <span class="str">'POST'</span>, ... });</span></div>
       <div class="code-line" id="cl-14"><span class="ln">14</span><span class="src">      delivered++;</span></div>
       <div class="code-line" id="cl-15"><span class="ln">15</span><span class="src">      <span class="fn">heartbeat</span>(delivered);</span></div>
       <div class="code-line" id="cl-16"><span class="ln">16</span><span class="src">      <span class="kw">await</span> <span class="fn">sleep</span>(<span class="num">1000</span>);</span></div>
@@ -454,7 +454,7 @@ const BUG_CODE_HTML = `
 
 const FIX_CODE_HTML = `
       <div class="code-line dim" id="cl-1"><span class="ln">1</span><span class="src"><span class="kw">export async function</span> <span class="fn">deliverWebhookBatch</span>(</span></div>
-      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  req: WebhookDeliveryBatch</span></div>
+      <div class="code-line dim" id="cl-2"><span class="ln">2</span><span class="src">  request: WebhookDeliveryBatch</span></div>
       <div class="code-line dim" id="cl-3"><span class="ln">3</span><span class="src">): <span class="kw">Promise</span>&lt;<span class="kw">number</span>&gt; {</span></div>
       <div class="code-line" id="cl-4"><span class="ln">4</span><span class="src">  <span class="kw">const</span> { attempt, heartbeatDetails } = <span class="fn">activityInfo</span>();</span></div>
       <div class="code-line" id="cl-5"><span class="ln">5</span><span class="src"></span></div>
@@ -465,9 +465,9 @@ const FIX_CODE_HTML = `
       <div class="code-line" id="cl-10"><span class="ln">10</span><span class="src"></span></div>
       <div class="code-line" id="cl-11"><span class="ln">11</span><span class="src">  <span class="kw">let</span> delivered = startIndex;</span></div>
       <div class="code-line dim" id="cl-12"><span class="ln">12</span><span class="src">  <span class="kw">try</span> {</span></div>
-      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; req.items.length; i++) {</span></div>
-      <div class="code-line" id="cl-14"><span class="ln">14</span><span class="src">      <span class="kw">const</span> item = req.items[i];</span></div>
-      <div class="code-line" id="cl-15"><span class="ln">15</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(req.url, { method: <span class="str">'POST'</span>, ... });</span></div>
+      <div class="code-line" id="cl-13"><span class="ln">13</span><span class="src">    <span class="kw">for</span> (<span class="kw">let</span> i = startIndex; i &lt; request.items.length; i++) {</span></div>
+      <div class="code-line" id="cl-14"><span class="ln">14</span><span class="src">      <span class="kw">const</span> item = request.items[i];</span></div>
+      <div class="code-line" id="cl-15"><span class="ln">15</span><span class="src">      <span class="kw">await</span> <span class="fn">fetch</span>(request.url, { method: <span class="str">'POST'</span>, ... });</span></div>
       <div class="code-line" id="cl-16"><span class="ln">16</span><span class="src">      delivered++;</span></div>
       <div class="code-line" id="cl-17"><span class="ln">17</span><span class="src">      <span class="fn">heartbeat</span>(delivered);</span></div>
       <div class="code-line" id="cl-18"><span class="ln">18</span><span class="src">      <span class="kw">await</span> <span class="fn">sleep</span>(<span class="num">1000</span>);</span></div>

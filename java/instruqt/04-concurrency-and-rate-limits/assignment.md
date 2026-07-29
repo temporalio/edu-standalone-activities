@@ -100,7 +100,7 @@ time gradle -q execute -PmainClass=webhook.SendBulk -PappArgs=60
 With no rate cap, the 60 deliveries should complete in **a second or two**. The Worker dispatches them as fast as its concurrency limit allows. You should see:
 
 ```bash,nocopy
-All 60 deliveries completed.
+14:35:02 INFO  webhook.SendBulk - All 60 deliveries completed.
 ```
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. `received_count` and `processed_count` should both reach 60, and the `received_at` timestamps will all be clustered tight together. The tab auto-refreshes every 2 seconds.
@@ -111,24 +111,28 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, **Standal
 
 ## 2. Add a real rate limit on the receiver (~3 min)
 
-In the [button label="Terminal" background="#444CE7"](tab-3) tab, turn on a 2 req/sec cap at the receiver:
+Now cap the receiver at 2 req/sec and fan out 60 deliveries against it, using `SendBulkDemo` (`SendBulkDemo.java`). It uses separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 4.
+
+In the [button label="Terminal" background="#444CE7"](tab-3) tab:
 
 ```bash,run
-# Enable a 2 req/sec cap on the receiver
-curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
-```
-
-Now send 60 deliveries against the rate-limited receiver using `SendBulkDemo` (`SendBulkDemo.java`), which uses separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 4:
-
-```bash,run
-# Reset and fan out 60 deliveries against the rate-limited receiver. Watch the 429s.
+# Cap the receiver at 2 req/sec (verified), then fan out 60 deliveries. Watch the 429s.
+scripts/rate-limit.sh 2
 scripts/reset-receiver.sh
 gradle -q execute -PmainClass=webhook.SendBulkDemo -PappArgs=60
 ```
 
+`rate-limit.sh` sets the cap and reads it back, so it fails loudly if the cap did not stick. You should see:
+
+```bash,nocopy
+Receiver rate limit is now 2 req/sec.
+```
+
 `SendBulkDemo` will hang because the Activities keep retrying on every 429. After about **5 seconds**, press **Ctrl+C**.
 
-Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. Open the [button label="Worker" background="#444CE7"](tab-4) tab and look for error lines ending in `HTTP 429`.
+Check the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. Only a handful of deliveries land at first; the rest get rejected with `429 Too Many Requests` and keep retrying. You should see `throttled_count` climbing well past `processed_count`, which is the direct evidence the cap is doing something. Open the [button label="Worker" background="#444CE7"](tab-4) tab and look for error lines ending in `HTTP 429`.
+
+> **If `throttled_count` stays at 0**, the cap isn't in effect. Check `rate_limit` in the receiver tab: if it reads `0`, re-run `scripts/rate-limit.sh 2` and start the fan-out again. Leaving and re-entering this module resets the cap to `0`, so it has to be set in the same pass as the fan-out.
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, **Standalone Activities**. Most of the `demo-*` Activities should be in **Running** state with the attempt count climbing.
 
@@ -145,7 +149,7 @@ WorkerOptions options = WorkerOptions.newBuilder()
         .setMaxConcurrentActivityExecutionSize(10)
         .setMaxWorkerActivitiesPerSecond(2)
         .build();
-var worker = factory.newWorker(Shared.TASK_QUEUE, options);
+var worker = factory.newWorker(Webhook.TASK_QUEUE, options);
 ```
 
 The Worker now dispatches at most 2 Activities per second. The full version is in the **Solution** tab.
@@ -156,7 +160,7 @@ The Worker now dispatches at most 2 Activities per second. The full version is i
 
 ## 4. Re-run with the rate cap (~3 min)
 
-The receiver is still rate-limited at 2/sec from section 2. Dispatch at the same pace and watch the 429s vanish.
+The receiver should still be capped at 2/sec from section 2. Dispatch at the same pace and watch the 429s vanish. The run block below re-applies the cap so this section works even if it got cleared.
 
 Restart the Worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-4) tab, press **Ctrl+C**, then re-run:
 
@@ -168,14 +172,15 @@ gradle -q execute -PmainClass=webhook.Worker
 You should see:
 
 ```bash,nocopy
-Worker running on task queue "webhook-queue" (rate cap: 2/sec)
+14:36:44 INFO  webhook.Worker - Worker running on task queue "webhook-queue" (rate cap: 2/sec)
 ```
 
 In the [button label="Terminal" background="#444CE7"](tab-3) tab, send another 60:
 
 ```bash,run
-# Clear leftover demo Activities, reset the receiver, then send 60 at the capped rate
+# Clear leftover demo Activities, reset the receiver, re-apply the cap, then send 60
 scripts/stop-demo-and-reset.sh
+scripts/rate-limit.sh 2
 time gradle -q execute -PmainClass=webhook.SendBulk -PappArgs=60
 ```
 
@@ -221,4 +226,4 @@ Two options:
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

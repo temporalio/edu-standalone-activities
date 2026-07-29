@@ -8,5 +8,5 @@ import io.temporal.activity.ActivityInterface;
  */
 @ActivityInterface
 public interface WebhookActivities {
-    int deliverWebhook(WebhookDelivery req);
+    int deliverWebhook(WebhookDelivery request);
 }

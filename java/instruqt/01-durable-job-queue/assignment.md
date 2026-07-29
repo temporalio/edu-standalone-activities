@@ -15,6 +15,62 @@ notes:
     You're going to build a durable webhook delivery service.
 
     When something happens in your application - a payment clears, an order ships, a user signs up - you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry does not double-deliver.
+
+    The same `deliverWebhook` Activity runs through every module of this tutorial:
+
+    - **Module 1**: Run the Activity directly from a client. Inspect it in the Temporal UI.
+    - **Module 2**: Make retries safe with an idempotency key.
+    - **Module 3**: Reject duplicate jobs at the platform level.
+    - **Module 4**: Cap throughput and prioritize urgent jobs.
+    - **Module 5**: Long-running jobs that heartbeat progress and resume after a crash.
+    - **Module 6**: The same Activity, called from a Workflow. Same code, two job types.
+
+    ## What's already running in this sandbox
+
+    - **Temporal Service and Web UI**: already running and ready for the exercises.
+    - **Webhook receiver**: records webhook deliveries so you can verify what left your Worker actually landed.
+
+    You don't need to start any of these. They boot with the sandbox.
+
+    ## Prerequisites
+
+    - Comfortable reading and writing Java (classes, interfaces, annotations).
+    - Familiar with Temporal Activities and Workers at the level [Temporal 101 in Java](https://learn.temporal.io/courses/temporal_101/java/) covers. If those words are new, take that course first and come back.
+
+    ## How this tutorial works
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 220" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+      <g transform="translate(0, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="60" y="40" width="160" height="44" fill="#444CE7" rx="6"/>
+        <text x="140" y="68" text-anchor="middle" fill="#fff" font-size="15" font-weight="600">Worker</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Click blue buttons</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">to jump to that tab</text>
+      </g>
+      <g transform="translate(300, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="20" y="35" width="240" height="58" fill="#1a1a2e" stroke="#4a5568" rx="4"/>
+        <text x="35" y="58" fill="#7aa2ff" font-size="11" font-family="ui-monospace, monospace">$ gradle -q execute</text>
+        <text x="35" y="76" fill="#9ae6b4" font-size="11" font-family="ui-monospace, monospace">    -PmainClass=webhook.Worker</text>
+        <rect x="195" y="44" width="55" height="28" fill="#444CE7" rx="4"/>
+        <text x="222" y="62" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">▶ Run</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Click the Run button</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">to execute in a terminal</text>
+      </g>
+      <g transform="translate(600, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="20" y="42" width="60" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="50" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">Exercise</text>
+        <rect x="88" y="42" width="60" height="32" fill="#9ae6b4" rx="3"/>
+        <text x="118" y="63" text-anchor="middle" fill="#1a1a2e" font-size="10" font-weight="700">Solution</text>
+        <rect x="156" y="42" width="60" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="186" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">Terminal</text>
+        <rect x="224" y="42" width="36" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="242" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">...</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Solution tab</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">has the answer. Peek any time</text>
+      </g>
+    </svg>
 tabs:
 - id: 82dbyqs87jvd
   title: Temporal UI
@@ -77,31 +133,42 @@ Estimated time: 7 minutes.
 
 ## 1. Write the Activity (~2 min)
 
-Open `WebhookActivitiesImpl.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. You'll see a stub with three `TODO` comments and a placeholder exception.
+Open `WebhookActivitiesImpl.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. You'll see a stub with three `TODO` comments and a placeholder `throw` that you also need to delete.
 
-Replace the three `TODO` lines and the `throw` with this code:
+Keep the `log.info` line. Replace everything below it, which is the three `TODO` comments **and the `throw` beneath them**, with this code:
 
 ```java
 try {
-    String body = MAPPER.writeValueAsString(req.getPayload());
-    HttpRequest httpReq = HttpRequest.newBuilder(URI.create(req.getUrl()))
+    String body = objectMapper.writeValueAsString(request.getPayload());
+    HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(request.getUrl()))
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
-    HttpResponse<String> resp = HTTP.send(httpReq, HttpResponse.BodyHandlers.ofString());
-    if (resp.statusCode() >= 300) {
-        throw new RuntimeException("HTTP " + resp.statusCode()); // 4xx/5xx: Temporal retries
+    HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+    int statusCode = response.statusCode();
+    if (statusCode >= 300) {
+        // 408 and 429 are transient, so a retry can succeed. Other 3xx and 4xx codes are
+        // permanent, so fail fast instead of retrying a broken request forever.
+        if (statusCode < 500 && statusCode != 408 && statusCode != 429) {
+            throw ApplicationFailure.newNonRetryableFailure(
+                    "HTTP " + statusCode, "WebhookPermanentFailure");
+        }
+        throw new RuntimeException("HTTP " + statusCode);
     }
-    return resp.statusCode();
-} catch (IOException | InterruptedException e) {
+    return statusCode;
+} catch (IOException e) {
     throw new RuntimeException(e); // network error: Temporal retries
+} catch (InterruptedException e) {
+    // Worker shutting down or Activity cancelled. Restore the flag so the SDK still sees it.
+    Thread.currentThread().interrupt();
+    throw new RuntimeException(e);
 }
 ```
 
 Three things happen here:
 
 1. POST the payload as JSON to the URL. Both come from the `WebhookDelivery` input.
-2. Throw if the response status is 300 or higher. Temporal sees the thrown exception and retries.
+2. Throw if the response status is 300 or higher, but **how** you throw decides what Temporal does next. A plain exception is retryable, so use it for the codes a retry could fix: 5xx, plus 408 (timeout) and 429 (rate limited). A `404` or `400` will never succeed no matter how many times you resend it, so throw `ApplicationFailure.newNonRetryableFailure` and Temporal gives up immediately instead of retrying forever.
 3. Return the HTTP status code as the Activity's result.
 
 Instruqt auto-saves your edits. The full version is in the **Solution** tab.
@@ -122,7 +189,7 @@ gradle -q execute -PmainClass=webhook.Worker
 You should see:
 
 ```bash,nocopy
-Worker running on task queue "webhook-queue"
+14:32:07 INFO  webhook.Worker - Worker running on task queue "webhook-queue"
 ```
 
 The Worker is now polling Temporal for tasks. Leave it running.
@@ -137,7 +204,7 @@ gradle -q execute -PmainClass=webhook.SendStandalone -PappArgs=evt_001
 You should see:
 
 ```bash,nocopy
-Standalone Activity completed with status 200
+14:32:19 INFO  webhook.SendStandalone - Standalone Activity completed with status 200
 ```
 
 Open `SendStandalone.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. This call submits the durable job:
@@ -145,12 +212,12 @@ Open `SendStandalone.java` in the [button label="Exercise" background="#444CE7"]
 ```java
 StartActivityOptions options = StartActivityOptions.newBuilder()
         .setId("deliver-" + eventId)
-        .setTaskQueue(Shared.TASK_QUEUE)
+        .setTaskQueue(Webhook.TASK_QUEUE)
         .setStartToCloseTimeout(Duration.ofSeconds(10))
         .build();
 
 int status = client.execute(
-        WebhookActivities.class, WebhookActivities::deliverWebhook, options, req);
+        WebhookActivities.class, WebhookActivities::deliverWebhook, options, request);
 ```
 
 One API call. The client tells Temporal, "run this Activity once and give me the result." There is no Workflow in the program, and there is no broker, scheduler, or result store for you to deploy. Temporal persisted the job before acknowledging it, dispatched it to your Worker, and stored the result.
@@ -207,4 +274,4 @@ The next modules tackle what happens when reality intrudes:
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
