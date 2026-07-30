@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+NN=05-heartbeats-and-checkpointing
+cp -rf /opt/workshop/solution/$NN/. /root/workshop/exercise/$NN/
+grep -rl "standaloneactivities/solution/$NN" /root/workshop/exercise/$NN 2>/dev/null \
+  | xargs -r sed -i "s#standaloneactivities/solution/$NN#standaloneactivities/exercise/$NN#g" || true

@@ -1,0 +1,10 @@
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+*.swp
+sandbox/Dockerfile.bak
+
+course-repo/bin
+course-repo/*.exe
