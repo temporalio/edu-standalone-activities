@@ -1,0 +1,277 @@
+---
+slug: durable-job-queue
+id: r9hrlzzzkgzi
+type: challenge
+title: 'Standalone Activities: the durable job queue'
+teaser: Run a webhook delivery as a durable job, with no broker, scheduler, or result
+  store to operate.
+notes:
+- type: text
+  contents: |
+    # Build a Job Queue with Standalone Activities (Java)
+
+    *By [Nikolay Advolodkin](https://www.linkedin.com/in/nikolayadvolodkin/), Staff Developer Advocate at Temporal*
+
+    You're going to build a durable webhook delivery service.
+
+    When something happens in your application - a payment clears, an order ships, a user signs up - you POST to a URL another team gave you. Doing it durably means: if the network fails, retry. If the receiver returns 500, retry. If your service crashes mid-send, the retry does not double-deliver.
+
+    The same `deliverWebhook` Activity runs through every module of this tutorial:
+
+    - **Module 1**: Run the Activity directly from a client. Inspect it in the Temporal UI.
+    - **Module 2**: Make retries safe with an idempotency key.
+    - **Module 3**: Reject duplicate jobs at the platform level.
+    - **Module 4**: Cap throughput and prioritize urgent jobs.
+    - **Module 5**: Long-running jobs that heartbeat progress and resume after a crash.
+    - **Module 6**: The same Activity, called from a Workflow. Same code, two job types.
+
+    ## What's already running in this sandbox
+
+    - **Temporal Service and Web UI**: already running and ready for the exercises.
+    - **Webhook receiver**: records webhook deliveries so you can verify what left your Worker actually landed.
+
+    You don't need to start any of these. They boot with the sandbox.
+
+    ## Prerequisites
+
+    - Comfortable reading and writing Java (classes, interfaces, annotations).
+    - Familiar with Temporal Activities and Workers at the level [Temporal 101 in Java](https://learn.temporal.io/courses/temporal_101/java/) covers. If those words are new, take that course first and come back.
+
+    ## How this tutorial works
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 220" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+      <g transform="translate(0, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="60" y="40" width="160" height="44" fill="#444CE7" rx="6"/>
+        <text x="140" y="68" text-anchor="middle" fill="#fff" font-size="15" font-weight="600">Worker</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Click blue buttons</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">to jump to that tab</text>
+      </g>
+      <g transform="translate(300, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="20" y="35" width="240" height="58" fill="#1a1a2e" stroke="#4a5568" rx="4"/>
+        <text x="35" y="58" fill="#7aa2ff" font-size="11" font-family="ui-monospace, monospace">$ gradle -q execute</text>
+        <text x="35" y="76" fill="#9ae6b4" font-size="11" font-family="ui-monospace, monospace">    -PmainClass=webhook.Worker</text>
+        <rect x="195" y="44" width="55" height="28" fill="#444CE7" rx="4"/>
+        <text x="222" y="62" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">▶ Run</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Click the Run button</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">to execute in a terminal</text>
+      </g>
+      <g transform="translate(600, 0)">
+        <rect width="280" height="220" fill="#252540" stroke="#3a3158" stroke-width="1" rx="10"/>
+        <rect x="20" y="42" width="60" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="50" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">Exercise</text>
+        <rect x="88" y="42" width="60" height="32" fill="#9ae6b4" rx="3"/>
+        <text x="118" y="63" text-anchor="middle" fill="#1a1a2e" font-size="10" font-weight="700">Solution</text>
+        <rect x="156" y="42" width="60" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="186" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">Terminal</text>
+        <rect x="224" y="42" width="36" height="32" fill="#2d3748" stroke="#4a5568" rx="3"/>
+        <text x="242" y="63" text-anchor="middle" fill="#a0aec0" font-size="10">...</text>
+        <text x="140" y="142" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Solution tab</text>
+        <text x="140" y="166" text-anchor="middle" fill="#a0aec0" font-size="12">has the answer. Peek any time</text>
+      </g>
+    </svg>
+tabs:
+- id: 82dbyqs87jvd
+  title: Temporal UI
+  type: service
+  hostname: workshop
+  port: 8233
+- id: wyumlwdh7xnb
+  title: Exercise
+  type: code
+  hostname: workshop
+  path: /root/workshop/exercise/01-durable-job-queue
+- id: rkytu9vfmcxh
+  title: Solution
+  type: code
+  hostname: workshop
+  path: /root/workshop/solution/01-durable-job-queue
+- id: xuvw2ax91am0
+  title: Terminal
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop/exercise/01-durable-job-queue
+- id: uwywudwsc4cg
+  title: Worker
+  type: terminal
+  hostname: workshop
+  workdir: /root/workshop/exercise/01-durable-job-queue
+- id: ecleuxir0jio
+  title: Webhook receiver
+  type: service
+  hostname: workshop
+  port: 9000
+difficulty: basic
+timelimit: 1500
+enhanced_loading: null
+---
+
+# Submit a durable job with one API call
+
+With many job queues, you still have to solve the hard parts yourself:
+
+- Jobs vanish during deploys, crashes, and restarts.
+- Bring your own broker, result store, scheduler, and monitoring.
+- Retry logic reimplemented in every service, all behaving differently.
+- Slow consumers can block everything behind them.
+- If the work grows into orchestration, you often have to rewrite it elsewhere.
+- No polyglot support in most job queue frameworks.
+- A Tier-0 service nobody wants to maintain.
+
+**Standalone Activities are Temporal's durable job queue.** You write a regular Java Activity and submit it with one API call. Temporal persists it, retries it on failure, and makes it visible in the UI. No broker, scheduler, or result store to deploy.
+
+You'll do three things in this module:
+
+1. Write a small `deliverWebhook` Activity in Java.
+2. Submit it as a Standalone Activity from a client.
+3. Inspect the running job in the Temporal UI.
+
+Estimated time: 7 minutes.
+
+---
+
+## 1. Write the Activity (~2 min)
+
+Open `WebhookActivitiesImpl.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. You'll see a stub with three `TODO` comments and a placeholder `throw` that you also need to delete.
+
+Keep the `log.info` line. Replace everything below it, which is the three `TODO` comments **and the `throw` beneath them**, with this code:
+
+```java
+try {
+    String body = objectMapper.writeValueAsString(request.getPayload());
+    HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(request.getUrl()))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .build();
+    HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+    int statusCode = response.statusCode();
+    if (statusCode >= 300) {
+        // 408 and 429 are transient, so a retry can succeed. Other 3xx and 4xx codes are
+        // permanent, so fail fast instead of retrying a broken request forever.
+        if (statusCode < 500 && statusCode != 408 && statusCode != 429) {
+            throw ApplicationFailure.newNonRetryableFailure(
+                    "HTTP " + statusCode, "WebhookPermanentFailure");
+        }
+        throw new RuntimeException("HTTP " + statusCode);
+    }
+    return statusCode;
+} catch (IOException e) {
+    throw new RuntimeException(e); // network error: Temporal retries
+} catch (InterruptedException e) {
+    // Worker shutting down or Activity cancelled. Restore the flag so the SDK still sees it.
+    Thread.currentThread().interrupt();
+    throw new RuntimeException(e);
+}
+```
+
+Three things happen here:
+
+1. POST the payload as JSON to the URL. Both come from the `WebhookDelivery` input.
+2. Throw if the response status is 300 or higher, but **how** you throw decides what Temporal does next. A plain exception is retryable, so use it for the codes a retry could fix: 5xx, plus 408 (timeout) and 429 (rate limited). A `404` or `400` will never succeed no matter how many times you resend it, so throw `ApplicationFailure.newNonRetryableFailure` and Temporal gives up immediately instead of retrying forever.
+3. Return the HTTP status code as the Activity's result.
+
+Instruqt auto-saves your edits. The full version is in the **Solution** tab.
+
+> This is a regular Java method on an `@ActivityInterface`. There's no "standalone" annotation. Standalone vs. inside-a-Workflow is decided by *how the Activity is called*, not how it's defined.
+
+---
+
+## 2. Submit it as a Standalone Activity (~3 min)
+
+In the [button label="Worker" background="#444CE7"](tab-4) tab, start the Worker:
+
+```bash,run
+# Start the Worker. Polls Temporal for Activity tasks.
+gradle -q execute -PmainClass=webhook.Worker
+```
+
+You should see:
+
+```bash,nocopy
+14:32:07 INFO  webhook.Worker - Worker running on task queue "webhook-queue"
+```
+
+The Worker is now polling Temporal for tasks. Leave it running.
+
+In the [button label="Terminal" background="#444CE7"](tab-3) tab, run the starter:
+
+```bash,run
+# Submit deliverWebhook as a Standalone Activity and wait for the result
+gradle -q execute -PmainClass=webhook.SendStandalone -PappArgs=evt_001
+```
+
+You should see:
+
+```bash,nocopy
+14:32:19 INFO  webhook.SendStandalone - Standalone Activity completed with status 200
+```
+
+Open `SendStandalone.java` in the [button label="Exercise" background="#444CE7"](tab-1) tab. This call submits the durable job:
+
+```java
+StartActivityOptions options = StartActivityOptions.newBuilder()
+        .setId("deliver-" + eventId)
+        .setTaskQueue(Webhook.TASK_QUEUE)
+        .setStartToCloseTimeout(Duration.ofSeconds(10))
+        .build();
+
+int status = client.execute(
+        WebhookActivities.class, WebhookActivities::deliverWebhook, options, request);
+```
+
+One API call. The client tells Temporal, "run this Activity once and give me the result." There is no Workflow in the program, and there is no broker, scheduler, or result store for you to deploy. Temporal persisted the job before acknowledging it, dispatched it to your Worker, and stored the result.
+
+Open the [button label="Webhook receiver" background="#444CE7"](tab-5) tab. `"processed_count"` should be `1`:
+
+```json,nocopy
+{
+  "received_count": 1,
+  "processed_count": 1
+}
+```
+
+The tab auto-refreshes every 2 seconds.
+
+---
+
+## 3. Inspect the job in the Temporal UI (~2 min)
+
+Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab and switch to the **Standalone Activities** view in the left nav. You should see `deliver-evt_001` listed as Completed.
+
+Click into it. Temporal is now handling three things you would otherwise have to build or operate:
+
+- **Addressable.** Every job has a stable ID (`deliver-evt_001` here). You can query its status, fetch its result, cancel it, or terminate it from the UI, CLI, SDK, or API.
+- **Durable.** The job was persisted before your Worker even saw it. If the Worker had crashed mid-delivery, the same job would have been redispatched to a Worker polling the Task Queue on retry.
+- **Observable.** Status, attempt count, the last error, and the result are visible without a separate logging pipeline.
+
+That is the shape we want from a job queue: durable execution, retries, status, and results without extra infrastructure to operate.
+
+---
+
+## Check your understanding
+
+> Your `deliverWebhook` job hits a transient 503 from the receiver on attempt 1. With Temporal's default retry policy, what happens?
+
+<details>
+<summary>Reveal the answer</summary>
+
+Temporal sees the thrown exception, waits the initial retry interval (1s by default), and dispatches the job again. The retry policy is exponential, so later failures wait longer. The job stays "Running" in the UI through every retry, and you can watch the attempt counter increment.
+
+Contrast: in a traditional job queue, retry behavior is something you re-implement per service, with subtle differences each time.
+
+</details>
+
+## Coming up
+
+The next modules tackle what happens when reality intrudes:
+
+- **Module 02**: Idempotency and crash safety. Crash the Worker mid-delivery, watch the receiver show duplicates, then fix it.
+- **Module 03**: Deduplication via ID reuse. Submit the same job ID twice and let Temporal return the existing handle.
+- **Module 04**: Concurrency, rate limits, priority and fairness. Stop one busy tenant from slowing everyone else down.
+- **Module 05**: Heartbeats and checkpointing. Resume long-running jobs from the last reported progress after a crash.
+- **Module 06**: Same code runs anywhere. Call the same `deliverWebhook` Activity from a Workflow.
+
+---
+
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

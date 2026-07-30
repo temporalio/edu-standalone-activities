@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+pkill -9 -f "mainClass=webhook.Worker" 2>/dev/null || true
+pkill -9 -f "webhook.Worker" 2>/dev/null || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+# /_reset preserves the rate-limit cap, so clear it explicitly. Otherwise the
+# 2/sec cap set in Module 04 leaks into this module's batch deliveries.
+curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=0" > /dev/null || true

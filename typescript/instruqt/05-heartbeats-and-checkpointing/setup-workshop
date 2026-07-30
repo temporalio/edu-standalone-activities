@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+pkill -f "ts-node.*worker.ts" 2>/dev/null || true
+curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true

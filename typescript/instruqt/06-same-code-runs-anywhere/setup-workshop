@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Wrap-up module: no code changes required. Clear any leftover rate limit.
+curl -fsS -X POST 'http://localhost:9000/_rate_limit?limit=0' > /dev/null || true
+exit 0

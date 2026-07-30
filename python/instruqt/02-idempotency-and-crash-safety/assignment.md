@@ -176,7 +176,7 @@ Three POSTs still landed at the receiver because the Activity still retried thre
 
 Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **Standalone Activities**, and find `deliver-evt_fixed`. Its record looks the same as the buggy run: a single **Completed** Activity that, now that it has finished, shows no sign it was retried. The [button label="Worker" background="#444CE7"](tab-4) console still logs the same transient failures, so the Activity retried just as before. The difference is on the receiver side, where the repeated requests were deduped.
 
-> **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively at-most-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
+> **The takeaway:** at-least-once delivery (Temporal) + idempotency (your Activity + receiver) = effectively-once side effect. Temporal can't guarantee exactly-once on its own; that's a property your Activity and the system it talks to have to provide together.
 
 ---
 
@@ -187,7 +187,7 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-0) tab, go to **S
 
 In this standalone webhook exercise, the event id is the logical delivery identity, so `webhook:{req.event_id}` is the right key.
 
-For workflow-bound Activities, use the Workflow Run ID plus the Activity ID:
+For Workflow-bound Activities, use the Workflow Run ID plus the Activity ID:
 
 ```python
 from temporalio import activity
@@ -301,7 +301,7 @@ Each retry generates a **different** random code, so the idempotency key changes
 The fix is to make the key deterministic across retries:
 
 - Derive it from input fields the caller already chose (e.g. `req.event_id`), or
-- For workflow-bound Activities, use `workflow_run_id + activity_id` as described above.
+- For Workflow-bound Activities, use `workflow_run_id + activity_id` as described above.
 
 If you need a random code as part of the side effect, generate it **outside** the Activity (in the caller / starter) and pass it in as Activity input.
 
@@ -313,4 +313,4 @@ If you need a random code as part of the side effect, generate it **outside** th
 
 ---
 
-📝 **Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.
+**Feedback on this tutorial?** [Share your thoughts in our quick form](https://forms.gle/hbTUjkHB6dkucEg27). It helps us improve.

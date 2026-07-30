@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+NN=02-idempotency-and-crash-safety
+cp -rf /opt/workshop/solution/$NN/. /root/workshop/exercise/$NN/

@@ -1,0 +1,45 @@
+package webhook;
+
+import io.temporal.client.ActivityClient;
+import io.temporal.client.ActivityClientOptions;
+import io.temporal.client.ActivityHandle;
+import io.temporal.client.StartActivityOptions;
+import io.temporal.serviceclient.WorkflowServiceStubs;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+// Uses separate demo-* IDs so leftover retries don't collide with the bulk-* IDs
+// used in sections 1 and 4.
+public class SendBulkDemo {
+    private static final Logger log = LoggerFactory.getLogger(SendBulkDemo.class);
+
+    public static void main(String[] args) {
+        int count = args.length > 0 ? Integer.parseInt(args[0]) : 60;
+
+        WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
+        ActivityClient client = ActivityClient.newInstance(
+                service, ActivityClientOptions.newBuilder().setNamespace("default").build());
+
+        List<CompletableFuture<Integer>> futures = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String sequence = String.format("%03d", i);
+            StartActivityOptions options = StartActivityOptions.newBuilder()
+                    .setId("demo-" + sequence)
+                    .setTaskQueue(Webhook.TASK_QUEUE)
+                    .setStartToCloseTimeout(Duration.ofSeconds(30))
+                    .build();
+            ActivityHandle<Integer> handle = client.start(
+                    WebhookActivities.class, WebhookActivities::deliverWebhook, options,
+                    new WebhookDelivery(Webhook.RECEIVER_URL,
+                            Map.of("eventId", "demo_" + sequence, "type", "demo_rate_limit"), "demo_" + sequence));
+            futures.add(handle.getResultAsync());
+        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        log.info("All {} deliveries completed.", count);
+    }
+}
