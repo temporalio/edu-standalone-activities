@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    // Temporal Java SDK 1.36.1 ships Standalone Activities (Public Preview): ActivityClient, StartActivityOptions.
+    implementation 'io.temporal:temporal-sdk:1.36.1'
+    // Used by the Activity to serialize the webhook payload map to a JSON POST body.
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    // An SLF4J binding so the Worker console prints Activity logs (used by the log-reading steps).
+    runtimeOnly 'ch.qos.logback:logback-classic:1.5.6'
+}
+
+// Run any main() in this module:  gradle -q execute -PmainClass=webhook.Worker [-PappArgs="evt_001"]
+tasks.register('execute', JavaExec) {
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('mainClass')) {
+        mainClass.set(project.property('mainClass').toString())
+    }
+    if (project.hasProperty('appArgs')) {
+        args((project.property('appArgs').toString()).split('\\s+').findAll { it })
+    }
+    standardInput = System.in
+}

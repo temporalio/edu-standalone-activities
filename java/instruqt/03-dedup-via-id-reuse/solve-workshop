@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+NN=03-dedup-via-id-reuse
+cp -rf /opt/workshop/solution/$NN/. /root/workshop/exercise/$NN/
