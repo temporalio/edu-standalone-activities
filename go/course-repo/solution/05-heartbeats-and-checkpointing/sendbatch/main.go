@@ -31,8 +31,16 @@ func main() {
 		items[i] = map[string]any{"eventId": fmt.Sprintf("item_%03d", i), "type": "batch.delivery", "index": i}
 	}
 
+	// Optional second arg labels the Activity ID (e.g. `sendbatch 10 fixed` ->
+	// deliver-batch-10-fixed). Section 3 uses a label so its execution is its own
+	// Activity, separate from the one section 1 already ran to completion.
+	activityID := fmt.Sprintf("deliver-batch-%d", count)
+	if len(os.Args) > 2 && os.Args[2] != "" {
+		activityID = fmt.Sprintf("%s-%s", activityID, os.Args[2])
+	}
+
 	handle, err := c.ExecuteActivity(context.Background(), client.StartActivityOptions{
-		ID:                  fmt.Sprintf("deliver-batch-%d", count),
+		ID:                  activityID,
 		TaskQueue:           webhook.TaskQueue,
 		StartToCloseTimeout: 5 * time.Minute,
 		// Sized above the full 10-item batch runtime (10 items x 1s). Section 1's
@@ -42,7 +50,12 @@ func main() {
 		HeartbeatTimeout: 12 * time.Second,
 	}, webhook.DeliverWebhookBatch, webhook.WebhookDeliveryBatch{URL: webhook.WebhookReceiverURL, Items: items})
 	if err != nil {
-		log.Fatalln("submit failed", err)
+		// An already-started error means a previous execution of this same
+		// Activity ID is still in flight. Nothing is delivered in that case, so
+		// clear it out rather than reading the stale counts as a result.
+		log.Fatalf("submit failed for %s: %v\n"+
+			"If this says the Activity is already started, run scripts/reset-batch.sh first.",
+			activityID, err)
 	}
 
 	var delivered int

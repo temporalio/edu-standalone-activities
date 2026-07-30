@@ -98,11 +98,13 @@ go run ./worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send a 10-item batch and bring the service down mid-run:
 
 ```bash,run
-# Reset the receiver, submit a 10-item batch, bring the service down after ~4 items
-scripts/reset-receiver.sh
+# Clear any leftovers, submit a 10-item batch, bring the service down after ~4 items
+scripts/reset-batch.sh
 go run ./sendbatch 10 &
 sleep 4 && scripts/kill-worker.sh
 ```
+
+`reset-batch.sh` clears the receiver's counters *and* terminates any batch Activity still in flight from an earlier attempt at this module. That second part matters: `sendbatch` submits a fixed Activity ID, and Temporal rejects a submit whose ID is already running. If that happens nothing is delivered at all, so you would be reading a receiver count of `0` against an Activity that looks **Completed** from a previous run. Re-run this script any time you want to start a section over.
 
 That sequence:
 
@@ -188,9 +190,13 @@ if activity.HasHeartbeatDetails(ctx) {
 	var checkpoint int
 	if err := activity.GetHeartbeatDetails(ctx, &checkpoint); err == nil {
 		startIndex = checkpoint
+		activity.GetLogger(ctx).Info("Resuming from checkpoint",
+			"startIndex", startIndex, "attempt", activity.GetInfo(ctx).Attempt)
 	}
 }
 ```
+
+The log line is what you'll look for in section 3 to prove the resume happened.
 
 For TODO 2, replace:
 
@@ -224,16 +230,18 @@ go run ./worker
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, repeat the kill-mid-batch dance:
 
 ```bash,run
-# Same as section 1: reset, submit batch, kill mid-run to trigger the retry
-scripts/reset-receiver.sh
-go run ./sendbatch 10 &
+# Same as section 1, but under its own Activity ID so this run is a fresh execution
+scripts/reset-batch.sh
+go run ./sendbatch 10 fixed &
 sleep 4 && scripts/kill-worker.sh
 ```
+
+The extra `fixed` argument labels the Activity ID, so this submits `deliver-batch-10-fixed` rather than reusing the `deliver-batch-10` that section 1 already ran to completion. Two benefits: the retry you are about to watch is unambiguously a fresh execution, and you can compare the two runs side by side in the UI.
 
 Peek before restarting:
 
 - [button label="Webhook receiver" background="#444CE7"](tab-4): about 4 deliveries. The first attempt heartbeated its progress.
-- [button label="Temporal UI" background="#444CE7"](tab-5) → **Standalone Activities** → `deliver-batch-10`: still **Running**, waiting for a Worker.
+- [button label="Temporal UI" background="#444CE7"](tab-5) → **Standalone Activities** → `deliver-batch-10-fixed`: still **Running**, waiting for a Worker.
 
 Restart the Worker:
 
