@@ -5,6 +5,18 @@
 // (typescript/course-repo/server/webhookReceiver.ts) but is written using
 // only the Go standard library so the sandbox image does not need a Node
 // runtime.
+//
+// Endpoints:
+//
+//	POST /hooks       Record a delivery. Honors an optional Idempotency-Key
+//	                  header (Module 02). Returns 429 once the configured
+//	                  rate-limit cap is exceeded (Module 04).
+//	GET  /_received   Counts, the current cap, and the recorded deliveries.
+//	POST /_reset      Clear recorded deliveries and counters. PRESERVES the
+//	                  rate-limit cap so a lesson can zero counters between
+//	                  observations without losing the cap.
+//	POST /_rate_limit Set the cap from ?limit=N (requests/sec). limit=0
+//	                  disables it. Sliding 1-second window.
 package main
 
 import (
@@ -43,12 +55,15 @@ var (
 	deliveries       []Delivery
 )
 
+// resetState clears recorded deliveries and counters. It deliberately does NOT
+// clear rateLimit: Module 04 arms the cap once, then resets counters between
+// observations, so a reset that wiped the cap would silently turn the 429 demo
+// into a clean run. /_rate_limit?limit=0 is the way to disable the cap.
 func resetState() {
 	receivedCount = 0
 	processedCount = 0
 	dedupedCount = 0
 	throttledCount = 0
-	rateLimit = 0
 	windowTimestamps = nil
 	seenKeys = map[string]bool{}
 	deliveries = nil

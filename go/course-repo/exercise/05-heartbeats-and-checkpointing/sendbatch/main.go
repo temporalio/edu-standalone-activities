@@ -35,7 +35,11 @@ func main() {
 		ID:                  fmt.Sprintf("deliver-batch-%d", count),
 		TaskQueue:           webhook.TaskQueue,
 		StartToCloseTimeout: 5 * time.Minute,
-		HeartbeatTimeout:    5 * time.Second,
+		// Sized above the full 10-item batch runtime (10 items x 1s). Section 1's
+		// Activity never heartbeats, so its timer runs from attempt start: any
+		// value below the batch runtime would kill every attempt mid-batch and
+		// retry forever instead of retrying once and finishing.
+		HeartbeatTimeout: 12 * time.Second,
 	}, webhook.DeliverWebhookBatch, webhook.WebhookDeliveryBatch{URL: webhook.WebhookReceiverURL, Items: items})
 	if err != nil {
 		log.Fatalln("submit failed", err)

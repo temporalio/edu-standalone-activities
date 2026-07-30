@@ -111,18 +111,20 @@ Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Stan
 
 ## 2. Add a real rate limit on the receiver (~3 min)
 
-In the [button label="Terminal" background="#444CE7"](tab-2) tab, turn on a 2 req/sec cap at the receiver:
+In the [button label="Terminal" background="#444CE7"](tab-2) tab, clear the counters from section 1 and turn on a 2 req/sec cap at the receiver:
 
 ```bash,run
-# Enable a 2 req/sec cap on the receiver
+# Clear the counters first, then enable a 2 req/sec cap on the receiver
+scripts/reset-receiver.sh
 curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
 ```
+
+Order matters here: `reset-receiver.sh` zeroes the receiver's counters, so arm the cap *after* it.
 
 Now send 60 deliveries against the rate-limited receiver using `sendbulkdemo` (separate `demo-*` IDs so leftover retries don't collide with the `bulk-*` IDs used in sections 1 and 4):
 
 ```bash,run
-# Reset and fan out 60 deliveries against the rate-limited receiver. Watch the 429s.
-scripts/reset-receiver.sh
+# Fan out 60 deliveries against the rate-limited receiver. Watch the 429s.
 go run ./sendbulkdemo 60
 ```
 
@@ -145,6 +147,12 @@ MaxConcurrentActivityExecutionSize: 10,
 WorkerActivitiesPerSecond: 2,
 ```
 
+While you're in the file, change the startup log line just below so you can tell the capped Worker apart from the uncapped one you ran in sections 1 and 2:
+
+```go
+log.Printf("Worker running on task queue %q (rate cap: 2/sec)", webhook.TaskQueue)
+```
+
 Two knobs, two jobs. `MaxConcurrentActivityExecutionSize: 10` is the *concurrency* cap: at most 10 Activities run on this Worker at once. `WorkerActivitiesPerSecond: 2` is the *rate* cap: the Worker starts at most 2 per second no matter how many slots are free. Rate limiting is what protects the receiver here; the concurrency cap bounds how much this Worker takes on at any instant. The full version is in the **Solution** tab.
 
 > **Where does the excess go?** It waits in the Task Queue on the Temporal server. The Worker polls, and the server hands it work at the configured rate. Unscheduled work stays in the queue and nothing is lost.
@@ -153,7 +161,7 @@ Two knobs, two jobs. `MaxConcurrentActivityExecutionSize: 10` is the *concurrenc
 
 ## 4. Re-run with the rate cap (~3 min)
 
-The receiver is still rate-limited at 2/sec from section 2. Dispatch at the same pace and watch the 429s vanish.
+The receiver stays rate-limited at 2/sec. Dispatch at the same pace and watch the 429s vanish.
 
 Restart the Worker so it picks up the new config. In the [button label="Worker" background="#444CE7"](tab-3) tab, press **Ctrl+C**, then re-run:
 
@@ -171,16 +179,19 @@ Worker running on task queue "webhook-queue" (rate cap: 2/sec)
 In the [button label="Terminal" background="#444CE7"](tab-2) tab, send another 60:
 
 ```bash,run
-# Clear leftover demo Activities, reset the receiver, then send 60 at the capped rate
+# Clear leftover demo Activities, reset the receiver, confirm the 2/sec cap, then send 60
 scripts/stop-demo-and-reset.sh
+curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=2"
 time go run ./sendbulk 60
 ```
 
-`stop-demo-and-reset.sh` clears the receiver and stops any `demo-*` Activities still retrying from section 2.
+`stop-demo-and-reset.sh` clears the receiver's counters and stops any `demo-*` Activities still retrying from section 2. The `curl` re-asserts the 2 req/sec cap so this run is measured against the same rate-limited receiver as section 2 - the only thing that changed is the Worker's dispatch rate.
 
 At 2/sec, draining 60 deliveries takes about **30 seconds**. Open the [button label="Temporal UI" background="#444CE7"](tab-5) tab → **Standalone Activities** and watch `bulk-*` Activities flip from **Running** to **Completed** about two per second.
 
-The [button label="Webhook receiver" background="#444CE7"](tab-4) tab will show the `received_at` timestamps visibly spread out instead of clustering, with `processed_count` climbing by about two per second. The `throttled_count` should be a small number from the initial burst, then flat.
+The [button label="Webhook receiver" background="#444CE7"](tab-4) tab will show the `received_at` timestamps visibly spread out instead of clustering, with `processed_count` climbing by about two per second. Check that the **Rate limit (req/s)** tile reads `2` - that confirms you're measuring against the capped receiver and not an open one.
+
+`throttled_count` is the number to watch: it should stay at **0**. The Worker releases one Activity roughly every 500ms, so it never presents more than the receiver's 2 requests per second and never earns a 429. Compare that with section 2, where it climbed for as long as the Activities kept retrying. Same receiver, same cap - the only thing that changed is that the Worker now paces its own dispatch.
 
 ---
 

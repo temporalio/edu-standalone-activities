@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"standaloneactivities/solution/05-heartbeats-and-checkpointing/webhook"
 
@@ -16,7 +17,14 @@ func main() {
 	}
 	defer c.Close()
 
-	w := worker.New(c, webhook.TaskQueue, worker.Options{})
+	w := worker.New(c, webhook.TaskQueue, worker.Options{
+		// The SDK batches heartbeats, flushing at most one per throttle interval
+		// (80% of HeartbeatTimeout by default = 9.6s here). That is far coarser
+		// than this Activity's 1-item-per-second progress, so the server's
+		// checkpoint would lag badly behind a crash. Pin the flush to 1s so the
+		// stored checkpoint stays within an item of what was actually delivered.
+		MaxHeartbeatThrottleInterval: 1 * time.Second,
+	})
 	w.RegisterActivity(webhook.DeliverWebhookBatch)
 
 	log.Printf("Worker running on task queue %q", webhook.TaskQueue)

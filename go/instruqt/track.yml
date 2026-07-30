@@ -19,6 +19,7 @@ tags:
 - go
 owner: temporal
 developers:
+- angela.zhou@temporal.io
 - nikolay.advolodkin@temporal.io
 skipping_enabled: true
 idle_timeout: 3600
@@ -64,5 +65,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentLeft
   default_layout_sidebar_size: 33
-checksum: "8962474832090687724"
+checksum: "15585333725744454433"
 enhanced_loading: true

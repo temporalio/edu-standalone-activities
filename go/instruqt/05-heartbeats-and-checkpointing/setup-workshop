@@ -5,3 +5,5 @@ pkill -9 -f "exe/worker" 2>/dev/null || true
 pkill -9 -f "go-build.*/worker$" 2>/dev/null || true
 pkill -9 -f "/worker$" 2>/dev/null || true
 curl -fsS -X POST http://localhost:9000/_reset > /dev/null || true
+# /_reset preserves the cap, so clear Module 04's 2/sec cap explicitly.
+curl -fsS -X POST "http://localhost:9000/_rate_limit?limit=0" > /dev/null || true

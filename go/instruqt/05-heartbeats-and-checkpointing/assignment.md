@@ -131,7 +131,9 @@ Return to the [button label="Terminal" background="#444CE7"](tab-2) tab and wait
 wait
 ```
 
-After ~5 seconds, the Activity's `HeartbeatTimeout` fires on the server. No heartbeat for 5s means the attempt is dead, so Temporal triggers a retry and the new Worker picks it up. The retry replays the Activity body **from the top**, including items already delivered.
+After ~12 seconds, the Activity's `HeartbeatTimeout` fires on the server. This Activity never heartbeats at all, so the server's clock runs from the moment the attempt started: 12 seconds of silence means the attempt is dead, so Temporal triggers a retry and the new Worker picks it up. The retry replays the Activity body **from the top**, including items already delivered.
+
+The retry gets a full 10 seconds to run and finishes the whole batch, so the Activity completes on attempt 2. Watch `processed_count` settle at 14 and stop.
 
 Check the [button label="Webhook receiver" background="#444CE7"](tab-4) tab. `"processed_count"` should exceed 10. Items 0 through 3 are recorded twice because the retry started from item 0:
 
@@ -255,7 +257,9 @@ Batch delivery completed: 10 items delivered.
 
 The [button label="Webhook receiver" background="#444CE7"](tab-4) tab shows `"processed_count"` close to 10, a big drop from the 14 you saw without a checkpoint. The retry read the heartbeat details, jumped near the checkpoint index, and finished the remaining items instead of redoing the whole batch.
 
-The Go SDK throttles how often heartbeats actually reach the server, capping updates to roughly 80% of `HeartbeatTimeout`. That means the checkpoint the server has on file can lag a beat behind what the Activity already delivered locally, so do not be surprised if one or two items right at the crash boundary show up twice. That is still far better than redoing the whole batch, and it is why heartbeating is worth using even though it is not a perfect exactly-once guarantee.
+The Go SDK does not send every `RecordHeartbeat` call to the server. It sends the first one, then batches the rest and flushes at most one per *throttle interval*, which defaults to 80% of `HeartbeatTimeout`. At the 12-second timeout this Activity uses, that default would be 9.6 seconds - so a crash 4 seconds in would leave the server holding a checkpoint of `1`, and the retry would redo almost the whole batch.
+
+That's why `worker/main.go` sets `MaxHeartbeatThrottleInterval: 1 * time.Second`, which caps the flush interval regardless of the timeout. The stored checkpoint now stays within about one item of what was actually delivered, which is why one item near the crash boundary can still show up twice. Heartbeating is progress-saving, not an exactly-once guarantee - the granularity of your checkpoint is bounded by how often it actually reaches the server.
 
 Look at the Worker console logs for the second attempt. You should see a line containing `Resuming from checkpoint`, with a `startIndex` close to wherever the first attempt got interrupted and `attempt 2` (the exact number depends on heartbeat throttling timing).
 
@@ -298,12 +302,12 @@ If you don't heartbeat, cancellation cannot reach the Activity at all. It will r
 
 ## Check your understanding
 
-> Your batch Activity has `HeartbeatTimeout: 5 * time.Second` and processes one item per second. Mid-batch, the Worker hangs (deadlock, not crash). It stops calling `activity.RecordHeartbeat`, but the process is still alive. What does Temporal do?
+> Your batch Activity has `HeartbeatTimeout: 12 * time.Second` and processes one item per second. Mid-batch, the Worker hangs (deadlock, not crash). It stops calling `activity.RecordHeartbeat`, but the process is still alive. What does Temporal do?
 
 <details>
 <summary>Answer</summary>
 
-Temporal treats the attempt as dead after 5 seconds with no heartbeat, the same as a crash. It schedules a retry on whatever Worker picks it up next.
+Temporal treats the attempt as dead after 12 seconds with no heartbeat, the same as a crash. It schedules a retry on whatever Worker picks it up next.
 
 That's the point of `HeartbeatTimeout`: it's the server's way to detect a stuck or dead attempt without waiting for the much longer `StartToCloseTimeout`. Heartbeats are not just for storing progress. They are the liveness signal that lets the server route around a stuck Worker quickly.
 

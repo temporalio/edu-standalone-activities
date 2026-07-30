@@ -92,6 +92,20 @@ if resp.StatusCode >= 300 {
 return resp.StatusCode, nil
 ```
 
+This code uses three packages the stub doesn't import yet, so replace the import block at the top of the file with:
+
+```go
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"go.temporal.io/sdk/activity"
+)
+```
+
 Three things happen here:
 
 1. POST the payload as JSON to the URL with `http.Post`. Both come from the `WebhookDelivery` input.
