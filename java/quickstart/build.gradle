@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    // Temporal Java SDK 1.36.1 ships Standalone Activities (Public Preview): ActivityClient, StartActivityOptions.
+    implementation 'io.temporal:temporal-sdk:1.36.1'
+    // Environment configuration: ClientConfigProfile.load() reads TEMPORAL_PROFILE + the TOML file.
+    implementation 'io.temporal:temporal-envconfig:1.36.1'
+    // An SLF4J binding so the console prints Activity and connection logs.
+    runtimeOnly 'ch.qos.logback:logback-classic:1.5.6'
+}
+
+def appArgs = project.hasProperty('appArgs')
+        ? project.property('appArgs').toString().split('\\s+').findAll { it }
+        : []
+
+// Convenience runners:  gradle -q runWorker   |   gradle -q runClient [-PappArgs="Angela"]
+tasks.register('runWorker', JavaExec) {
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set('quickstart.Worker')
+}
+
+tasks.register('runClient', JavaExec) {
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set('quickstart.Client')
+    args = appArgs
+}
+
+// Generic runner matching the course modules:  gradle -q execute -PmainClass=quickstart.Worker
+tasks.register('execute', JavaExec) {
+    group = 'application'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('mainClass')) {
+        mainClass.set(project.property('mainClass').toString())
+    }
+    args = appArgs
+    standardInput = System.in
+}

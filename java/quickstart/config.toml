@@ -1,0 +1,43 @@
+# Reference profiles for Temporal's environment-configuration feature.
+#
+# By default the SDK reads the OS config directory:
+#   macOS:   ~/Library/Application Support/temporalio/temporal.toml
+#   Linux:   ~/.config/temporalio/temporal.toml
+#   Windows: %APPDATA%\temporalio\temporal.toml
+#
+# To use THIS file instead, point TEMPORAL_CONFIG_FILE at it. Select a profile
+# with the TEMPORAL_PROFILE env var (it defaults to "default").
+#
+#   TEMPORAL_CONFIG_FILE=./config.toml TEMPORAL_PROFILE=cloud gradle -q runClient
+#
+# Once you copy this into the OS default location above, the shorter form works
+# with no TEMPORAL_CONFIG_FILE:
+#
+#   TEMPORAL_PROFILE=cloud gradle -q runClient
+
+# Local dev server (temporal server start-dev). Used when TEMPORAL_PROFILE is
+# unset, since the profile name defaults to "default".
+[profile.default]
+address = "localhost:7233"
+namespace = "default"
+
+# Temporal Cloud. Replace the placeholders with your own values, then run:
+#   TEMPORAL_PROFILE=cloud gradle -q runClient
+#
+# Use the auth method your namespace was created with (this is chosen at
+# namespace creation and cannot be changed later).
+#
+# API-key auth (shown here). TLS is enabled automatically when api_key is
+# present, so no TLS block is needed.
+[profile.cloud]
+address = "your-namespace.a1b2c.tmprl.cloud:7233"
+namespace = "your-namespace.a1b2c"
+api_key = "your-api-key-here"
+
+# mTLS auth alternative. To use this instead, delete the api_key line above,
+# uncomment the block below, and keep TEMPORAL_API_KEY unset (an api key would
+# override the cert pair and the server would reject with
+# "tls: certificate required").
+# [profile.cloud.tls]
+# client_cert_path = "/path/to/client.pem"
+# client_key_path = "/path/to/client.key"
