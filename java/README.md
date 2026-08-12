@@ -48,12 +48,7 @@ gradle -q execute -PmainClass=webhook.Worker
 gradle -q execute -PmainClass=webhook.SendStandalone -PappArgs=evt_001
 ```
 
-## Before opening a PR
-
-```bash
-bash java/scripts/verify-content.sh
-cd java/instruqt && instruqt track validate
-```
+## Build the sandbox image
 
 The Java sandbox image builds from the **repository root** context (so it can reach
 `shared/`):
