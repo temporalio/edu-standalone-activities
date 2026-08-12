@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"quickstart/greet"
@@ -11,6 +12,15 @@ import (
 )
 
 func main() {
+	// Keep main tiny: run() owns the deferred cleanup, and only main calls
+	// log.Fatalln. Calling log.Fatalln inside run() would os.Exit and skip the
+	// deferred c.Close().
+	if err := run(); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func run() error {
 	// LoadDefaultClientOptions reads the TEMPORAL_PROFILE env var (default
 	// "default"), loads that profile from the TOML config file (default OS
 	// config dir, or TEMPORAL_CONFIG_FILE), and applies any TEMPORAL_*
@@ -18,12 +28,12 @@ func main() {
 	// runs against a local dev server or Temporal Cloud.
 	options, err := envconfig.LoadDefaultClientOptions()
 	if err != nil {
-		log.Fatalln("Unable to load Temporal client options", err)
+		return fmt.Errorf("load Temporal client options: %w", err)
 	}
 
 	c, err := client.Dial(options)
 	if err != nil {
-		log.Fatalln("Unable to create client", err)
+		return fmt.Errorf("create client: %w", err)
 	}
 	defer c.Close()
 
@@ -41,6 +51,7 @@ func main() {
 	log.Printf("Worker connected to %s (namespace %s), polling task queue %q", hostPort, namespace, greet.TaskQueue)
 
 	if err := w.Run(worker.InterruptCh()); err != nil {
-		log.Fatalln("Unable to start worker", err)
+		return fmt.Errorf("run worker: %w", err)
 	}
+	return nil
 }

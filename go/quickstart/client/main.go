@@ -14,6 +14,15 @@ import (
 )
 
 func main() {
+	// Keep main tiny: run() owns the deferred cleanup, and only main calls
+	// log.Fatalln. Calling log.Fatalln inside run() would os.Exit and skip the
+	// deferred c.Close().
+	if err := run(); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func run() error {
 	name := "Temporal"
 	if len(os.Args) > 1 {
 		name = os.Args[1]
@@ -24,12 +33,12 @@ func main() {
 	// and TEMPORAL_* env vars can override individual fields.
 	options, err := envconfig.LoadDefaultClientOptions()
 	if err != nil {
-		log.Fatalln("Unable to load Temporal client options", err)
+		return fmt.Errorf("load Temporal client options: %w", err)
 	}
 
 	c, err := client.Dial(options)
 	if err != nil {
-		log.Fatalln("Unable to create client", err)
+		return fmt.Errorf("create client: %w", err)
 	}
 	defer c.Close()
 
@@ -51,12 +60,13 @@ func main() {
 		StartToCloseTimeout: 10 * time.Second,
 	}, greet.Greet, name)
 	if err != nil {
-		log.Fatalln("Unable to start standalone activity", err)
+		return fmt.Errorf("start standalone activity: %w", err)
 	}
 
 	var result string
 	if err := handle.Get(context.Background(), &result); err != nil {
-		log.Fatalln("Standalone activity failed", err)
+		return fmt.Errorf("standalone activity failed: %w", err)
 	}
 	log.Printf("Standalone Activity result: %s", result)
+	return nil
 }
