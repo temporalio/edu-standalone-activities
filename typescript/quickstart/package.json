@@ -9,10 +9,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@temporalio/activity": "^1.22.0",
-    "@temporalio/client": "^1.22.0",
-    "@temporalio/envconfig": "^1.22.0",
-    "@temporalio/worker": "^1.22.0"
+    "@temporalio/client": "1.22.0",
+    "@temporalio/envconfig": "1.22.0",
+    "@temporalio/worker": "1.22.0"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
