@@ -1,0 +1,10 @@
+[project]
+name = "temporal-standalone-activities-quickstart-py"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+  "temporalio>=1.27",
+]
+
+[tool.uv]
+package = false
