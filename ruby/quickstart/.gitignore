@@ -1,0 +1,5 @@
+/.bundle/
+/vendor/bundle/
+# The temporalio gem is platform-specific, so the lockfile is not committed;
+# each `bundle install` resolves the gem for the current OS/architecture.
+Gemfile.lock

@@ -1,0 +1,8 @@
+source 'https://rubygems.org'
+
+# Standalone Activities require Temporal Ruby SDK v1.5.0 or higher.
+#
+# Pinned to 1.5.0 because temporalio 1.6.0+ uses Ruby 3.4+ block syntax that
+# fails to parse on Ruby 3.3. On Ruby 3.4 or newer you can relax this to a newer
+# version (for example, gem 'temporalio', '>= 1.5.0').
+gem 'temporalio', '1.5.0'
