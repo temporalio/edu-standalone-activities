@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Keep pinned GitHub Actions SHAs current. Cooldown holds back freshly
+  # published releases so a compromised upstream tag is not adopted immediately.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
