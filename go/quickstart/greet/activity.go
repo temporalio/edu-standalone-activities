@@ -8,9 +8,7 @@ import (
 )
 
 // TaskQueue is the queue the Worker polls and the client submits to. Keep the
-// Worker and client pointed at the same value. Reads TEMPORAL_TASK_QUEUE when
-// set — e.g. a test harness isolating each run on its own queue — and otherwise
-// uses the shared default, so a copy-paste user's behavior is unchanged.
+// Worker and client pointed at the same value.
 var TaskQueue = taskQueue()
 
 func taskQueue() string {
