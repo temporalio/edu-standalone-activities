@@ -2,11 +2,21 @@
 // and the client.
 package greet
 
-import "context"
+import (
+	"context"
+	"os"
+)
 
 // TaskQueue is the queue the Worker polls and the client submits to. Keep the
 // Worker and client pointed at the same value.
-const TaskQueue = "quickstart-standalone-activities"
+var TaskQueue = taskQueue()
+
+func taskQueue() string {
+	if v := os.Getenv("TEMPORAL_TASK_QUEUE"); v != "" {
+		return v
+	}
+	return "quickstart-standalone-activities"
+}
 
 // Greet is a plain Activity. Nothing here knows or cares whether it was invoked
 // as a Standalone Activity or from a Workflow: the same function works either
