@@ -8,3 +8,6 @@ dependencies = [
 
 [tool.uv]
 package = false
+exclude-newer = "2 weeks"
+# First-party Temporal SDK: samples, features and edu track SDK releases without the cooldown.
+exclude-newer-package = { temporalio = false }
